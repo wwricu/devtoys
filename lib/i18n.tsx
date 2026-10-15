@@ -102,6 +102,7 @@ const zhCategories: Record<string, string> = {
   Text: "文本",
   Generators: "生成器",
   Utilities: "实用工具",
+  Favourites: "收藏夹",
 };
 
 const zhTools: Record<string, { name: string; description: string }> = {
