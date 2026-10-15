@@ -3,8 +3,18 @@
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 import { getTool } from "@/lib/tools";
+import { useLang } from "@/lib/i18n";
 
 const cache = new Map<string, ComponentType>();
+
+function LoadingTool() {
+  const { t } = useLang();
+  return (
+    <div className="flex h-40 items-center justify-center text-xs text-neutral-400">
+      {t.loadingTool}
+    </div>
+  );
+}
 
 function getToolComponent(id: string): ComponentType | null {
   const tool = getTool(id);
@@ -13,11 +23,7 @@ function getToolComponent(id: string): ComponentType | null {
   if (!comp) {
     comp = dynamic(tool.load, {
       ssr: false,
-      loading: () => (
-        <div className="flex h-40 items-center justify-center text-xs text-neutral-400">
-          Loading tool…
-        </div>
-      ),
+      loading: LoadingTool,
     }) as ComponentType;
     cache.set(id, comp);
   }
