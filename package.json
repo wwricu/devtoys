@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "gen:routes": "node scripts/gen-tool-routes.mjs",
     "lint": "eslint"
   },
   "dependencies": {

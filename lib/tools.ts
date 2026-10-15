@@ -1,5 +1,8 @@
-import type { ComponentType } from "react";
-
+/**
+ * Tool registry: metadata only, so the sidebar, home and category pages never
+ * pull in any feature code. `npm run gen:routes` turns each entry below into a
+ * static route at app/tools/<id>/page.tsx, which imports that tool by itself.
+ */
 export type ToolId = string;
 
 export interface ToolDefinition {
@@ -14,8 +17,10 @@ export interface ToolDefinition {
   category: string;
   /** Tool icon (a two-character shorthand, keeps the style minimal) */
   badge: string;
-  /** Lazy entry point: each tool is its own chunk, no cross imports */
-  load: () => Promise<{ default: ComponentType }>;
+  /** Feature module path. Inert here: `npm run gen:routes` turns it into the
+   *  dynamic import of this tool's route, keeping the registry out of any
+   *  route graph so one page never pulls in another tool's code. */
+  component: string;
 }
 
 export const tools: ToolDefinition[] = [
@@ -26,7 +31,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["json", "formatter", "format", "minify", "validate", "parse"],
     category: "Formatters",
     badge: "{}",
-    load: () => import("@/features/json/JsonFormatter"),
+    component: "@/features/json/JsonFormatter",
   },
   {
     id: "xml-format",
@@ -35,7 +40,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["xml", "formatter", "format", "minify", "validate", "parse"],
     category: "Formatters",
     badge: "<>",
-    load: () => import("@/features/xml/XmlFormatter"),
+    component: "@/features/xml/XmlFormatter",
   },
   {
     id: "text-escape",
@@ -44,7 +49,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["escape", "unescape", "string", "quote", "unicode", "text"],
     category: "Encoders / Decoders",
     badge: "\\",
-    load: () => import("@/features/escape/TextEscape"),
+    component: "@/features/escape/TextEscape",
   },
   {
     id: "base64",
@@ -53,7 +58,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["base64", "atob", "btoa", "encode", "decode", "binary"],
     category: "Encoders / Decoders",
     badge: "b6",
-    load: () => import("@/features/base64/Base64Tool"),
+    component: "@/features/base64/Base64Tool",
   },
   {
     id: "url-encode",
@@ -62,7 +67,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["url", "percent", "encode", "decode", "uri", "query"],
     category: "Encoders / Decoders",
     badge: "%",
-    load: () => import("@/features/url/UrlEncoder"),
+    component: "@/features/url/UrlEncoder",
   },
   {
     id: "html-entities",
@@ -71,7 +76,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["html", "entity", "encode", "decode", "escape", "amp"],
     category: "Encoders / Decoders",
     badge: "&",
-    load: () => import("@/features/html/HtmlEntities"),
+    component: "@/features/html/HtmlEntities",
   },
   {
     id: "jwt-decode",
@@ -80,7 +85,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["jwt", "token", "decode", "auth", "bearer", "signature"],
     category: "Encoders / Decoders",
     badge: "jk",
-    load: () => import("@/features/jwt/JwtDecoder"),
+    component: "@/features/jwt/JwtDecoder",
   },
   {
     id: "date-convert",
@@ -89,7 +94,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["date", "time", "unix", "timestamp", "epoch", "iso", "convert"],
     category: "Converters",
     badge: "@",
-    load: () => import("@/features/date/DateConverter"),
+    component: "@/features/date/DateConverter",
   },
   {
     id: "number-base",
@@ -107,7 +112,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Converters",
     badge: "0x",
-    load: () => import("@/features/ibase/NumberBase"),
+    component: "@/features/ibase/NumberBase",
   },
   {
     id: "bytes",
@@ -116,7 +121,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["bytes", "data", "size", "kb", "mb", "gb", "kib", "unit"],
     category: "Converters",
     badge: "bt",
-    load: () => import("@/features/bytes/ByteConverter"),
+    component: "@/features/bytes/ByteConverter",
   },
   {
     id: "case-convert",
@@ -134,7 +139,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Text",
     badge: "aA",
-    load: () => import("@/features/case/CaseConverter"),
+    component: "@/features/case/CaseConverter",
   },
   {
     id: "markdown",
@@ -143,7 +148,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["markdown", "md", "html", "render", "preview"],
     category: "Text",
     badge: "m↓",
-    load: () => import("@/features/markdown/MarkdownTool"),
+    component: "@/features/markdown/MarkdownTool",
   },
   {
     id: "hash",
@@ -152,7 +157,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["hash", "md5", "sha", "sha256", "digest", "checksum"],
     category: "Generators",
     badge: "#",
-    load: () => import("@/features/hash/HashTool"),
+    component: "@/features/hash/HashTool",
   },
   {
     id: "uuid",
@@ -161,7 +166,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["uuid", "guid", "unique", "identifier", "v1", "v4", "random"],
     category: "Generators",
     badge: "ID",
-    load: () => import("@/features/uuid/UuidGenerator"),
+    component: "@/features/uuid/UuidGenerator",
   },
   {
     id: "password",
@@ -177,7 +182,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "pw",
-    load: () => import("@/features/password/PasswordGenerator"),
+    component: "@/features/password/PasswordGenerator",
   },
   {
     id: "regex",
@@ -193,7 +198,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Utilities",
     badge: ".*",
-    load: () => import("@/features/regex/RegexTester"),
+    component: "@/features/regex/RegexTester",
   },
   {
     id: "cron",
@@ -202,7 +207,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["cron", "crontab", "schedule", "timer", "quartz", "expression"],
     category: "Utilities",
     badge: "cr",
-    load: () => import("@/features/cron/CronParser"),
+    component: "@/features/cron/CronParser",
   },
   {
     id: "url-parse",
@@ -211,7 +216,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["url", "parse", "query", "params", "host", "fragment", "uri"],
     category: "Utilities",
     badge: "u/",
-    load: () => import("@/features/urlparser/UrlParser"),
+    component: "@/features/urlparser/UrlParser",
   },
   {
     id: "text-diff",
@@ -220,7 +225,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["diff", "compare", "changes", "patch", "unified", "lines"],
     category: "Utilities",
     badge: "±",
-    load: () => import("@/features/diff/DiffTool"),
+    component: "@/features/diff/DiffTool",
   },
   {
     id: "base32",
@@ -229,7 +234,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["base32", "encode", "decode", "rfc4648", "hex", "padding"],
     category: "Encoders / Decoders",
     badge: "b5",
-    load: () => import("@/features/b32/Base32Tool"),
+    component: "@/features/b32/Base32Tool",
   },
   {
     id: "gzip",
@@ -238,7 +243,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["gzip", "deflate", "compress", "decompress", "zlib", "zip"],
     category: "Encoders / Decoders",
     badge: "gz",
-    load: () => import("@/features/gzip/GzipTool"),
+    component: "@/features/gzip/GzipTool",
   },
   {
     id: "jwt-sign",
@@ -247,7 +252,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["jwt", "sign", "verify", "hmac", "hs256", "token", "secret"],
     category: "Encoders / Decoders",
     badge: "sg",
-    load: () => import("@/features/jwt/JwtSigner"),
+    component: "@/features/jwt/JwtSigner",
   },
   {
     id: "color",
@@ -256,7 +261,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["color", "colour", "hex", "rgb", "hsl", "cmyk", "contrast"],
     category: "Converters",
     badge: "c!",
-    load: () => import("@/features/color/ColorConverter"),
+    component: "@/features/color/ColorConverter",
   },
   {
     id: "json-yaml",
@@ -272,7 +277,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Converters",
     badge: "y!",
-    load: () => import("@/features/yaml/YamlConverter"),
+    component: "@/features/yaml/YamlConverter",
   },
   {
     id: "json-csv",
@@ -281,7 +286,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["json", "csv", "convert", "table", "spreadsheet", "delimiter"],
     category: "Converters",
     badge: "c,",
-    load: () => import("@/features/csv/CsvConverter"),
+    component: "@/features/csv/CsvConverter",
   },
   {
     id: "text-stats",
@@ -290,7 +295,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["text", "words", "characters", "count", "stats", "reading time"],
     category: "Text",
     badge: "a#",
-    load: () => import("@/features/stats/TextStatsTool"),
+    component: "@/features/stats/TextStatsTool",
   },
   {
     id: "image-convert",
@@ -308,7 +313,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Converters",
     badge: "img",
-    load: () => import("@/features/image/ImageConverter"),
+    component: "@/features/image/ImageConverter",
   },
   {
     id: "image-base64",
@@ -317,7 +322,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["image", "base64", "data url", "encode", "decode", "preview"],
     category: "Converters",
     badge: "ib",
-    load: () => import("@/features/imgb64/ImageBase64"),
+    component: "@/features/imgb64/ImageBase64",
   },
   {
     id: "pem-decode",
@@ -336,7 +341,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Utilities",
     badge: "x5",
-    load: () => import("@/features/pem/PemDecoder"),
+    component: "@/features/pem/PemDecoder",
   },
   {
     id: "hmac",
@@ -353,7 +358,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "hm",
-    load: () => import("@/features/hmac/HmacTool"),
+    component: "@/features/hmac/HmacTool",
   },
   {
     id: "random-number",
@@ -370,7 +375,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "rn",
-    load: () => import("@/features/random/RandomNumbers"),
+    component: "@/features/random/RandomNumbers",
   },
   {
     id: "aes",
@@ -387,7 +392,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Encoders / Decoders",
     badge: "ae",
-    load: () => import("@/features/aes/AesTool"),
+    component: "@/features/aes/AesTool",
   },
   {
     id: "line-tools",
@@ -404,7 +409,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Text",
     badge: "l=",
-    load: () => import("@/features/lines/LineTools"),
+    component: "@/features/lines/LineTools",
   },
   {
     id: "cidr",
@@ -422,7 +427,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Utilities",
     badge: "ip",
-    load: () => import("@/features/cidr/CidrTool"),
+    component: "@/features/cidr/CidrTool",
   },
   {
     id: "chmod",
@@ -431,7 +436,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["chmod", "permission", "octal", "unix", "linux", "file", "rwx"],
     category: "Utilities",
     badge: "7x",
-    load: () => import("@/features/chmod/ChmodCalculator"),
+    component: "@/features/chmod/ChmodCalculator",
   },
   {
     id: "totp",
@@ -448,7 +453,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "otp",
-    load: () => import("@/features/totp/TotpTool"),
+    component: "@/features/totp/TotpTool",
   },
   {
     id: "base16",
@@ -465,7 +470,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Encoders / Decoders",
     badge: "b1",
-    load: () => import("@/features/b16/Base16Tool"),
+    component: "@/features/b16/Base16Tool",
   },
   {
     id: "semver",
@@ -482,7 +487,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Utilities",
     badge: "v#",
-    load: () => import("@/features/semver/SemverTool"),
+    component: "@/features/semver/SemverTool",
   },
   {
     id: "user-agent",
@@ -499,7 +504,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Utilities",
     badge: "ua",
-    load: () => import("@/features/useragent/UserAgentTool"),
+    component: "@/features/useragent/UserAgentTool",
   },
   {
     id: "qr-code",
@@ -518,7 +523,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "qr",
-    load: () => import("@/features/qr/QrTool"),
+    component: "@/features/qr/QrTool",
   },
   {
     id: "toml",
@@ -527,7 +532,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["toml", "json", "convert", "config", "cargo", "ini", "package"],
     category: "Converters",
     badge: "tm",
-    load: () => import("@/features/toml/TomlConverter"),
+    component: "@/features/toml/TomlConverter",
   },
   {
     id: "sql-format",
@@ -544,7 +549,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Formatters",
     badge: "db",
-    load: () => import("@/features/sql/SqlFormatter"),
+    component: "@/features/sql/SqlFormatter",
   },
   {
     id: "html-md",
@@ -553,7 +558,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["html", "markdown", "md", "convert", "tag", "inverse"],
     category: "Converters",
     badge: "h>",
-    load: () => import("@/features/htmlmd/HtmlMarkdownTool"),
+    component: "@/features/htmlmd/HtmlMarkdownTool",
   },
   {
     id: "base58",
@@ -570,7 +575,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Encoders / Decoders",
     badge: "58",
-    load: () => import("@/features/b58/Base58Tool"),
+    component: "@/features/b58/Base58Tool",
   },
   {
     id: "idn",
@@ -587,7 +592,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Encoders / Decoders",
     badge: "idn",
-    load: () => import("@/features/idn/IdnTool"),
+    component: "@/features/idn/IdnTool",
   },
   {
     id: "svg-preview",
@@ -596,7 +601,7 @@ export const tools: ToolDefinition[] = [
     keywords: ["svg", "preview", "vector", "image", "png", "rasterise", "icon"],
     category: "Utilities",
     badge: "svg",
-    load: () => import("@/features/svg/SvgPreviewTool"),
+    component: "@/features/svg/SvgPreviewTool",
   },
   {
     id: "xml-json",
@@ -613,7 +618,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Converters",
     badge: "xj",
-    load: () => import("@/features/xml/XmlJsonConverter"),
+    component: "@/features/xml/XmlJsonConverter",
   },
   {
     id: "json-ts",
@@ -631,7 +636,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Converters",
     badge: "ts",
-    load: () => import("@/features/ts-types/TsTypesTool"),
+    component: "@/features/ts-types/TsTypesTool",
   },
   {
     id: "keypair",
@@ -653,7 +658,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "key",
-    load: () => import("@/features/keys/KeyPairTool"),
+    component: "@/features/keys/KeyPairTool",
   },
   {
     id: "code128",
@@ -672,7 +677,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "|||",
-    load: () => import("@/features/code128/Code128Tool"),
+    component: "@/features/code128/Code128Tool",
   },
   {
     id: "slug",
@@ -690,7 +695,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Text",
     badge: "/",
-    load: () => import("@/features/slug/SlugTool"),
+    component: "@/features/slug/SlugTool",
   },
   {
     id: "lorem",
@@ -707,7 +712,7 @@ export const tools: ToolDefinition[] = [
     ],
     category: "Generators",
     badge: "ipsum",
-    load: () => import("@/features/lorem/LoremTool"),
+    component: "@/features/lorem/LoremTool",
   },
 ];
 
@@ -724,4 +729,16 @@ export function getCategories(): { name: string; tools: ToolDefinition[] }[] {
     map.set(t.category, list);
   }
   return [...map].map(([name, tools]) => ({ name, tools }));
+}
+
+/** URL slug for a category; derived from the English name in the registry. */
+export function categorySlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function getCategory(slug: string) {
+  return getCategories().find((c) => categorySlug(c.name) === slug);
 }

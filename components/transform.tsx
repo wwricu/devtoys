@@ -59,10 +59,7 @@ export function SimpleTransform({
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
-        <Panel
-          title={t.output}
-          actions={<CopyButton getText={() => output} />}
-        >
+        <Panel title={t.output} actions={<CopyButton getText={() => output} />}>
           <textarea
             className={editorClass}
             spellCheck={false}

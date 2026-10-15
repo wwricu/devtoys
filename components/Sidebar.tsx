@@ -3,7 +3,12 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getCategories, tools, type ToolDefinition } from "@/lib/tools";
+import {
+  categorySlug,
+  getCategories,
+  tools,
+  type ToolDefinition,
+} from "@/lib/tools";
 import { useStoredState } from "@/components/kit";
 import { fill, useLang } from "@/lib/i18n";
 
@@ -138,7 +143,7 @@ export default function Sidebar() {
                     <Chevron open={open} />
                   </button>
                   <Link
-                    href={`/?category=${encodeURIComponent(c.name)}`}
+                    href={`/category/${categorySlug(c.name)}`}
                     className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                   >
                     <span className="flex-1 truncate">
