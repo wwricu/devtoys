@@ -1,3 +1,14 @@
+/** Category ids keyed by the UI dictionary; `classRange` is the emitted value. */
+export type CidrClass =
+  | "private"
+  | "loopback"
+  | "linkLocal"
+  | "carrierNat"
+  | "documentation"
+  | "multicast"
+  | "reserved"
+  | "public";
+
 export interface CidrInfo {
   input: string;
   ip: string;
@@ -13,11 +24,17 @@ export interface CidrInfo {
   hosts: number;
   binaryMask: string;
   reverseZone: string;
-  privateRange: string;
+  classId: CidrClass;
+  classRange: string;
 }
 
 function octets(value: number): [number, number, number, number] {
-  return [(value >>> 24) & 255, (value >>> 16) & 255, (value >>> 8) & 255, value & 255];
+  return [
+    (value >>> 24) & 255,
+    (value >>> 16) & 255,
+    (value >>> 8) & 255,
+    value & 255,
+  ];
 }
 
 function dotted(value: number): string {
@@ -54,26 +71,32 @@ function maskToPrefix(value: number): number | null {
   return rebuilt === value >>> 0 ? bits : null;
 }
 
-const special: { label: string; base: number; bits: number }[] = [
-  { label: "private (10.0.0.0/8)", base: 0x0a000000, bits: 8 },
-  { label: "private (172.16.0.0/12)", base: 0xac100000, bits: 12 },
-  { label: "private (192.168.0.0/16)", base: 0xc0a80000, bits: 16 },
-  { label: "loopback (127.0.0.0/8)", base: 0x7f000000, bits: 8 },
-  { label: "link-local (169.254.0.0/16)", base: 0xa9fe0000, bits: 16 },
-  { label: "carrier-grade NAT (100.64.0.0/10)", base: 0x64400000, bits: 10 },
-  { label: "documentation (192.0.2.0/24)", base: 0xc0000200, bits: 24 },
-  { label: "documentation (198.51.100.0/24)", base: 0xc6336400, bits: 24 },
-  { label: "documentation (203.0.113.0/24)", base: 0xcb007100, bits: 24 },
-  { label: "multicast (224.0.0.0/4)", base: 0xe0000000, bits: 4 },
-  { label: "reserved (240.0.0.0/4)", base: 0xf0000000, bits: 4 },
+const special: { id: CidrClass; base: number; bits: number }[] = [
+  { id: "private", base: 0x0a000000, bits: 8 },
+  { id: "private", base: 0xac100000, bits: 12 },
+  { id: "private", base: 0xc0a80000, bits: 16 },
+  { id: "loopback", base: 0x7f000000, bits: 8 },
+  { id: "linkLocal", base: 0xa9fe0000, bits: 16 },
+  { id: "carrierNat", base: 0x64400000, bits: 10 },
+  { id: "documentation", base: 0xc0000200, bits: 24 },
+  { id: "documentation", base: 0xc6336400, bits: 24 },
+  { id: "documentation", base: 0xcb007100, bits: 24 },
+  { id: "multicast", base: 0xe0000000, bits: 4 },
+  { id: "reserved", base: 0xf0000000, bits: 4 },
 ];
 
-function classify(network: number): string {
+/** Range label of a network block, e.g. 0x0a000000/8 -> "10.0.0.0/8". */
+function rangeOf(base: number, bits: number): string {
+  return `${dotted(base)}/${bits}`;
+}
+
+function classify(network: number): { id: CidrClass; range: string } {
   for (const r of special) {
     const mask = r.bits === 0 ? 0 : (~0 << (32 - r.bits)) >>> 0;
-    if (((network & mask) >>> 0) === r.base) return r.label;
+    if ((network & mask) >>> 0 === r.base)
+      return { id: r.id, range: rangeOf(r.base, r.bits) };
   }
-  return "public / unicast";
+  return { id: "public", range: "" };
 }
 
 /** Reverse DNS zone for a network, e.g. 192.0.2.0/26 -> 0.2.0.192.in-addr.arpa */
@@ -98,18 +121,21 @@ export function parseCidr(text: string): CidrResult {
 
   if (raw.includes("/")) {
     const [a, b, extra] = raw.split(/\s*\/\s*/);
-    if (extra) return { info: null, error: "Too many parts, expected address/prefix" };
+    if (extra)
+      return { info: null, error: "Too many parts, expected address/prefix" };
     ipPart = a;
     prefixPart = b;
   } else if (/[\s,]/.test(raw)) {
     const [a, b, extra] = raw.split(/[\s,]+/);
-    if (extra) return { info: null, error: "Expected an address plus a mask or prefix" };
+    if (extra)
+      return { info: null, error: "Expected an address plus a mask or prefix" };
     ipPart = a;
     prefixPart = b;
   }
 
   const ip = parseIpv4(ipPart);
-  if (ip === null) return { info: null, error: `"${ipPart}" is not a dotted IPv4 address` };
+  if (ip === null)
+    return { info: null, error: `"${ipPart}" is not a dotted IPv4 address` };
 
   let prefix: number;
   if (prefixPart === null) {
@@ -118,22 +144,29 @@ export function parseCidr(text: string): CidrResult {
     prefix = Number(prefixPart);
   } else {
     const mask = parseIpv4(prefixPart);
-    if (mask === null) return { info: null, error: `"${prefixPart}" is not a prefix or netmask` };
+    if (mask === null)
+      return {
+        info: null,
+        error: `"${prefixPart}" is not a prefix or netmask`,
+      };
     const bits = maskToPrefix(mask);
-    if (bits === null) return { info: null, error: "That netmask is not contiguous" };
+    if (bits === null)
+      return { info: null, error: "That netmask is not contiguous" };
     prefix = bits;
   }
 
   const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
-  const wildcard = (~mask) >>> 0;
+  const wildcard = ~mask >>> 0;
   const network = (ip & mask) >>> 0;
   const broadcast = (network | wildcard) >>> 0;
   const total = 2 ** (32 - prefix);
 
   const tiny = prefix >= 31;
   const first = prefix === 32 ? network : tiny ? network : (network + 1) >>> 0;
-  const last = prefix === 32 ? network : tiny ? broadcast : (broadcast - 1) >>> 0;
+  const last =
+    prefix === 32 ? network : tiny ? broadcast : (broadcast - 1) >>> 0;
   const hosts = prefix === 32 ? 1 : prefix === 31 ? 2 : Math.max(0, total - 2);
+  const cls = classify(network);
 
   return {
     info: {
@@ -151,14 +184,17 @@ export function parseCidr(text: string): CidrResult {
       hosts,
       binaryMask: binary(mask),
       reverseZone: reverseZone(network, prefix),
-      privateRange: classify(network),
+      classId: cls.id,
+      classRange: cls.range,
     },
     error: null,
   };
 }
 
 /** Split a network into its two halves (one prefix longer). */
-export function subnets(info: CidrInfo): { cidr: string; network: string; hosts: number }[] {
+export function subnets(
+  info: CidrInfo,
+): { cidr: string; network: string; hosts: number }[] {
   if (info.prefix >= 31) return [];
   const network = parseIpv4(info.network)!;
   const size = 2 ** (32 - info.prefix) / 2;

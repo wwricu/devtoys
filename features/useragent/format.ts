@@ -1,3 +1,6 @@
+/** Device category ids keyed by the UI dictionary; names stay locale-neutral. */
+export type DeviceId = "desktop" | "phone" | "tablet" | "tv" | "automated";
+
 export interface AgentInfo {
   browser: string;
   browserVersion: string;
@@ -5,11 +8,11 @@ export interface AgentInfo {
   engineVersion: string;
   os: string;
   osVersion: string;
-  device: string;
+  device: DeviceId;
   raw: string;
 }
 
-function firstNumber(value: string | null): string {
+export function firstNumber(value: string | null): string {
   if (!value) return "";
   const match = /^(\d+)/.exec(value);
   return match ? match[1] : value;
@@ -17,7 +20,12 @@ function firstNumber(value: string | null): string {
 
 export function parseUserAgent(ua: string): AgentInfo {
   const raw = ua.trim();
-  const tokens = raw.replace(/^.*?\(|\).*/g, " ").length > 0 ? [...raw.matchAll(/([A-Za-z0-9._-]+)\/([0-9][0-9a-zA-Z._-]*)/g)].map((m) => m[0]) : [];
+  const tokens =
+    raw.replace(/^.*?\(|\).*/g, " ").length > 0
+      ? [...raw.matchAll(/([A-Za-z0-9._-]+)\/([0-9][0-9a-zA-Z._-]*)/g)].map(
+          (m) => m[0],
+        )
+      : [];
   const inside = [...raw.matchAll(/\(([^)]*)\)/g)].map((m) => m[1]).join("; ");
   const names = tokens.map((t) => t.split("/")[0]);
 
@@ -36,7 +44,9 @@ export function parseUserAgent(ua: string): AgentInfo {
       t.split("/")[0],
     ),
   );
-  const botToken = tokens.find((t) => /(bot|crawler|spider|crawling)/i.test(t.split("/")[0]));
+  const botToken = tokens.find((t) =>
+    /(bot|crawler|spider|crawling)/i.test(t.split("/")[0]),
+  );
 
   if (toolToken) {
     const name = toolToken.split("/")[0];
@@ -87,7 +97,10 @@ export function parseUserAgent(ua: string): AgentInfo {
     version = versionOf("Version");
   }
 
-  const iosWebKit = names.includes("CriOS") || names.includes("FxiOS") || names.includes("OPiOS");
+  const iosWebKit =
+    names.includes("CriOS") ||
+    names.includes("FxiOS") ||
+    names.includes("OPiOS");
   let engine = "Unknown";
   let engineVersion: string | null = null;
   if (names.includes("Firefox") || names.includes("Fennec")) {
@@ -97,7 +110,9 @@ export function parseUserAgent(ua: string): AgentInfo {
     engine = "WebKit";
     engineVersion = versionOf("AppleWebKit");
   } else if (
-    ["Chrome", "Edg", "OPR", "SamsungBrowser", "Electron", "Silk"].some((n) => names.includes(n))
+    ["Chrome", "Edg", "OPR", "SamsungBrowser", "Electron", "Silk"].some((n) =>
+      names.includes(n),
+    )
   ) {
     engine = "Blink";
     engineVersion = versionOf("Chrome") ?? versionOf("Edg") ?? versionOf("OPR");
@@ -123,18 +138,22 @@ export function parseUserAgent(ua: string): AgentInfo {
   for (const [pattern, label] of known) {
     if (pattern.test(inside || raw)) {
       os = label;
-      const versionMatch = /Windows NT ([0-9.]+)/.exec(raw) ?? /Android ([0-9.]+)/.exec(raw) ?? /Mac OS X ([0-9_.]+)/.exec(raw) ?? /CPU (?:iPhone )?OS ([0-9_]+)/.exec(raw);
+      const versionMatch =
+        /Windows NT ([0-9.]+)/.exec(raw) ??
+        /Android ([0-9.]+)/.exec(raw) ??
+        /Mac OS X ([0-9_.]+)/.exec(raw) ??
+        /CPU (?:iPhone )?OS ([0-9_]+)/.exec(raw);
       osVersion = versionMatch ? versionMatch[1].replace(/_/g, ".") : "";
       break;
     }
   }
   if (os === "macOS" && /like Mac OS X/.test(raw)) os = "iOS";
 
-  let device = "Desktop";
-  if (/iPhone|iPod|Android.*Mobile|Windows Phone/i.test(raw)) device = "Phone";
-  else if (/iPad|Tablet|Android(?!.*Mobile)/i.test(raw)) device = "Tablet";
-  else if (/SmartTV|Tizen|BRAVIA|CrKey|Firefox OS|TV/i.test(raw)) device = "TV";
-  else if (/bot|crawler|spider/i.test(raw)) device = "Automated agent";
+  let device: DeviceId = "desktop";
+  if (/iPhone|iPod|Android.*Mobile|Windows Phone/i.test(raw)) device = "phone";
+  else if (/iPad|Tablet|Android(?!.*Mobile)/i.test(raw)) device = "tablet";
+  else if (/SmartTV|Tizen|BRAVIA|CrKey|Firefox OS|TV/i.test(raw)) device = "tv";
+  else if (/bot|crawler|spider/i.test(raw)) device = "automated";
 
   return {
     browser,
@@ -148,14 +167,32 @@ export function parseUserAgent(ua: string): AgentInfo {
   };
 }
 
-/** Major-version shorthand plus the compatibility story browsers tell. */
-export function summariseAgent(info: AgentInfo): string[] {
-  const rows: string[] = [
-    `${info.browser}${info.browserVersion ? ` ${info.browserVersion}` : ""}`,
-    `engine: ${info.engine}${info.engineVersion ? ` ${info.engineVersion}` : ""}`,
-    `system: ${info.os}${info.osVersion ? ` ${info.osVersion}` : ""}`,
-    `device: ${info.device}`,
+/**
+ * Compact readout rows. `id` keys the translated field label; `value` is the
+ * parsed value (the literal name for browsers/engines/systems, a `DeviceId`
+ * for the device row) so the engine never concatenates display words.
+ */
+export type SummaryRow =
+  | { id: "browser" | "engine" | "system" | "majorVersion"; value: string }
+  | { id: "device"; value: DeviceId };
+
+export function summariseAgent(info: AgentInfo): SummaryRow[] {
+  const rows: SummaryRow[] = [
+    {
+      id: "browser",
+      value: `${info.browser}${info.browserVersion ? ` ${info.browserVersion}` : ""}`,
+    },
+    {
+      id: "engine",
+      value: `${info.engine}${info.engineVersion ? ` ${info.engineVersion}` : ""}`,
+    },
+    {
+      id: "system",
+      value: `${info.os}${info.osVersion ? ` ${info.osVersion}` : ""}`,
+    },
+    { id: "device", value: info.device },
   ];
-  if (info.browserVersion) rows.push(`major version: ${firstNumber(info.browserVersion)}`);
+  if (info.browserVersion)
+    rows.push({ id: "majorVersion", value: firstNumber(info.browserVersion) });
   return rows;
 }

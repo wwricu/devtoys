@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { CopyButton, Panel, ToolButton, editorClass } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { parseUrl, type UrlParts } from "./format";
+import { strings } from "./locale";
 
 function Row({ label, value }: { label: string; value: string }) {
   if (value === "") return null;
@@ -11,31 +13,38 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="w-24 shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
         {label}
       </span>
-      <span className="min-w-0 flex-1 break-all font-mono text-xs">{value}</span>
+      <span className="min-w-0 flex-1 break-all font-mono text-xs">
+        {value}
+      </span>
       <CopyButton getText={() => value} />
     </div>
   );
 }
 
-const EXAMPLE = "https://user:pass@example.com:8443/a/b/c.txt?q=hello%20world&tag=x&tag=y&empty#sec%203";
+const EXAMPLE =
+  "https://user:pass@example.com:8443/a/b/c.txt?q=hello%20world&tag=x&tag=y&empty#sec%203";
 
 export default function UrlParser() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [input, setInput] = useState("");
   const result = useMemo(() => parseUrl(input), [input]);
   const parts: UrlParts | null = result.parts;
 
-  const queryText = parts ? parts.params.map((p) => `${p.key}=${p.value}`).join("&") : "";
+  const queryText = parts
+    ? parts.params.map((p) => `${p.key}=${p.value}`).join("&")
+    : "";
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <Panel
-        title="URL"
+        title={L.url}
         actions={
           <>
-            <ToolButton onClick={() => setInput(EXAMPLE)} title="Load an example">
-              Example
+            <ToolButton onClick={() => setInput(EXAMPLE)} title={L.exampleHint}>
+              {L.example}
             </ToolButton>
-            <ToolButton onClick={() => setInput("")}>Clear</ToolButton>
+            <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
             <CopyButton getText={() => input} />
           </>
         }
@@ -43,7 +52,7 @@ export default function UrlParser() {
         <textarea
           className={editorClass + " min-h-16 flex-none"}
           spellCheck={false}
-          placeholder="Paste a URL, with or without the scheme…"
+          placeholder={L.pasteHint}
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
@@ -56,36 +65,38 @@ export default function UrlParser() {
       )}
 
       {parts?.inferredScheme && (
-        <p className="text-xs text-neutral-400">
-          No scheme found: parsed as if it started with https://
-        </p>
+        <p className="text-xs text-neutral-400">{L.inferredNote}</p>
       )}
 
       {parts && (
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-2">
-          <Panel title="Components">
+          <Panel title={L.components}>
             <div className="min-h-0 flex-1 overflow-y-auto px-2">
-              <Row label="Protocol" value={parts.protocol} />
-              <Row label="Username" value={parts.username} />
-              <Row label="Password" value={parts.password} />
-              <Row label="Host" value={parts.host} />
-              <Row label="Hostname" value={parts.hostname} />
-              <Row label="Port" value={parts.port} />
-              <Row label="Path" value={parts.path} />
-              <Row label="Query" value={parts.search} />
-              <Row label="Fragment" value={parts.hash} />
-              <Row label="Origin" value={parts.origin} />
-              <Row label="Segments" value={parts.segments.join(" / ")} />
+              <Row label={L.protocol} value={parts.protocol} />
+              <Row label={L.username} value={parts.username} />
+              <Row label={L.password} value={parts.password} />
+              <Row label={L.host} value={parts.host} />
+              <Row label={L.hostname} value={parts.hostname} />
+              <Row label={L.port} value={parts.port} />
+              <Row label={L.path} value={parts.path} />
+              <Row label={L.query} value={parts.search} />
+              <Row label={L.fragment} value={parts.hash} />
+              <Row label={L.origin} value={parts.origin} />
+              <Row label={L.segments} value={parts.segments.join(" / ")} />
             </div>
           </Panel>
 
           <Panel
-            title={`Query parameters (${parts.params.length})`}
-            actions={parts.params.length > 0 ? <CopyButton getText={() => queryText} /> : undefined}
+            title={fill(L.queryParams, { count: parts.params.length })}
+            actions={
+              parts.params.length > 0 ? (
+                <CopyButton getText={() => queryText} />
+              ) : undefined
+            }
           >
             <div className="min-h-0 flex-1 overflow-y-auto px-2">
               {parts.params.length === 0 && (
-                <p className="py-2 text-xs text-neutral-400">No query parameters.</p>
+                <p className="py-2 text-xs text-neutral-400">{L.noParams}</p>
               )}
               {parts.params.map((p, i) => (
                 <div
@@ -96,7 +107,11 @@ export default function UrlParser() {
                     {p.key}
                   </span>
                   <span className="min-w-0 flex-1 break-all font-mono text-xs">
-                    {p.value === "" ? <span className="text-neutral-400">(empty)</span> : p.value}
+                    {p.value === "" ? (
+                      <span className="text-neutral-400">{L.emptyValue}</span>
+                    ) : (
+                      p.value
+                    )}
                   </span>
                   <CopyButton getText={() => p.value} />
                 </div>

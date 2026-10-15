@@ -57,7 +57,11 @@ export function parseUrl(text: string): UrlParseResult {
     for (const pair of query.split("&")) {
       const eq = pair.indexOf("=");
       if (eq === -1) params.push({ key: decode(pair), value: "" });
-      else params.push({ key: decode(pair.slice(0, eq)), value: decode(pair.slice(eq + 1)) });
+      else
+        params.push({
+          key: decode(pair.slice(0, eq)),
+          value: decode(pair.slice(eq + 1)),
+        });
     }
 
   const segments = u.pathname.split("/").filter((s) => s !== "");

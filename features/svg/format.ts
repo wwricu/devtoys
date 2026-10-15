@@ -30,11 +30,22 @@ const DROPPED_TAGS = new Set([
   "set",
 ]);
 
-const URL_ATTRS = new Set(["href", "xlink:href", "src", "action", "from", "to", "values"]);
+const URL_ATTRS = new Set([
+  "href",
+  "xlink:href",
+  "src",
+  "action",
+  "from",
+  "to",
+  "values",
+]);
 
 function isSafeUrl(value: string): boolean {
   const u = value.trim().toLowerCase();
-  return !/^(javascript|data|vbscript|file|http|https|ftp):/.test(u) || u.startsWith("#");
+  return (
+    !/^(javascript|data|vbscript|file|http|https|ftp):/.test(u) ||
+    u.startsWith("#")
+  );
 }
 
 function localName(name: string): string {
@@ -43,7 +54,13 @@ function localName(name: string): string {
 }
 
 export function readSvg(text: string): SvgRead {
-  const empty: SvgRead = { markup: "", error: null, width: 0, height: 0, removed: 0 };
+  const empty: SvgRead = {
+    markup: "",
+    error: null,
+    width: 0,
+    height: 0,
+    removed: 0,
+  };
   if (text.trim() === "") return empty;
   if (typeof DOMParser === "undefined") return empty;
 
@@ -54,10 +71,17 @@ export function readSvg(text: string): SvgRead {
     return { ...empty, error: "Could not parse the SVG document" };
   }
   const failed = doc.querySelector("parsererror");
-  if (failed) return { ...empty, error: "Not well-formed XML: " + failed.textContent?.slice(0, 120) };
+  if (failed)
+    return {
+      ...empty,
+      error: "Not well-formed XML: " + failed.textContent?.slice(0, 120),
+    };
   const root = doc.documentElement;
   if (localName(root.tagName) !== "svg")
-    return { ...empty, error: `Expected an <svg> root element, found <${localName(root.tagName)}>` };
+    return {
+      ...empty,
+      error: `Expected an <svg> root element, found <${localName(root.tagName)}>`,
+    };
 
   let removed = 0;
   const walk = (el: Element) => {
@@ -81,7 +105,10 @@ export function readSvg(text: string): SvgRead {
     }
   };
   for (const attr of Array.from(root.attributes)) {
-    if (localName(attr.name.toLowerCase()) === "onload" || attr.name.toLowerCase().startsWith("on")) {
+    if (
+      localName(attr.name.toLowerCase()) === "onload" ||
+      attr.name.toLowerCase().startsWith("on")
+    ) {
       removed++;
       root.removeAttribute(attr.name);
     }
@@ -93,7 +120,9 @@ export function readSvg(text: string): SvgRead {
   root.setAttribute("width", String(size.width));
   root.setAttribute("height", String(size.height));
   const markup =
-    typeof XMLSerializer === "undefined" ? root.outerHTML : new XMLSerializer().serializeToString(root);
+    typeof XMLSerializer === "undefined"
+      ? root.outerHTML
+      : new XMLSerializer().serializeToString(root);
   return { markup, error: null, ...size, removed };
 }
 
@@ -106,15 +135,23 @@ function readSize(root: Element): { width: number; height: number } {
     const n = Number.parseFloat(value);
     return Number.isFinite(n) && n > 0 ? n : 0;
   };
-  const width = num(root.getAttribute("width")) || (view ? Number(view[3]) : 0) || 300;
-  const height = num(root.getAttribute("height")) || (view ? Number(view[4]) : 0) || 150;
+  const width =
+    num(root.getAttribute("width")) || (view ? Number(view[3]) : 0) || 300;
+  const height =
+    num(root.getAttribute("height")) || (view ? Number(view[4]) : 0) || 150;
   return { width, height };
 }
 
 /** Rasterise the sanitized markup through an image element and a canvas. */
-export function svgToPng(markup: string, width: number, height: number): Promise<Blob> {
+export function svgToPng(
+  markup: string,
+  width: number,
+  height: number,
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(new Blob([markup], { type: "image/svg+xml;charset=utf-8" }));
+    const url = URL.createObjectURL(
+      new Blob([markup], { type: "image/svg+xml;charset=utf-8" }),
+    );
     const image = new Image();
     const release = () => URL.revokeObjectURL(url);
     image.onerror = () => {

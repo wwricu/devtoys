@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Panel, StatusLine, ToolButton, editorClass } from "@/components/kit";
+import { fill, useText } from "@/lib/i18n";
 import { parseUserAgent, summariseAgent } from "./format";
+import { strings } from "./locale";
 
 const SAMPLES: { label: string; ua: string }[] = [
   {
@@ -29,6 +31,7 @@ const SAMPLES: { label: string; ua: string }[] = [
 ];
 
 export default function UserAgentTool() {
+  const L = useText(strings);
   const [ua, setUa] = useState(SAMPLES[0].ua);
 
   const info = useMemo(() => parseUserAgent(ua), [ua]);
@@ -40,7 +43,7 @@ export default function UserAgentTool() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <ToolButton onClick={() => setUa(navigator.userAgent)}>
-          Use this browser
+          {L.useThisBrowser}
         </ToolButton>
         {SAMPLES.map(({ label, ua: sample }) => (
           <ToolButton key={label} onClick={() => setUa(sample)} title={sample}>
@@ -50,41 +53,47 @@ export default function UserAgentTool() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
-        <Panel title="User-Agent string">
+        <Panel title={L.userAgentString}>
           <textarea
             className={editorClass}
             spellCheck={false}
-            placeholder="Paste a User-Agent string…"
+            placeholder={L.pasteHint}
             value={ua}
             onChange={(e) => setUa(e.target.value)}
           />
         </Panel>
-        <Panel title="Parsed">
+        <Panel title={L.parsed}>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3">
             {ua.trim() === "" ? (
-              <p className="text-xs text-neutral-400">Paste a string to inspect it.</p>
+              <p className="text-xs text-neutral-400">{L.pasteInspect}</p>
             ) : (
               <>
                 {rows.map((row) => (
-                  <p key={row} className="font-mono text-xs text-neutral-700 dark:text-neutral-200">
-                    {row}
+                  <p
+                    key={row.id}
+                    className="font-mono text-xs text-neutral-700 dark:text-neutral-200"
+                  >
+                    {L[row.id]}:{" "}
+                    {row.id === "device" ? L[row.value] : row.value}
                   </p>
                 ))}
                 <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                  <dt className="text-neutral-500">Browser</dt>
+                  <dt className="text-neutral-500">{L.browser}</dt>
                   <dd className="font-mono text-neutral-800 dark:text-neutral-100">
                     {info.browser} {info.browserVersion}
                   </dd>
-                  <dt className="text-neutral-500">Engine</dt>
+                  <dt className="text-neutral-500">{L.engine}</dt>
                   <dd className="font-mono text-neutral-800 dark:text-neutral-100">
                     {info.engine} {info.engineVersion}
                   </dd>
-                  <dt className="text-neutral-500">System</dt>
+                  <dt className="text-neutral-500">{L.system}</dt>
                   <dd className="font-mono text-neutral-800 dark:text-neutral-100">
                     {info.os} {info.osVersion}
                   </dd>
-                  <dt className="text-neutral-500">Device</dt>
-                  <dd className="font-mono text-neutral-800 dark:text-neutral-100">{info.device}</dd>
+                  <dt className="text-neutral-500">{L.device}</dt>
+                  <dd className="font-mono text-neutral-800 dark:text-neutral-100">
+                    {L[info.device]}
+                  </dd>
                 </dl>
               </>
             )}
@@ -93,8 +102,12 @@ export default function UserAgentTool() {
       </div>
 
       <StatusLine
-        error={ua.trim() !== "" && !known ? { message: "Unrecognised User-Agent pattern", line: 1, column: 1 } : null}
-        info={known ? `${ua.length} chars parsed locally` : ""}
+        error={
+          ua.trim() !== "" && !known
+            ? { message: "Unrecognised User-Agent pattern", line: 1, column: 1 }
+            : null
+        }
+        info={known ? fill(L.countInfo, { count: ua.length }) : ""}
       />
     </div>
   );

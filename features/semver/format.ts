@@ -53,21 +53,35 @@ export function compareVersions(left: string, right: string): number | null {
   return a.prerelease.length < b.prerelease.length ? -1 : 1;
 }
 
-export function describeVersion(text: string): string[] {
-  const v = parseVersion(text);
-  if (!v) return [];
-  const rows = [
-    `major ${v.major}`,
-    `minor ${v.minor}`,
-    `patch ${v.patch}`,
-    v.prerelease.length ? `prerelease ${v.prerelease.join(".")}` : "prerelease -",
-    v.build.length ? `build ${v.build.join(".")}` : "build -",
-  ];
-  return rows;
+export type SemverField = "major" | "minor" | "patch" | "prerelease" | "build";
+
+export interface SemverRow {
+  /** Field id keyed by the UI dictionary */
+  id: SemverField;
+  /** Emitted value, kept exactly as parsed (a dash when absent) */
+  value: string;
 }
 
+export function describeVersion(text: string): SemverRow[] {
+  const v = parseVersion(text);
+  if (!v) return [];
+  return [
+    { id: "major", value: String(v.major) },
+    { id: "minor", value: String(v.minor) },
+    { id: "patch", value: String(v.patch) },
+    {
+      id: "prerelease",
+      value: v.prerelease.length ? v.prerelease.join(".") : "-",
+    },
+    { id: "build", value: v.build.length ? v.build.join(".") : "-" },
+  ];
+}
+
+export type BumpId =
+  "same" | "downgrade" | "major" | "minor" | "patch" | "promote" | "prerelease";
+
 /** Which bump a change represents, comparing two versions. */
-export function bumpBetween(left: string, right: string): string | null {
+export function bumpBetween(left: string, right: string): BumpId | null {
   const a = parseVersion(left);
   const b = parseVersion(right);
   if (!a || !b) return null;
@@ -77,7 +91,7 @@ export function bumpBetween(left: string, right: string): string | null {
   if (b.major > a.major) return "major";
   if (b.minor > a.minor) return "minor";
   if (b.patch > a.patch) return "patch";
-  if (a.prerelease.length && !b.prerelease.length) return "promote (release)";
+  if (a.prerelease.length && !b.prerelease.length) return "promote";
   if (a.prerelease.length && b.prerelease.length) return "prerelease";
   return "patch";
 }

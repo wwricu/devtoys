@@ -30,7 +30,9 @@ export function build(
 ): ChmodResult {
   const special = (setuid ? 4 : 0) + (setgid ? 2 : 0) + (sticky ? 1 : 0);
   const triples = [owner, group, other].map(bits);
-  const glyphs = triples.map((t) => t.map((on, j) => (on ? LETTERS[j] : "-")).join(""));
+  const glyphs = triples.map((t) =>
+    t.map((on, j) => (on ? LETTERS[j] : "-")).join(""),
+  );
   if (setuid) glyphs[0] = glyphs[0].slice(0, 2) + (owner & 1 ? "s" : "S");
   if (setgid) glyphs[1] = glyphs[1].slice(0, 2) + (group & 1 ? "s" : "S");
   if (sticky) glyphs[2] = glyphs[2].slice(0, 2) + (other & 1 ? "t" : "T");
@@ -67,7 +69,14 @@ export function fromOctal(text: string): ChmodResult | null {
   if (!/^[0-7]{3,4}$/.test(raw)) return null;
   const digits = [...raw].map(Number);
   const [s, o, g, p] = digits.length === 4 ? digits : [0, ...digits];
-  return build(o, g, p, (s & 4) !== 0, (s & 2) !== 0, s === 1 || s === 3 || s === 5 || s === 7);
+  return build(
+    o,
+    g,
+    p,
+    (s & 4) !== 0,
+    (s & 2) !== 0,
+    s === 1 || s === 3 || s === 5 || s === 7,
+  );
 }
 
 /** Handles "rwxr-xr-x", octal text, and chmod expressions like "u=rw,g=r,o-x". */
@@ -80,7 +89,9 @@ export function fromSymbolic(text: string): ChmodResult | null {
   if (ls) {
     const chars = ls[1];
     const value = (t: string) =>
-      (t[0] === "r" ? 4 : 0) + (t[1] === "w" ? 2 : 0) + (/[xtsS]/.test(t[2]) ? 1 : 0);
+      (t[0] === "r" ? 4 : 0) +
+      (t[1] === "w" ? 2 : 0) +
+      (/[xtsS]/.test(t[2]) ? 1 : 0);
     return build(
       value(chars.slice(0, 3)),
       value(chars.slice(3, 6)),
@@ -130,11 +141,24 @@ export function fromSymbolic(text: string): ChmodResult | null {
   return build(owner, group, other, setuid, setgid, sticky);
 }
 
-export const PRESETS: { label: string; octal: string }[] = [
-  { label: "755 - executable / folder", octal: "755" },
-  { label: "644 - text file", octal: "644" },
-  { label: "600 - private key", octal: "600" },
-  { label: "700 - private folder", octal: "700" },
-  { label: "777 - world writable", octal: "777" },
-  { label: "4755 - setuid binary", octal: "4755" },
+/** Preset description ids keyed by the UI dictionary. */
+export type ChmodPresetId =
+  | "executable"
+  | "textFile"
+  | "privateKey"
+  | "privateFolder"
+  | "worldWritable"
+  | "setuidBinary";
+
+/**
+ * Preset modes. `octal` is the emitted value, `id` keys the translated
+ * description in the UI dictionary so the engine stays free of display text.
+ */
+export const PRESETS: { id: ChmodPresetId; octal: string }[] = [
+  { id: "executable", octal: "755" },
+  { id: "textFile", octal: "644" },
+  { id: "privateKey", octal: "600" },
+  { id: "privateFolder", octal: "700" },
+  { id: "worldWritable", octal: "777" },
+  { id: "setuidBinary", octal: "4755" },
 ];
