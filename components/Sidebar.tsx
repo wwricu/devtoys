@@ -110,11 +110,8 @@ export default function Sidebar() {
       <aside className="hidden w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 md:flex">
         <Link
           href="/"
-          className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-800 hover:text-neutral-950 dark:text-neutral-200 dark:hover:text-white"
+          className="px-4 py-3 text-sm font-semibold text-neutral-800 hover:text-neutral-950 dark:text-neutral-200 dark:hover:text-white"
         >
-          <span className="inline-block size-5 rounded bg-neutral-800 text-center text-[11px] leading-5 text-white dark:bg-neutral-200 dark:text-neutral-900">
-            D
-          </span>
           {t.siteName}
         </Link>
         <div className="px-3 pb-2">
@@ -147,7 +144,7 @@ export default function Sidebar() {
                   </button>
                   <Link
                     href={`/${categorySlug(c.name)}`}
-                    className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-700 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
+                    className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-700 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
                   >
                     <span className="flex-1 truncate">
                       {categoryName(c.name)}
