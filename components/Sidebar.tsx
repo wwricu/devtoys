@@ -177,12 +177,12 @@ export default function Sidebar() {
                 {open && (
                   <ul className="space-y-0.5">
                     {c.tools.map((tool) => {
-                      const active =
-                        pathname === `/${categorySlug(c.name)}/${tool.id}`;
+                      const toolCat = categorySlug(tool.category);
+                      const active = pathname === `/${toolCat}/${tool.id}`;
                       return (
                         <li key={tool.id}>
                           <Link
-                            href={`/${categorySlug(c.name)}/${tool.id}`}
+                            href={`/${toolCat}/${tool.id}`}
                             className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
                               active
                                 ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"

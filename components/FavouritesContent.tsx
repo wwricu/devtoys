@@ -40,7 +40,7 @@ export default function FavouritesContent() {
     return (
       <div className="mx-auto w-full max-w-3xl">
         <div className="flex items-center justify-between pb-2">
-          <h1 className="text-lg font-semibold">Favourites</h1>
+          <h1 className="text-lg font-semibold">{t.favouritesTitle}</h1>
           <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="button"
@@ -64,7 +64,7 @@ export default function FavouritesContent() {
           </div>
         </div>
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          Star tools from their header to see them here.
+          {t.favouritesEmpty}
         </p>
       </div>
     );
@@ -74,7 +74,7 @@ export default function FavouritesContent() {
     <div className="w-full">
       <div className="mx-auto w-full max-w-3xl">
         <div className="flex items-center justify-between pb-2">
-          <h1 className="text-lg font-semibold">Favourites</h1>
+          <h1 className="text-lg font-semibold">{t.favouritesTitle}</h1>
           <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="button"
