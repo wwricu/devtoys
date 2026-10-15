@@ -2,14 +2,12 @@
 
 import { Segmented, useStoredState } from "@/components/kit";
 import { SimpleTransform } from "@/components/transform";
+import { useText } from "@/lib/i18n";
 import { defaultTsOptions, jsonToTypeScript } from "./format";
-
-const yesNo: { value: string; label: string }[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
-];
+import { strings } from "./locale";
 
 export default function TsTypesTool() {
+  const L = useText(strings);
   const [exportTypes, setExportTypes] = useStoredState<string>(
     "tstypes.export",
     "yes",
@@ -27,6 +25,11 @@ export default function TsTypesTool() {
     "no",
   );
 
+  const yesNo: { value: string; label: string }[] = [
+    { value: "yes", label: L.yes },
+    { value: "no", label: L.no },
+  ];
+
   return (
     <SimpleTransform
       controls={
@@ -35,7 +38,7 @@ export default function TsTypesTool() {
             export
           </span>
           <Segmented
-            ariaLabel="Export declarations"
+            ariaLabel={L.exportAria}
             value={exportTypes}
             options={yesNo}
             onChange={setExportTypes}
@@ -44,7 +47,7 @@ export default function TsTypesTool() {
             Array&lt;T&gt;
           </span>
           <Segmented
-            ariaLabel="Array syntax"
+            ariaLabel={L.arrayAria}
             value={arraySyntax}
             options={yesNo}
             onChange={setArraySyntax}
@@ -53,7 +56,7 @@ export default function TsTypesTool() {
             readonly
           </span>
           <Segmented
-            ariaLabel="Readonly members"
+            ariaLabel={L.readonlyAria}
             value={readonly}
             options={yesNo}
             onChange={setReadonly}
@@ -62,7 +65,7 @@ export default function TsTypesTool() {
             unknown as any
           </span>
           <Segmented
-            ariaLabel="Unknown type"
+            ariaLabel={L.unknownAria}
             value={unknownAsAny}
             options={yesNo}
             onChange={setUnknownAsAny}
@@ -78,10 +81,10 @@ export default function TsTypesTool() {
           readonly: readonly === "yes",
           unknownAsAny: unknownAsAny === "yes",
         });
-        return { output, error, note: error ? undefined : "interfaces" };
+        return { output, error, note: error ? undefined : L.note };
       }}
       inputPlaceholder='{\n  "id": 1,\n  "tags": ["a", "b"]\n}'
-      outputPlaceholder="TypeScript declarations"
+      outputPlaceholder={L.outputHint}
     />
   );
 }

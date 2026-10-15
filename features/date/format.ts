@@ -19,8 +19,7 @@ export function timestampToMs(raw: string, unit: TimeUnit): TimestampResult {
   if (unit !== "auto") {
     resolved = unit;
   } else {
-    resolved =
-      abs < 1e11 ? "s" : abs < 1e14 ? "ms" : abs < 1e17 ? "us" : "ns";
+    resolved = abs < 1e11 ? "s" : abs < 1e14 ? "ms" : abs < 1e17 ? "us" : "ns";
   }
   let ms: number;
   switch (resolved) {
@@ -47,33 +46,41 @@ export function timestampToMs(raw: string, unit: TimeUnit): TimestampResult {
 
 const pad = (n: number, w = 2) => String(n).padStart(w, "0");
 
+/** Day of week as a numeric index; the component maps it through the locale. */
 export interface DateFields {
   isoUtc: string;
   isoLocal: string;
   utc: string;
   local: string;
-  weekday: string;
+  weekday: number;
   timezone: string;
   offset: string;
   unixSeconds: string;
   unixMillis: string;
   unixMicros: string;
   unixNanos: string;
-  relative: string;
+  relative: RelativeParts;
   calendar: string;
   ymd: string;
   hms: string;
 }
 
-const WEEKDAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+export type RelativeUnit =
+  | "millisecond"
+  | "second"
+  | "minute"
+  | "hour"
+  | "day"
+  | "week"
+  | "month"
+  | "year";
+
+/** Structured relative time; the sentence is composed in the component. */
+export interface RelativeParts {
+  count: number;
+  unit: RelativeUnit;
+  past: boolean;
+}
 
 function offsetString(date: Date): string {
   const off = -date.getTimezoneOffset();
@@ -82,11 +89,11 @@ function offsetString(date: Date): string {
   return `UTC${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 }
 
-export function relativeTime(ms: number, now = Date.now()): string {
+export function relativeTime(ms: number, now = Date.now()): RelativeParts {
   const diff = ms - now;
   const past = diff < 0;
   const a = Math.abs(diff);
-  const units: [number, string][] = [
+  const units: [number, RelativeUnit][] = [
     [1000, "millisecond"],
     [1000, "second"],
     [60, "minute"],
@@ -98,10 +105,10 @@ export function relativeTime(ms: number, now = Date.now()): string {
   ];
   // threshold in ms for each unit size
   const sizes = [
-    1, 1000, 60_000, 3_600_000, 86_400_000, 604_800_000,
-    2_629_800_000, 31_557_600_000,
+    1, 1000, 60_000, 3_600_000, 86_400_000, 604_800_000, 2_629_800_000,
+    31_557_600_000,
   ];
-  let chosen = "millisecond";
+  let chosen: RelativeUnit = "millisecond";
   let count = a;
   for (let i = sizes.length - 1; i >= 0; i--) {
     if (a >= sizes[i]) {
@@ -110,9 +117,7 @@ export function relativeTime(ms: number, now = Date.now()): string {
       break;
     }
   }
-  const rounded = Math.floor(count);
-  const label = `${rounded} ${chosen}${rounded === 1 ? "" : "s"}`;
-  return past ? `${label} ago` : `in ${label}`;
+  return { count: Math.floor(count), unit: chosen, past };
 }
 
 export function formatDate(ms: number): DateFields {
@@ -120,17 +125,17 @@ export function formatDate(ms: number): DateFields {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
   const ymd = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const hms = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(
-    d.getSeconds()
+    d.getSeconds(),
   )}`;
   const calendar = `${ymd} ${hms}`;
   return {
     isoUtc: d.toISOString(),
     isoLocal: `${ymd}T${hms}.${pad(d.getMilliseconds(), 3)}${offsetString(
-      d
+      d,
     ).slice(3)}`,
     utc: d.toUTCString(),
     local: d.toLocaleString(),
-    weekday: WEEKDAYS[d.getDay()],
+    weekday: d.getDay(),
     timezone: tz,
     offset: offsetString(d),
     unixSeconds: String(Math.floor(ms / 1000)),

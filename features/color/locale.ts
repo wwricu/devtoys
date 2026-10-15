@@ -1,0 +1,28 @@
+export const strings = {
+  en: {
+    pickColor: "Pick a color",
+    unrecognized: "Unrecognized color",
+    formats: "Formats",
+    contrast: "Contrast",
+    shades: "Shades and tints",
+    onWhite: "On white",
+    onBlack: "On black",
+    gradeAaa: "AAA",
+    gradeAa: "AA",
+    gradeAaLarge: "AA large",
+    gradeFail: "fail",
+  },
+  zh: {
+    pickColor: "选择颜色",
+    unrecognized: "无法识别的颜色",
+    formats: "格式",
+    contrast: "对比度",
+    shades: "明暗色阶",
+    onWhite: "白底效果",
+    onBlack: "黑底效果",
+    gradeAaa: "AAA",
+    gradeAa: "AA",
+    gradeAaLarge: "AA（大字）",
+    gradeFail: "不达标",
+  },
+};

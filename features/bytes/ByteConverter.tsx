@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { BYTE_UNITS, convertBytes } from "./format";
+import { strings } from "./locale";
 
 const inputClass =
   "w-40 rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
 export default function ByteConverter() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [value, setValue] = useState("1");
   const [unit, setUnit] = useState("MB");
 
@@ -38,7 +41,11 @@ export default function ByteConverter() {
           ))}
         </select>
         <span className="text-xs text-neutral-500">
-          = {result ? result.bytes.toLocaleString("en-US") : "—"} bytes
+          {result
+            ? fill(L.bytesTotal, {
+                bytes: result.bytes.toLocaleString("en-US"),
+              })
+            : "= —"}
         </span>
       </div>
 
@@ -54,7 +61,7 @@ export default function ByteConverter() {
             <button
               type="button"
               className="min-w-0 flex-1 truncate rounded px-1 text-right font-mono text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              title="Click to copy"
+              title={t.copyHint}
               onClick={() => navigator.clipboard?.writeText(r.value)}
             >
               {r.value}

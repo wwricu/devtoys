@@ -2,22 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Segmented, ToolButton, useStoredState } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import {
   formatDate,
   parseDateString,
   timestampToMs,
+  type RelativeUnit,
+  type RelativeParts,
   type TimeUnit,
 } from "./format";
-
-const unitOptions: { value: TimeUnit; label: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "s", label: "Seconds" },
-  { value: "ms", label: "Millis" },
-  { value: "us", label: "Micros" },
-  { value: "ns", label: "Nanos" },
-];
+import { strings } from "./locale";
 
 function Field({ label, value }: { label: string; value: string }) {
+  const { t } = useLang();
   const [copied, setCopied] = useState(false);
   const copy = useCallback(async () => {
     try {
@@ -36,10 +33,10 @@ function Field({ label, value }: { label: string; value: string }) {
       <button
         type="button"
         onClick={copy}
-        title="Click to copy"
+        title={t.copyHint}
         className="min-w-0 flex-1 truncate rounded px-1 text-right font-mono text-xs text-neutral-800 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
       >
-        {copied ? "Copied" : value || "—"}
+        {copied ? t.copied : value || "—"}
       </button>
     </div>
   );
@@ -68,10 +65,46 @@ const inputClass =
   "w-full rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
 export default function DateConverter() {
+  const L = useText(strings);
   const [unit, setUnit] = useStoredState<TimeUnit>("date.unit", "auto");
   const [tsInput, setTsInput] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [now, setNow] = useState(() => Date.now());
+
+  const unitOptions: { value: TimeUnit; label: string }[] = [
+    { value: "auto", label: L.auto },
+    { value: "s", label: L.seconds },
+    { value: "ms", label: L.millis },
+    { value: "us", label: L.micros },
+    { value: "ns", label: L.nanos },
+  ];
+
+  const dayNames = [
+    L.daySunday,
+    L.dayMonday,
+    L.dayTuesday,
+    L.dayWednesday,
+    L.dayThursday,
+    L.dayFriday,
+    L.daySaturday,
+  ];
+
+  const unitWords: Record<RelativeUnit, [string, string]> = {
+    millisecond: [L.unitMillisecond, L.unitMillisecondPlural],
+    second: [L.unitSecond, L.unitSecondPlural],
+    minute: [L.unitMinute, L.unitMinutePlural],
+    hour: [L.unitHour, L.unitHourPlural],
+    day: [L.unitDay, L.unitDayPlural],
+    week: [L.unitWeek, L.unitWeekPlural],
+    month: [L.unitMonth, L.unitMonthPlural],
+    year: [L.unitYear, L.unitYearPlural],
+  };
+
+  const relativeText = (r: RelativeParts) => {
+    const [one, many] = unitWords[r.unit];
+    const word = r.count === 1 ? one : many;
+    return fill(r.past ? L.ago : L.later, { count: r.count, unit: word });
+  };
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -93,7 +126,7 @@ export default function DateConverter() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
       <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-        <span>Current:</span>
+        <span>{L.current}</span>
         <span className="font-mono text-neutral-700 dark:text-neutral-200">
           {new Date(now).toISOString()}
         </span>
@@ -101,22 +134,22 @@ export default function DateConverter() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card title="Timestamp → Date">
+        <Card title={L.tsToCard}>
           <div className="flex flex-wrap items-center gap-2">
             <input
               className={inputClass}
-              placeholder="e.g. 1700000000"
+              placeholder={L.tsHint}
               value={tsInput}
               onChange={(e) => setTsInput(e.target.value)}
             />
-            <ToolButton onClick={useNowTs} title="Use current time">
-              Now
+            <ToolButton onClick={useNowTs} title={L.nowHint}>
+              {L.now}
             </ToolButton>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-neutral-500">Unit</span>
+            <span className="text-xs text-neutral-500">{L.unit}</span>
             <Segmented
-              ariaLabel="Timestamp unit"
+              ariaLabel={L.unitAria}
               value={unit}
               options={unitOptions}
               onChange={setUnit}
@@ -131,44 +164,53 @@ export default function DateConverter() {
             <div className="flex flex-col">
               <Field label="ISO 8601 (UTC)" value={tsFields.isoUtc} />
               <Field label="UTC" value={tsFields.utc} />
-              <Field label="Local" value={tsFields.local} />
-              <Field label="Weekday" value={tsFields.weekday} />
-              <Field label="Relative" value={tsFields.relative} />
+              <Field label={L.local} value={tsFields.local} />
+              <Field label={L.weekday} value={dayNames[tsFields.weekday]} />
               <Field
-                label="Detected unit"
+                label={L.relative}
+                value={relativeText(tsFields.relative)}
+              />
+              <Field
+                label={L.detectedUnit}
                 value={String(tsResult.detectedUnit)}
               />
-              <Field label="Timezone" value={`${tsFields.timezone} (${tsFields.offset})`} />
+              <Field
+                label={L.timezone}
+                value={`${tsFields.timezone} (${tsFields.offset})`}
+              />
             </div>
           )}
         </Card>
 
-        <Card title="Date → Timestamp">
+        <Card title={L.dateToCard}>
           <div className="flex flex-wrap items-center gap-2">
             <input
               className={inputClass}
-              placeholder="e.g. 2026-10-15 08:30:00 or ISO"
+              placeholder={L.dateHint}
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
             />
-            <ToolButton onClick={useNowDate} title="Use current time">
-              Now
+            <ToolButton onClick={useNowDate} title={L.nowHint}>
+              {L.now}
             </ToolButton>
           </div>
           {dateInvalid && (
             <p className="text-xs text-red-600 dark:text-red-400">
-              Unrecognized date format
+              {L.unrecognizedDate}
             </p>
           )}
           {dateFields && (
             <div className="flex flex-col">
               <Field label="ISO 8601 (UTC)" value={dateFields.isoUtc} />
-              <Field label="Unix (seconds)" value={dateFields.unixSeconds} />
-              <Field label="Unix (millis)" value={dateFields.unixMillis} />
-              <Field label="Unix (micros)" value={dateFields.unixMicros} />
-              <Field label="Unix (nanos)" value={dateFields.unixNanos} />
-              <Field label="Local" value={dateFields.local} />
-              <Field label="Relative" value={dateFields.relative} />
+              <Field label={L.unixSeconds} value={dateFields.unixSeconds} />
+              <Field label={L.unixMillis} value={dateFields.unixMillis} />
+              <Field label={L.unixMicros} value={dateFields.unixMicros} />
+              <Field label={L.unixNanos} value={dateFields.unixNanos} />
+              <Field label={L.local} value={dateFields.local} />
+              <Field
+                label={L.relative}
+                value={relativeText(dateFields.relative)}
+              />
             </div>
           )}
         </Card>
