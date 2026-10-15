@@ -16,11 +16,47 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dev Toys - Online Developer Tools",
-    template: "%s - Dev Toys",
+    default: "Dev Toys - Free Online Developer Tools",
+    template: "%s | Dev Toys",
   },
   description:
-    "Free online developer tools: JSON formatter, XML formatter and more. Runs entirely in the browser, no data is uploaded.",
+    "Free online developer tools: JSON formatter, XML formatter, Base64 encoder, QR code generator and more. All tools run entirely in your browser — nothing is uploaded.",
+  keywords: [
+    "developer tools",
+    "JSON formatter",
+    "XML formatter",
+    "Base64 encoder",
+    "QR code generator",
+    "online tools",
+    "browser tools",
+    "free tools",
+    "no upload",
+    "privacy",
+  ],
+  authors: [{ name: "Dev Toys" }],
+  creator: "Dev Toys",
+  publisher: "Dev Toys",
+  robots: "index, follow",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    title: "Dev Toys - Free Online Developer Tools",
+    description:
+      "Free online developer tools that run entirely in your browser. No data is uploaded.",
+    siteName: "Dev Toys",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Dev Toys - Free Online Developer Tools",
+    description:
+      "Free online developer tools that run entirely in your browser.",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
