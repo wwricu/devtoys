@@ -8,30 +8,35 @@ import {
   StatusLine,
   ToolButton,
   editorClass,
-  indentOptions,
+  useIndentOptions,
   useStoredState,
   type Indent,
 } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { processJson, type SortKeys } from "./format";
-
-const sortOptions: { value: SortKeys; label: string }[] = [
-  { value: "none", label: "Off" },
-  { value: "asc", label: "A-Z" },
-  { value: "desc", label: "Z-A" },
-];
+import { strings } from "./locale";
 
 export default function JsonFormatter() {
+  const { t } = useLang();
+  const L = useText(strings);
+  const indentOptions = useIndentOptions();
   const [input, setInput] = useState("");
   const [indent, setIndent] = useStoredState<Indent>("json-format.indent", "2");
   const [sortKeys, setSortKeys] = useStoredState<SortKeys>(
     "json-format.sort",
-    "none"
+    "none",
   );
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const sortOptions: { value: SortKeys; label: string }[] = [
+    { value: "none", label: L.sortOff },
+    { value: "asc", label: "A-Z" },
+    { value: "desc", label: "Z-A" },
+  ];
+
   const result = useMemo(
     () => processJson(input, { indent, sortKeys }),
-    [input, indent, sortKeys]
+    [input, indent, sortKeys],
   );
 
   const download = useCallback(() => {
@@ -65,19 +70,19 @@ export default function JsonFormatter() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          Indent
+          {L.indent}
         </span>
         <Segmented
-          ariaLabel="Indentation"
+          ariaLabel={L.indentation}
           value={indent}
           options={indentOptions}
           onChange={setIndent}
         />
         <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-          Sort keys
+          {L.sortKeys}
         </span>
         <Segmented
-          ariaLabel="Sort keys"
+          ariaLabel={L.sortKeys}
           value={sortKeys}
           options={sortOptions}
           onChange={setSortKeys}
@@ -86,20 +91,20 @@ export default function JsonFormatter() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title="Input"
+          title={t.input}
           actions={
             <>
-              <ToolButton onClick={loadFile} title="Load from a local file">
-                Open file
+              <ToolButton onClick={loadFile} title={L.openFileHint}>
+                {L.openFile}
               </ToolButton>
               <ToolButton
                 onClick={() => {
                   setInput("");
                   inputRef.current?.focus();
                 }}
-                title="Clear input"
+                title={L.clearHint}
               >
-                Clear
+                {t.clear}
               </ToolButton>
               <CopyButton getText={() => input} />
             </>
@@ -109,18 +114,18 @@ export default function JsonFormatter() {
             ref={inputRef}
             className={editorClass}
             spellCheck={false}
-            placeholder="Paste JSON here…"
+            placeholder={L.pasteHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
 
         <Panel
-          title="Output"
+          title={t.output}
           actions={
             <>
-              <ToolButton onClick={download} title="Download the output file">
-                Download
+              <ToolButton onClick={download} title={L.downloadHint}>
+                {L.download}
               </ToolButton>
               <CopyButton getText={() => result.output} />
             </>
@@ -130,7 +135,7 @@ export default function JsonFormatter() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder="Formatted result"
+            placeholder={L.formatted}
             value={result.output}
           />
         </Panel>
@@ -140,7 +145,7 @@ export default function JsonFormatter() {
         <div className="max-h-28 shrink-0 overflow-y-auto rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
           {result.errors.map((e, i) => (
             <div key={i}>
-              Line {e.line}, col {e.column}: {e.message}
+              {fill(t.lineCol, { line: e.line, col: e.column })}: {e.message}
             </div>
           ))}
         </div>
@@ -150,9 +155,13 @@ export default function JsonFormatter() {
         error={result.error}
         info={
           result.output
-            ? `Input ${inLines} lines / ${input.length} chars · Output ${result.output.length} chars`
+            ? fill(L.stats, {
+                lines: inLines,
+                chars: input.length,
+                out: result.output.length,
+              })
             : input
-              ? "Valid JSON, no errors"
+              ? L.valid
               : ""
         }
       />

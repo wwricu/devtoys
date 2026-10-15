@@ -5,9 +5,9 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { useStoredState } from "@/components/kit";
 import type { ToolDefinition } from "@/lib/tools";
 
 export type Lang = "en" | "zh";
@@ -26,6 +26,23 @@ const shell = {
       "A collection of everyday developer tools, all running locally in your browser. Nothing is uploaded.",
     english: "EN",
     chinese: "中文",
+    copy: "Copy",
+    copied: "Copied",
+    copyHint: "Copy to clipboard",
+    clear: "Clear",
+    reset: "Reset",
+    input: "Input",
+    output: "Output",
+    result: "Result",
+    ready: "Ready",
+    outputToInput: "Output → Input",
+    outputToInputHint: "Move output back into the input",
+    ioChars: "Input {input} · Output {output} chars",
+    lineCol: "Line {line}, col {col}",
+    indentTab: "Tab",
+    indent2: "2 spaces",
+    indent4: "4 spaces",
+    indentMinify: "Minify",
   },
   zh: {
     siteName: "Dev Toys",
@@ -37,6 +54,23 @@ const shell = {
       "常用开发者工具合集，全部在你自己的浏览器里运行，不会上传任何数据。",
     english: "EN",
     chinese: "中文",
+    copy: "复制",
+    copied: "已复制",
+    copyHint: "复制到剪贴板",
+    clear: "清空",
+    reset: "重置",
+    input: "输入",
+    output: "输出",
+    result: "结果",
+    ready: "就绪",
+    outputToInput: "输出回填输入",
+    outputToInputHint: "把输出内容放回输入框",
+    ioChars: "输入 {input} · 输出 {output} 字符",
+    lineCol: "第 {line} 行，第 {col} 列",
+    indentTab: "制表符",
+    indent2: "2 空格",
+    indent4: "4 空格",
+    indentMinify: "压缩",
   },
 };
 
@@ -284,18 +318,75 @@ const contextDefault = build("en", () => {});
 
 const LangContext = createContext<Value>(contextDefault);
 
+const langKey = "tool:ui.lang";
+
+const langListeners = new Set<() => void>();
+
+function readLang(): Lang {
+  try {
+    return localStorage.getItem(langKey) === '"zh"' ? "zh" : "en";
+  } catch {
+    return "en";
+  }
+}
+
+function writeLang(lang: Lang) {
+  try {
+    localStorage.setItem(langKey, JSON.stringify(lang));
+  } catch {
+    /* silently ignore when storage is unavailable */
+  }
+  langListeners.forEach((notify) => notify());
+}
+
+function subscribeLang(notify: () => void) {
+  langListeners.add(notify);
+  window.addEventListener("storage", notify);
+  return () => {
+    langListeners.delete(notify);
+    window.removeEventListener("storage", notify);
+  };
+}
+
+function serverLang(): Lang {
+  return "en";
+}
+
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useStoredState<Lang>("ui.lang", "en");
+  // Server snapshot is English, so hydration can never mismatch the markup.
+  const lang = useSyncExternalStore(subscribeLang, readLang, serverLang);
 
   useEffect(() => {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
   }, [lang]);
 
-  const value = useMemo(() => build(lang, setLang), [lang, setLang]);
+  const value = useMemo(() => build(lang, writeLang), [lang]);
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }
 
 export function useLang(): Value {
   return useContext(LangContext);
+}
+
+/**
+ * Feature strings live in `features/<tool>/locale.ts`, so each dictionary is
+ * bundled inside that tool's lazy chunk instead of the shared first paint.
+ */
+export function useText<T extends Record<string, string>>(dict: {
+  en: T;
+  zh: T;
+}): T {
+  const { lang } = useLang();
+  return dict[lang];
+}
+
+/** Replace `{name}` placeholders inside a translated template. */
+export function fill(
+  template: string,
+  args: Record<string, string | number>,
+): string {
+  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in args ? String(args[name]) : match,
+  );
 }

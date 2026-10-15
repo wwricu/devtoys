@@ -48,8 +48,8 @@ export function slugStats(
   input: string,
   slug: string,
   separator: string,
-): string {
+): { words: number; parts: number } {
   const words = (input.trim().match(/\S+/g) ?? []).length;
   const parts = slug === "" ? 0 : slug.split(separator).length;
-  return `${words} words in · ${parts} in the slug`;
+  return { words, parts };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fill, useLang } from "@/lib/i18n";
 
 /** Persist tool options (localStorage); each tool uses its own key */
 export function useStoredState<T>(key: string, initial: T) {
@@ -72,12 +73,16 @@ export function Segmented<T extends string>({
   );
 }
 
-export const indentOptions: { value: Indent; label: string }[] = [
-  { value: "tab", label: "Tab" },
-  { value: "2", label: "2 spaces" },
-  { value: "4", label: "4 spaces" },
-  { value: "none", label: "Minify" },
-];
+/** Localized indent choices; the labels follow the UI language */
+export function useIndentOptions(): { value: Indent; label: string }[] {
+  const { t } = useLang();
+  return [
+    { value: "tab", label: t.indentTab },
+    { value: "2", label: t.indent2 },
+    { value: "4", label: t.indent4 },
+    { value: "none", label: t.indentMinify },
+  ];
+}
 
 export function ToolButton({
   onClick,
@@ -101,6 +106,7 @@ export function ToolButton({
 }
 
 export function CopyButton({ getText }: { getText: () => string }) {
+  const { t } = useLang();
   const [copied, setCopied] = useState(false);
   const onCopy = useCallback(async () => {
     const text = getText();
@@ -115,8 +121,8 @@ export function CopyButton({ getText }: { getText: () => string }) {
   }, [getText]);
 
   return (
-    <ToolButton onClick={onCopy} title="Copy to clipboard">
-      {copied ? "Copied" : "Copy"}
+    <ToolButton onClick={onCopy} title={t.copyHint}>
+      {copied ? t.copied : t.copy}
     </ToolButton>
   );
 }
@@ -157,6 +163,7 @@ export function StatusLine({
   error?: { message: string; line: number; column: number } | null;
   info: string;
 }) {
+  const { t } = useLang();
   return (
     <div
       className={`flex h-7 shrink-0 items-center gap-3 rounded border px-2 text-xs ${
@@ -167,7 +174,8 @@ export function StatusLine({
     >
       {error ? (
         <span>
-          Line {error.line}, col {error.column}: {error.message}
+          {fill(t.lineCol, { line: error.line, col: error.column })}:{" "}
+          {error.message}
         </span>
       ) : (
         <span>{info}</span>

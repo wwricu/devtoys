@@ -8,13 +8,14 @@ import {
   StatusLine,
   ToolButton,
   editorClass,
-  indentOptions,
+  useIndentOptions,
   useStoredState,
   type Indent,
 } from "@/components/kit";
 import { processXml } from "./format";
 
 export default function XmlFormatter() {
+  const indentOptions = useIndentOptions();
   const [input, setInput] = useState("");
   const [indent, setIndent] = useStoredState<Indent>("xml-format.indent", "2");
   const [preserveComments, setPreserveComments] = useStoredState<boolean>(

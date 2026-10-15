@@ -2,20 +2,13 @@
 
 import { Segmented, ToolButton, useStoredState } from "@/components/kit";
 import { SimpleTransform } from "@/components/transform";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { slugStats, slugify, type SlugOptions } from "./format";
-
-const SEPARATORS: { value: "-" | "_" | " "; label: string }[] = [
-  { value: "-", label: "hyphen" },
-  { value: "_", label: "underscore" },
-  { value: " ", label: "space" },
-];
-
-const YES_NO: { value: "yes" | "no"; label: string }[] = [
-  { value: "yes", label: "yes" },
-  { value: "no", label: "no" },
-];
+import { strings } from "./locale";
 
 export default function SlugTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [separator, setSeparator] = useStoredState<SlugOptions["separator"]>(
     "slug.sep",
     "-",
@@ -27,31 +20,42 @@ export default function SlugTool() {
   );
   const [limit, setLimit] = useStoredState<string>("slug.limit", "0");
 
+  const separators: { value: "-" | "_" | " "; label: string }[] = [
+    { value: "-", label: L.hyphen },
+    { value: "_", label: L.underscore },
+    { value: " ", label: L.space },
+  ];
+  const yesNo: { value: "yes" | "no"; label: string }[] = [
+    { value: "yes", label: L.yes },
+    { value: "no", label: L.no },
+  ];
+
   return (
     <SimpleTransform
-      inputPlaceholder="Type a title to turn into a slug"
+      inputPlaceholder={L.titleHint}
+      outputPlaceholder={t.result}
       controls={
         <>
           <Segmented
             value={separator}
-            options={SEPARATORS}
+            options={separators}
             onChange={setSeparator}
-            ariaLabel="Separator"
+            ariaLabel={L.separator}
           />
           <Segmented
             value={lower}
-            options={YES_NO}
+            options={yesNo}
             onChange={setLower}
-            ariaLabel="Lower case"
+            ariaLabel={L.lowerCase}
           />
           <Segmented
             value={unicode}
-            options={YES_NO}
+            options={yesNo}
             onChange={setUnicode}
-            ariaLabel="Keep non-Latin letters"
+            ariaLabel={L.keepLatin}
           />
           <label className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-300">
-            Max
+            {L.max}
             <input
               type="number"
               min={0}
@@ -68,17 +72,13 @@ export default function SlugTool() {
               setLimit("0");
             }}
           >
-            Reset
+            {t.reset}
           </ToolButton>
         </>
       }
       run={(input) => {
         if (input.trim() === "")
-          return {
-            output: "",
-            error: null,
-            note: "Slugify strips punctuation and accents",
-          };
+          return { output: "", error: null, note: L.stripNote };
         const options: SlugOptions = {
           separator,
           lower: lower === "yes",
@@ -86,13 +86,11 @@ export default function SlugTool() {
           maxLength: Math.max(0, Math.round(Number(limit) || 0)),
         };
         const output = slugify(input, options);
+        const { words, parts } = slugStats(input, output, separator);
         return {
           output,
-          error:
-            output === ""
-              ? "Nothing left after removing the non-word characters"
-              : null,
-          note: slugStats(input, output, separator),
+          error: output === "" ? L.nothingLeft : null,
+          note: fill(L.stats, { words, parts }),
         };
       }}
     />

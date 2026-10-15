@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CopyButton, Panel, StatusLine, ToolButton, editorClass } from "./kit";
+import { fill, useLang } from "@/lib/i18n";
 
 export interface TransformResult {
   output: string;
@@ -18,13 +19,14 @@ export function SimpleTransform({
   controls,
   run,
   inputPlaceholder,
-  outputPlaceholder = "Result",
+  outputPlaceholder,
 }: {
   controls?: React.ReactNode;
   run: (input: string) => TransformResult;
   inputPlaceholder?: string;
   outputPlaceholder?: string;
 }) {
+  const { t } = useLang();
   const [input, setInput] = useState("");
   const { output, error, note } = run(input);
 
@@ -34,17 +36,17 @@ export function SimpleTransform({
         {controls}
         <ToolButton
           onClick={() => setInput(output)}
-          title="Move output back into the input"
+          title={t.outputToInputHint}
         >
-          Output → Input
+          {t.outputToInput}
         </ToolButton>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title="Input"
+          title={t.input}
           actions={
             <>
-              <ToolButton onClick={() => setInput("")}>Clear</ToolButton>
+              <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
               <CopyButton getText={() => input} />
             </>
           }
@@ -52,17 +54,20 @@ export function SimpleTransform({
           <textarea
             className={editorClass}
             spellCheck={false}
-            placeholder={inputPlaceholder}
+            placeholder={inputPlaceholder ?? t.input}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
-        <Panel title="Output" actions={<CopyButton getText={() => output} />}>
+        <Panel
+          title={t.output}
+          actions={<CopyButton getText={() => output} />}
+        >
           <textarea
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder={outputPlaceholder}
+            placeholder={outputPlaceholder ?? t.result}
             value={output}
           />
         </Panel>
@@ -71,9 +76,12 @@ export function SimpleTransform({
         error={error ? { message: error, line: 1, column: 1 } : null}
         info={
           output
-            ? `${note ? note + " · " : ""}Input ${input.length} · Output ${output.length} chars`
+            ? `${note ? note + " · " : ""}${fill(t.ioChars, {
+                input: input.length,
+                output: output.length,
+              })}`
             : input
-              ? "Ready"
+              ? t.ready
               : ""
         }
       />

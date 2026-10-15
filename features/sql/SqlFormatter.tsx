@@ -1,6 +1,11 @@
 "use client";
 
-import { Segmented, indentOptions, useStoredState, type Indent } from "@/components/kit";
+import {
+  Segmented,
+  useIndentOptions,
+  useStoredState,
+  type Indent,
+} from "@/components/kit";
 import { SimpleTransform } from "@/components/transform";
 import { formatSql, type KeywordCase } from "./format";
 
@@ -11,6 +16,7 @@ const caseOptions: { value: KeywordCase; label: string }[] = [
 ];
 
 export default function SqlFormatter() {
+  const indentOptions = useIndentOptions();
   const [keywordCase, setKeywordCase] = useStoredState<KeywordCase>("sql.case", "upper");
   const [indent, setIndent] = useStoredState<Indent>("sql.indent", "2");
 
