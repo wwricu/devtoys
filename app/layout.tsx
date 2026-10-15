@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   },
   description:
     "Free online developer tools: JSON formatter, XML formatter, Base64 encoder, QR code generator and more. All tools run entirely in your browser — nothing is uploaded.",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   keywords: [
     "developer tools",
     "JSON formatter",
