@@ -1,6 +1,7 @@
 "use client";
 
 import { repoUrl, useLang } from "@/lib/i18n";
+import { usePathname } from "next/navigation";
 
 const iconClass =
   "flex h-7 items-center gap-1 rounded px-1.5 text-[11px] text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white";
@@ -34,9 +35,13 @@ function GitHubMark() {
 }
 
 export default function HeaderBar() {
+  const pathname = usePathname();
   const { lang, setLang, t } = useLang();
   const next = lang === "en" ? "zh" : "en";
   const nextLabel = lang === "en" ? t.chinese : t.english;
+
+  // Only show on the home page — tool pages carry these controls in ToolHeader.
+  if (pathname !== "/") return null;
 
   return (
     <header className="flex shrink-0 items-center justify-end gap-1 border-b border-neutral-200 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-900">

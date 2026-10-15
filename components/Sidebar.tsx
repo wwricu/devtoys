@@ -9,6 +9,7 @@ import {
   tools,
   type ToolDefinition,
 } from "@/lib/tools";
+import { getFavouritesCategory } from "@/lib/favorites";
 import { useStoredState } from "@/components/kit";
 import { fill, useLang } from "@/lib/i18n";
 
@@ -67,12 +68,17 @@ export default function Sidebar() {
       : tools.filter((tool) =>
           toolSearchText(tool).some((text) => text.toLowerCase().includes(q)),
         );
-    return getCategories()
+
+    const favCat = getFavouritesCategory();
+    const realCats = getCategories()
       .map((c) => ({
         ...c,
         tools: filtered.filter((tool) => tool.category === c.name),
       }))
       .filter((c) => c.tools.length > 0);
+
+    // Prepend the Favourites category when it has items.
+    return favCat ? [favCat, ...realCats] : realCats;
   }, [query, toolSearchText]);
 
   // While filtering, every matched group is revealed so results stay readable.
