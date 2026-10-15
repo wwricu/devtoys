@@ -90,19 +90,22 @@ export default function Sidebar() {
         >
           {t.siteName}
         </Link>
-        {tools.map((tool) => (
-          <Link
-            key={tool.id}
-            href={`/tools/${tool.id}`}
-            className={`shrink-0 rounded border px-2 py-1 text-xs ${
-              pathname === `/tools/${tool.id}`
-                ? "border-neutral-400 bg-neutral-200 font-medium dark:border-neutral-600 dark:bg-neutral-800"
-                : "border-neutral-200 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400"
-            }`}
-          >
-            {toolName(tool)}
-          </Link>
-        ))}
+        {tools.map((tool) => {
+          const cat = categorySlug(tool.category);
+          return (
+            <Link
+              key={tool.id}
+              href={`/${cat}/${tool.id}`}
+              className={`shrink-0 rounded border px-2 py-1 text-xs ${
+                pathname === `/${cat}/${tool.id}`
+                  ? "border-neutral-400 bg-neutral-200 font-medium dark:border-neutral-600 dark:bg-neutral-800"
+                  : "border-neutral-200 text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
+              }`}
+            >
+              {toolName(tool)}
+            </Link>
+          );
+        })}
       </div>
       <aside className="hidden w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 md:flex">
         <Link
@@ -143,8 +146,8 @@ export default function Sidebar() {
                     <Chevron open={open} />
                   </button>
                   <Link
-                    href={`/category/${categorySlug(c.name)}`}
-                    className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                    href={`/${categorySlug(c.name)}`}
+                    className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-700 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
                   >
                     <span className="flex-1 truncate">
                       {categoryName(c.name)}
@@ -157,15 +160,16 @@ export default function Sidebar() {
                 {open && (
                   <ul className="space-y-0.5">
                     {c.tools.map((tool) => {
-                      const active = pathname === `/tools/${tool.id}`;
+                      const active =
+                        pathname === `/${categorySlug(c.name)}/${tool.id}`;
                       return (
                         <li key={tool.id}>
                           <Link
-                            href={`/tools/${tool.id}`}
+                            href={`/${categorySlug(c.name)}/${tool.id}`}
                             className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
                               active
                                 ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                                : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800/60"
+                                : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800/60"
                             }`}
                           >
                             <BadgeTile tool={tool} active={active} />

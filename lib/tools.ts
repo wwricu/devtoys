@@ -1,7 +1,7 @@
 /**
  * Tool registry: metadata only, so the sidebar, home and category pages never
  * pull in any feature code. `npm run gen:routes` turns each entry below into a
- * static route at app/tools/<id>/page.tsx, which imports that tool by itself.
+ * static route at app/[category]/<id>/page.tsx, which imports that tool by itself.
  */
 export type ToolId = string;
 
