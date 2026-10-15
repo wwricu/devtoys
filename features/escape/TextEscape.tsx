@@ -10,26 +10,30 @@ import {
   editorClass,
   useStoredState,
 } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { escapeString, unescapeString } from "./format";
+import { strings } from "./locale";
 
 type Mode = "escape" | "unescape";
 
-const modeOptions: { value: Mode; label: string }[] = [
-  { value: "escape", label: "Escape" },
-  { value: "unescape", label: "Unescape" },
-];
-
 export default function TextEscape() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [mode, setMode] = useStoredState<Mode>("escape.mode", "escape");
   const [escapeUnicode, setEscapeUnicode] = useStoredState<boolean>(
     "escape.unicode",
-    false
+    false,
   );
   const [wrapQuotes, setWrapQuotes] = useStoredState<boolean>(
     "escape.wrap",
-    false
+    false,
   );
   const [input, setInput] = useState("");
+
+  const modeOptions: { value: Mode; label: string }[] = [
+    { value: "escape", label: L.escape },
+    { value: "unescape", label: L.unescape },
+  ];
 
   const { output, error } = useMemo(() => {
     if (input === "") return { output: "", error: null };
@@ -51,7 +55,7 @@ export default function TextEscape() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
-          ariaLabel="Mode"
+          ariaLabel={L.mode}
           value={mode}
           options={modeOptions}
           onChange={setMode}
@@ -65,7 +69,7 @@ export default function TextEscape() {
                 onChange={(e) => setEscapeUnicode(e.target.checked)}
                 className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
               />
-              Escape non-ASCII (\uXXXX)
+              {L.escapeUnicode}
             </label>
             <label className="flex cursor-pointer items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
               <input
@@ -74,22 +78,22 @@ export default function TextEscape() {
                 onChange={(e) => setWrapQuotes(e.target.checked)}
                 className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
               />
-              Wrap in quotes
+              {L.wrapQuotes}
             </label>
           </>
         )}
-        <ToolButton onClick={swap} title="Move output back into the input">
-          Output → Input
+        <ToolButton onClick={swap} title={t.outputToInputHint}>
+          {t.outputToInput}
         </ToolButton>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title="Input"
+          title={t.input}
           actions={
             <>
-              <ToolButton onClick={() => setInput("")} title="Clear input">
-                Clear
+              <ToolButton onClick={() => setInput("")} title={L.clearHint}>
+                {t.clear}
               </ToolButton>
               <CopyButton getText={() => input} />
             </>
@@ -98,25 +102,18 @@ export default function TextEscape() {
           <textarea
             className={editorClass}
             spellCheck={false}
-            placeholder={
-              mode === "escape"
-                ? "Paste raw text to escape…"
-                : "Paste escaped text to unescape…"
-            }
+            placeholder={mode === "escape" ? L.escapeHint : L.unescapeHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
 
-        <Panel
-          title="Output"
-          actions={<CopyButton getText={() => output} />}
-        >
+        <Panel title={t.output} actions={<CopyButton getText={() => output} />}>
           <textarea
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder="Result"
+            placeholder={t.result}
             value={output}
           />
         </Panel>
@@ -126,9 +123,9 @@ export default function TextEscape() {
         error={error ? { message: error, line: 1, column: 1 } : null}
         info={
           output
-            ? `Input ${input.length} chars · Output ${output.length} chars`
+            ? fill(t.ioChars, { input: input.length, output: output.length })
             : input
-              ? "No change"
+              ? L.noChange
               : ""
         }
       />

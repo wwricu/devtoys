@@ -1,0 +1,26 @@
+export const strings = {
+  en: {
+    direction: "Direction",
+    toHex: "Text to bytes",
+    fromHex: "Bytes to text",
+    notation: "Notation",
+    hex: "Hex",
+    binary: "Binary",
+    textHint: "Text to convert…",
+    hexHint: "Hex bytes, e.g. 48 65 6c 6c 6f",
+    utf8Bytes: "UTF-8 bytes",
+    codePoints: "code points",
+  },
+  zh: {
+    direction: "转换方向",
+    toHex: "文本转字节",
+    fromHex: "字节转文本",
+    notation: "记法",
+    hex: "十六进制",
+    binary: "二进制",
+    textHint: "要转换的文本…",
+    hexHint: "十六进制字节，例如 48 65 6c 6c 6f",
+    utf8Bytes: "UTF-8 字节",
+    codePoints: "码点",
+  },
+};

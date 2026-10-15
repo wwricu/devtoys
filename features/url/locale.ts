@@ -1,0 +1,26 @@
+export const strings = {
+  en: {
+    mode: "Mode",
+    encode: "Encode",
+    decode: "Decode",
+    scope: "Scope",
+    component: "Component",
+    fullUrl: "Full URL",
+    form: "Form",
+    encodeHint: "Text or URL to encode…",
+    decodeHint: "Encoded text to decode…",
+    invalidInput: "Invalid percent-encoded input",
+  },
+  zh: {
+    mode: "模式",
+    encode: "编码",
+    decode: "解码",
+    scope: "范围",
+    component: "URL 组件",
+    fullUrl: "完整 URL",
+    form: "表单",
+    encodeHint: "要编码的文本或 URL…",
+    decodeHint: "要解码的编码文本…",
+    invalidInput: "百分号编码输入无效",
+  },
+};

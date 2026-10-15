@@ -3,13 +3,10 @@
  * being read out loud or copied from a screenshot.
  */
 
-export const BITCOIN_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-export const RIPPLE_ALPHABET = "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
-
-export const ALPHABETS: { value: string; label: string }[] = [
-  { value: "bitcoin", label: "Bitcoin" },
-  { value: "ripple", label: "Ripple" },
-];
+export const BITCOIN_ALPHABET =
+  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+export const RIPPLE_ALPHABET =
+  "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
 
 export function alphabetFor(name: string): string {
   return name === "ripple" ? RIPPLE_ALPHABET : BITCOIN_ALPHABET;
@@ -36,7 +33,10 @@ export function bytesToBase58(bytes: Uint8Array, letters: string): string {
   return out;
 }
 
-export function base58ToBytes(text: string, letters: string): Uint8Array<ArrayBuffer> {
+export function base58ToBytes(
+  text: string,
+  letters: string,
+): Uint8Array<ArrayBuffer> {
   const trimmed = text.trim();
   if (trimmed === "") return new Uint8Array(0);
   let zeros = 0;
@@ -57,7 +57,8 @@ export function base58ToBytes(text: string, letters: string): Uint8Array<ArrayBu
     }
   }
   const out = new Uint8Array(zeros + bytes.length);
-  for (let i = 0; i < bytes.length; i++) out[zeros + i] = bytes[bytes.length - 1 - i];
+  for (let i = 0; i < bytes.length; i++)
+    out[zeros + i] = bytes[bytes.length - 1 - i];
   return out;
 }
 
@@ -73,7 +74,10 @@ async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
 }
 
 /** Base58Check: four checksum bytes from a double SHA-256 ride along. */
-export async function encodeCheck(bytes: Uint8Array, letters: string): Promise<string> {
+export async function encodeCheck(
+  bytes: Uint8Array,
+  letters: string,
+): Promise<string> {
   const sum = await sha256(await sha256(bytes));
   const payload = new Uint8Array(bytes.length + 4);
   payload.set(bytes);
@@ -81,13 +85,18 @@ export async function encodeCheck(bytes: Uint8Array, letters: string): Promise<s
   return bytesToBase58(payload, letters);
 }
 
-export async function decodeCheck(text: string, letters: string): Promise<Uint8Array> {
+export async function decodeCheck(
+  text: string,
+  letters: string,
+): Promise<Uint8Array> {
   const raw = base58ToBytes(text, letters);
-  if (raw.length < 4) throw new Error("A Base58Check code needs at least four checksum bytes");
+  if (raw.length < 4)
+    throw new Error("A Base58Check code needs at least four checksum bytes");
   const body = raw.subarray(0, raw.length - 4);
   const sum = await sha256(await sha256(body));
   for (let i = 0; i < 4; i++)
-    if (sum[i] !== raw[body.length + i]) throw new Error("Checksum does not match this payload");
+    if (sum[i] !== raw[body.length + i])
+      throw new Error("Checksum does not match this payload");
   return body;
 }
 
@@ -96,7 +105,8 @@ export function hexToBytes(hex: string): Uint8Array<ArrayBuffer> {
   if (clean !== "" && !/^([0-9a-fA-F]{2})+$/.test(clean))
     throw new Error("Hex text needs pairs of hex digits");
   const out = new Uint8Array(clean.length / 2);
-  for (let i = 0; i < out.length; i++) out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+  for (let i = 0; i < out.length; i++)
+    out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
   return out;
 }
 
