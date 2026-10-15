@@ -1,14 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, Panel, ToolButton, useStoredState } from "@/components/kit";
 import {
-  DOW_LABELS,
+  CopyButton,
+  Panel,
+  ToolButton,
+  useStoredState,
+} from "@/components/kit";
+import { fill, useText } from "@/lib/i18n";
+import {
   describeCron,
-  formatFieldValues,
+  describeValues,
   nextRuns,
   parseCron,
+  type CronFieldKey,
+  type FieldDescription,
 } from "./format";
+import { strings } from "./locale";
 
 const PRESETS = [
   "* * * * *",
@@ -19,19 +27,56 @@ const PRESETS = [
   "0 */2 * * * *",
 ];
 
-function relative(ms: number): string {
-  const diff = Math.max(0, ms);
-  const m = Math.floor(diff / 60000);
-  const h = Math.floor(m / 60);
-  const d = Math.floor(h / 24);
-  if (d >= 365) return `${Math.floor(d / 365)}y ${Math.floor((d % 365) / 30)}mo`;
-  if (d > 0) return `${d}d ${h % 24}h`;
-  if (h > 0) return `${h}h ${m % 60}m`;
-  if (m > 0) return `${m}m`;
-  return "soon";
-}
+/** Locale keys holding the day and month names, in index order. */
+const DOW_KEYS = [
+  "dowSun",
+  "dowMon",
+  "dowTue",
+  "dowWed",
+  "dowThu",
+  "dowFri",
+  "dowSat",
+] as const;
+
+const MONTH_KEYS = [
+  "monthJan",
+  "monthFeb",
+  "monthMar",
+  "monthApr",
+  "monthMay",
+  "monthJun",
+  "monthJul",
+  "monthAug",
+  "monthSep",
+  "monthOct",
+  "monthNov",
+  "monthDec",
+] as const;
+
+type Text = typeof strings.en;
+
+const FIELD_LABEL: Record<CronFieldKey, keyof Text> = {
+  second: "fieldSecond",
+  minute: "fieldMinute",
+  hour: "fieldHour",
+  dayOfMonth: "fieldDayOfMonth",
+  month: "fieldMonth",
+  dayOfWeek: "fieldDayOfWeek",
+};
+
+const EVERY_LABEL: Record<CronFieldKey, keyof Text> = {
+  second: "everySecond",
+  minute: "everyMinute",
+  hour: "everyHour",
+  dayOfMonth: "everyDayOfMonth",
+  month: "everyMonth",
+  dayOfWeek: "everyDayOfWeek",
+};
+
+const pad = (n: number, width = 2) => String(n).padStart(width, "0");
 
 export default function CronParser() {
+  const L = useText(strings);
   const [expression, setExpression] = useStoredState(
     "cron.expr",
     "*/15 9-17 * * 1-5",
@@ -48,16 +93,48 @@ export default function CronParser() {
     [result.spec],
   );
 
-  const runsText = runs
-    .map(
-      (d) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-          d.getDate(),
-        ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
-          d.getMinutes(),
-        ).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`,
-    )
-    .join("\n");
+  /** Turn a structured value set into text using the active language. */
+  function describeField(key: CronFieldKey, d: FieldDescription): string {
+    switch (d.kind) {
+      case "all":
+        return L[EVERY_LABEL[key]];
+      case "days":
+        return d.days.map((v) => L[DOW_KEYS[v]]).join(", ");
+      case "months":
+        return d.months.map((v) => L[MONTH_KEYS[v - 1]]).join(", ");
+      case "many":
+        return fill(L.manyValues, {
+          count: d.count,
+          range: `${d.min}-${d.max}`,
+        });
+      case "values":
+        return d.values.join(", ");
+    }
+  }
+
+  function formatRun(d: Date): string {
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const clock = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    return `${L[DOW_KEYS[d.getDay()]]} ${date} ${clock}`;
+  }
+
+  function relative(ms: number): string {
+    const diff = Math.max(0, ms);
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d >= 365)
+      return fill(L.relYears, {
+        years: Math.floor(d / 365),
+        months: Math.floor((d % 365) / 30),
+      });
+    if (d > 0) return fill(L.relDays, { days: d, hours: h % 24 });
+    if (h > 0) return fill(L.relHours, { hours: h, minutes: m % 60 });
+    if (m > 0) return fill(L.relMinutes, { minutes: m });
+    return L.relSoon;
+  }
+
+  const runsText = runs.map(formatRun).join("\n");
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
@@ -66,18 +143,18 @@ export default function CronParser() {
           <input
             className="min-w-0 flex-1 bg-transparent py-1 font-mono text-xs outline-none placeholder:text-neutral-400"
             spellCheck={false}
-            placeholder="Cron expression, 5 or 6 fields"
+            placeholder={L.exprHint}
             value={expression}
             onChange={(e) => setExpression(e.target.value)}
           />
         </div>
-        <ToolButton onClick={() => setNow(new Date())} title="Recompute from the current time">
-          Now
+        <ToolButton onClick={() => setNow(new Date())} title={L.nowHint}>
+          {L.now}
         </ToolButton>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-neutral-400">Presets:</span>
+        <span className="text-xs text-neutral-400">{L.presets}</span>
         {PRESETS.map((p) => (
           <ToolButton key={p} onClick={() => setExpression(p)}>
             <span className="font-mono">{p}</span>
@@ -93,33 +170,40 @@ export default function CronParser() {
 
       {result.spec && (
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-2">
-          <Panel title="Fields">
+          <Panel title={L.fields}>
             <div className="min-h-0 flex-1 overflow-y-auto">
               <table className="w-full text-left text-xs">
                 <tbody>
                   {result.spec.fields.map((f) => (
                     <tr
-                      key={f.name}
+                      key={f.key}
                       className="border-b border-neutral-100 align-top dark:border-neutral-800"
                     >
                       <td className="w-28 py-1.5 pr-2 font-medium text-neutral-500 dark:text-neutral-400">
-                        {f.name}
+                        {L[FIELD_LABEL[f.key]]}
                       </td>
                       <td className="py-1.5 break-all font-mono text-neutral-700 dark:text-neutral-200">
-                        {formatFieldValues(f)}
+                        {describeField(f.key, describeValues(f))}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-                {described.join(" · ")}
+                {described
+                  .map((d) =>
+                    fill(L.fieldLine, {
+                      field: L[FIELD_LABEL[d.key]],
+                      value: describeField(d.key, d.description),
+                    }),
+                  )
+                  .join(" · ")}
               </p>
             </div>
           </Panel>
 
           <Panel
-            title="Next runs"
+            title={L.nextRuns}
             actions={<CopyButton getText={() => runsText} />}
           >
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -131,25 +215,18 @@ export default function CronParser() {
                   <span className="w-6 shrink-0 text-right text-neutral-400">
                     {i + 1}
                   </span>
-                  <span className="font-mono">
-                    {DOW_LABELS[d.getDay()]}{" "}
-                    {d.getFullYear()}-{String(d.getMonth() + 1).padStart(2, "0")}-
-                    {String(d.getDate()).padStart(2, "0")}{" "}
-                    {String(d.getHours()).padStart(2, "0")}:
-                    {String(d.getMinutes()).padStart(2, "0")}:
-                    {String(d.getSeconds()).padStart(2, "0")}
-                  </span>
+                  <span className="font-mono">{formatRun(d)}</span>
                   {i === 0 && (
                     <span className="ml-auto text-neutral-400">
-                      in {relative(d.getTime() - now.getTime())}
+                      {fill(L.inTime, {
+                        time: relative(d.getTime() - now.getTime()),
+                      })}
                     </span>
                   )}
                 </div>
               ))}
               {runs.length === 0 && (
-                <p className="py-2 text-xs text-neutral-400">
-                  No fire time found within the next 4 years.
-                </p>
+                <p className="py-2 text-xs text-neutral-400">{L.noFireTime}</p>
               )}
             </div>
           </Panel>

@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CopyButton, Panel, Segmented, ToolButton, useStoredState } from "@/components/kit";
+import {
+  CopyButton,
+  Panel,
+  Segmented,
+  ToolButton,
+  useStoredState,
+} from "@/components/kit";
+import { fill, useText } from "@/lib/i18n";
 import {
   decode,
   encode,
@@ -9,6 +16,7 @@ import {
   type Encoded,
   type ImageFormat,
 } from "./format";
+import { strings } from "./locale";
 
 const formatOptions: { value: ImageFormat; label: string }[] = [
   { value: "png", label: "PNG" },
@@ -16,14 +24,34 @@ const formatOptions: { value: ImageFormat; label: string }[] = [
   { value: "webp", label: "WebP" },
 ];
 
+interface DecodeState {
+  /** the file this result belongs to, so stale results are ignored */
+  from: File;
+  bitmap: ImageBitmap | null;
+  error: string | null;
+}
+
+interface EncodeState {
+  from: ImageBitmap;
+  key: string;
+  result: Encoded | null;
+  error: string | null;
+}
+
+const message = (err: unknown) =>
+  err instanceof Error ? err.message : String(err);
+
 export default function ImageConverter() {
+  const L = useText(strings);
   const [file, setFile] = useState<File | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const urlRef = useRef<string | null>(null);
-  const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
-  const [result, setResult] = useState<Encoded | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [format, setFormat] = useStoredState<ImageFormat>("image.format", "webp");
+  const [decodeState, setDecodeState] = useState<DecodeState | null>(null);
+  const [encodeState, setEncodeState] = useState<EncodeState | null>(null);
+  const [format, setFormat] = useStoredState<ImageFormat>(
+    "image.format",
+    "webp",
+  );
   const [quality, setQuality] = useStoredState<number>("image.quality", 0.82);
   const [maxWidth, setMaxWidth] = useStoredState<number>("image.maxWidth", 0);
   const pickRef = useRef<HTMLInputElement>(null);
@@ -35,21 +63,18 @@ export default function ImageConverter() {
     setFile(picked);
   };
 
+  const encodeKey = `${format}|${quality}|${maxWidth}`;
+
   useEffect(() => {
-    if (!file) {
-      setBitmap(null);
-      return;
-    }
+    if (!file) return;
     let alive = true;
     decode(file)
-      .then((b) => {
-        if (alive) {
-          setBitmap(b);
-          setError(null);
-        }
+      .then((bitmap) => {
+        if (alive) setDecodeState({ from: file, bitmap, error: null });
       })
       .catch((err: unknown) => {
-        if (alive) setError(err instanceof Error ? err.message : String(err));
+        if (alive)
+          setDecodeState({ from: file, bitmap: null, error: message(err) });
       });
     return () => {
       alive = false;
@@ -57,25 +82,47 @@ export default function ImageConverter() {
   }, [file]);
 
   useEffect(() => {
-    if (!bitmap) {
-      setResult(null);
-      return;
-    }
+    if (!decodeState || decodeState.from !== file) return;
+    const bitmap = decodeState.bitmap;
+    if (!bitmap) return;
     let alive = true;
     encode(bitmap, format, quality, maxWidth > 0 ? maxWidth : undefined)
-      .then((r) => {
-        if (alive) {
-          setResult(r);
-          setError(null);
-        }
+      .then((res) => {
+        if (alive)
+          setEncodeState({
+            from: bitmap,
+            key: encodeKey,
+            result: res,
+            error: null,
+          });
       })
       .catch((err: unknown) => {
-        if (alive) setError(err instanceof Error ? err.message : String(err));
+        if (alive)
+          setEncodeState({
+            from: bitmap,
+            key: encodeKey,
+            result: null,
+            error: message(err),
+          });
       });
     return () => {
       alive = false;
     };
-  }, [bitmap, format, quality, maxWidth]);
+  }, [decodeState, file, format, quality, maxWidth, encodeKey]);
+
+  // Anything computed from an older file or older options is ignored.
+  const currentDecode =
+    decodeState && decodeState.from === file ? decodeState : null;
+  const bitmap = currentDecode?.bitmap ?? null;
+  const currentEncode =
+    bitmap &&
+    encodeState &&
+    encodeState.from === bitmap &&
+    encodeState.key === encodeKey
+      ? encodeState
+      : null;
+  const result = currentEncode?.result ?? null;
+  const error = currentDecode?.error ?? currentEncode?.error ?? null;
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -106,11 +153,18 @@ export default function ImageConverter() {
             if (picked) choose(picked);
           }}
         />
-        <ToolButton onClick={() => pickRef.current?.click()}>Choose image</ToolButton>
-        <Segmented value={format} options={formatOptions} onChange={setFormat} ariaLabel="Target format" />
+        <ToolButton onClick={() => pickRef.current?.click()}>
+          {L.chooseImage}
+        </ToolButton>
+        <Segmented
+          value={format}
+          options={formatOptions}
+          onChange={setFormat}
+          ariaLabel={L.targetFormat}
+        />
         {format !== "png" && (
           <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
-            Quality
+            {L.quality}
             <input
               type="range"
               min={0.3}
@@ -123,7 +177,7 @@ export default function ImageConverter() {
           </label>
         )}
         <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
-          Max width
+          {L.maxWidth}
           <input
             type="number"
             className="w-20 rounded border border-neutral-300 bg-white px-1.5 py-1 font-mono text-xs outline-none dark:border-neutral-700 dark:bg-neutral-800"
@@ -131,7 +185,7 @@ export default function ImageConverter() {
             min={0}
             onChange={(e) => setMaxWidth(Number(e.target.value) || 0)}
           />
-          px (0 = keep)
+          {L.maxWidthUnit}
         </label>
       </div>
 
@@ -146,52 +200,70 @@ export default function ImageConverter() {
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
       >
-        <Panel title="Source">
+        <Panel title={L.source}>
           {file ? (
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={sourceUrl ?? ""}
-                alt="source preview"
+                alt={L.altSource}
                 className="max-h-64 max-w-full object-contain"
               />
               <p className="text-xs text-neutral-500">
-                {file.name} - {sizeOf(file.size)}
-                {bitmap ? ` - ${bitmap.width}x${bitmap.height}` : ""}
+                {bitmap
+                  ? fill(L.sourceInfoRes, {
+                      name: file.name,
+                      size: sizeOf(file.size),
+                      dimensions: fill(L.dimensions, {
+                        width: bitmap.width,
+                        height: bitmap.height,
+                      }),
+                    })
+                  : fill(L.sourceInfo, {
+                      name: file.name,
+                      size: sizeOf(file.size),
+                    })}
               </p>
             </div>
           ) : (
-            <p className="p-3 text-xs text-neutral-400">
-              Drop an image here or choose one. Nothing is uploaded; everything runs locally.
-            </p>
+            <p className="p-3 text-xs text-neutral-400">{L.dropHint}</p>
           )}
         </Panel>
 
         <Panel
-          title="Converted"
+          title={L.converted}
           actions={
             result ? (
               <>
                 <CopyButton getText={() => result.dataUrl} />
-                <ToolButton onClick={download}>Download</ToolButton>
+                <ToolButton onClick={download}>{L.download}</ToolButton>
               </>
             ) : undefined
           }
         >
           {result ? (
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={result.dataUrl}
-                alt="converted preview"
+                alt={L.altConverted}
                 className="max-h-64 max-w-full object-contain"
               />
               <p className="text-xs text-neutral-500">
-                {result.width}x{result.height} - {sizeOf(result.blob.size)}
-                {file ? ` (${Math.round((result.blob.size / file.size) * 100)}% of source)` : ""}
+                {fill(L.convertedInfo, {
+                  width: result.width,
+                  height: result.height,
+                  size: sizeOf(result.blob.size),
+                })}
+                {file
+                  ? ` ${fill(L.ofSource, {
+                      percent: Math.round((result.blob.size / file.size) * 100),
+                    })}`
+                  : ""}
               </p>
             </div>
           ) : (
-            <p className="p-3 text-xs text-neutral-400">Result appears here.</p>
+            <p className="p-3 text-xs text-neutral-400">{L.resultHint}</p>
           )}
         </Panel>
       </div>

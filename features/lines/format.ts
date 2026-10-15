@@ -13,21 +13,26 @@ export type LineOperation =
   | "dedent"
   | "join-lines";
 
-export const OPERATION_LABELS: { value: LineOperation; label: string }[] = [
-  { value: "sort-asc", label: "Sort A→Z" },
-  { value: "sort-desc", label: "Sort Z→A" },
-  { value: "sort-length", label: "Sort by length" },
-  { value: "sort-random", label: "Shuffle" },
-  { value: "unique", label: "Remove duplicates" },
-  { value: "remove-empty", label: "Remove empty lines" },
-  { value: "trim-lines", label: "Trim each line" },
-  { value: "collapse-blank", label: "Collapse blank lines" },
-  { value: "reverse", label: "Reverse order" },
-  { value: "number", label: "Add line numbers" },
-  { value: "unnumber", label: "Strip line numbers" },
-  { value: "dedent", label: "Remove common indent" },
-  { value: "join-lines", label: "Join into one line" },
-];
+/** Which remark the UI shows next to the result; labels live in locale.ts. */
+export type LineNoteKey =
+  | "sortCaseInsensitive"
+  | "sortNumeric"
+  | "sortReversed"
+  | "sortShortest"
+  | "shuffled"
+  | "removedDuplicates"
+  | "removedEmpty"
+  | "trimmed"
+  | "collapsed"
+  | "strippedNumbers"
+  | "dedented"
+  | "joined";
+
+export interface LineNote {
+  key: LineNoteKey;
+  /** count of affected lines, when the remark reports one */
+  count?: number;
+}
 
 export interface LineOptions {
   ignoreCase: boolean;
@@ -46,7 +51,12 @@ function compare(a: string, b: string, ignoreCase: boolean): number {
   const numX = Number(x);
   const numY = Number(y);
   // numeric lines sort by value, which is what a list of measurements needs
-  if (x.trim() !== "" && y.trim() !== "" && Number.isFinite(numX) && Number.isFinite(numY))
+  if (
+    x.trim() !== "" &&
+    y.trim() !== "" &&
+    Number.isFinite(numX) &&
+    Number.isFinite(numY)
+  )
     return numX - numY || x.localeCompare(y);
   return x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" });
 }
@@ -69,24 +79,28 @@ export function applyLines(
   text: string,
   operation: LineOperation,
   options: LineOptions,
-): { output: string; note: string } {
+): { output: string; note: LineNote | null } {
   const all = splitLines(text);
   const lines = options.keepEmpty ? all : all.filter((l) => l.trim() !== "");
   let out = lines.slice();
-  let note = "";
+  let note: LineNote | null = null;
 
   switch (operation) {
     case "sort-asc":
       out.sort((a, b) => compare(a, b, options.ignoreCase));
-      note = options.ignoreCase ? "case-insensitive, numbers by value" : "numbers by value";
+      note = options.ignoreCase
+        ? { key: "sortCaseInsensitive" }
+        : { key: "sortNumeric" };
       break;
     case "sort-desc":
       out.sort((a, b) => -compare(a, b, options.ignoreCase));
-      note = "reversed";
+      note = { key: "sortReversed" };
       break;
     case "sort-length":
-      out.sort((a, b) => a.length - b.length || compare(a, b, options.ignoreCase));
-      note = "shortest first";
+      out.sort(
+        (a, b) => a.length - b.length || compare(a, b, options.ignoreCase),
+      );
+      note = { key: "sortShortest" };
       break;
     case "sort-random": {
       const roll = new Uint32Array(out.length);
@@ -95,22 +109,22 @@ export function applyLines(
         .map((line, i) => ({ line, roll: roll[i] }))
         .sort((a, b) => a.roll - b.roll)
         .map((x) => x.line);
-      note = "shuffled with the Web Crypto RNG";
+      note = { key: "shuffled" };
       break;
     }
     case "unique": {
       const before = out.length;
       out = unique(out, options.ignoreCase);
-      note = `${before - out.length} duplicate line(s) removed`;
+      note = { key: "removedDuplicates", count: before - out.length };
       break;
     }
     case "remove-empty":
       out = all.filter((l) => l.trim() !== "");
-      note = `${all.length - out.length} empty line(s) removed`;
+      note = { key: "removedEmpty", count: all.length - out.length };
       break;
     case "trim-lines":
       out = out.map((l) => l.trim());
-      note = "leading and trailing space removed";
+      note = { key: "trimmed" };
       break;
     case "collapse-blank": {
       const kept: string[] = [];
@@ -123,7 +137,7 @@ export function applyLines(
         kept.push(line);
       }
       out = kept;
-      note = "runs of blank lines reduced to one";
+      note = { key: "collapsed" };
       break;
     }
     case "reverse":
@@ -131,7 +145,9 @@ export function applyLines(
       break;
     case "number": {
       const width = String(out.length).length;
-      out = out.map((line, i) => `${String(i + 1).padStart(width, "0")}. ${line}`);
+      out = out.map(
+        (line, i) => `${String(i + 1).padStart(width, "0")}. ${line}`,
+      );
       break;
     }
     case "unnumber": {
@@ -142,7 +158,7 @@ export function applyLines(
         changed++;
         return match[1] + match[4];
       });
-      note = `${changed} line(s) stripped`;
+      note = { key: "strippedNumbers", count: changed };
       break;
     }
     case "dedent": {
@@ -150,14 +166,16 @@ export function applyLines(
         .filter((l) => l.trim() !== "")
         .map((l) => /^[\t ]*/.exec(l)![0].replace(/\t/g, "  ").length);
       const common = indents.length ? Math.min(...indents) : 0;
-      out = out.map((l) => l.slice(Math.min(common, /^[\t ]*/.exec(l)![0].length)));
-      note = `removed ${common} column(s) of common indent`;
+      out = out.map((l) =>
+        l.slice(Math.min(common, /^[\t ]*/.exec(l)![0].length)),
+      );
+      note = { key: "dedented", count: common };
       break;
     }
     case "join-lines":
       return {
         output: lines.join(options.separator),
-        note: `${lines.length} line(s) joined`,
+        note: { key: "joined", count: lines.length },
       };
   }
 

@@ -1,0 +1,31 @@
+export const strings = {
+  en: {
+    sideBySide: "Side by side",
+    unified: "Unified",
+    view: "View",
+    ignoreCase: "Ignore case",
+    ignoreWhitespace: "Ignore whitespace",
+    unchanged: "{count} unchanged",
+    original: "Original",
+    changed: "Changed",
+    originalHint: "Original text…",
+    changedHint: "Changed text…",
+    unifiedDiff: "Unified diff",
+    truncated:
+      "Too many changed lines for an exact diff; shown as block replacement.",
+  },
+  zh: {
+    sideBySide: "并排",
+    unified: "统一",
+    view: "视图",
+    ignoreCase: "忽略大小写",
+    ignoreWhitespace: "忽略空白",
+    unchanged: "{count} 行未变",
+    original: "原文",
+    changed: "修改后",
+    originalHint: "在此粘贴原文…",
+    changedHint: "在此粘贴修改后的文本…",
+    unifiedDiff: "统一差异",
+    truncated: "变更行数过多，无法给出精确差异；已按整块替换显示。",
+  },
+};

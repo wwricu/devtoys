@@ -1,8 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, Panel, editorClass, useStoredState } from "@/components/kit";
+import {
+  CopyButton,
+  Panel,
+  editorClass,
+  useStoredState,
+} from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { diffLines, unifiedDiff, type DiffLine, type DiffOp } from "./format";
+import { strings } from "./locale";
 
 interface Row {
   left: DiffLine | null;
@@ -37,17 +44,29 @@ const cellClass: Record<DiffOp, string> = {
   delete: "bg-red-50 dark:bg-red-950/50",
 };
 
-function Cell({ line, side }: { line: DiffLine | null; side: "left" | "right" }) {
+function Cell({
+  line,
+  side,
+}: {
+  line: DiffLine | null;
+  side: "left" | "right";
+}) {
   const no = line ? (side === "left" ? line.left : line.right) : null;
   const op = line?.op ?? "equal";
   return (
-    <div className={`flex min-w-0 ${line ? cellClass[op] : "bg-neutral-50 dark:bg-neutral-900"}`}>
+    <div
+      className={`flex min-w-0 ${line ? cellClass[op] : "bg-neutral-50 dark:bg-neutral-900"}`}
+    >
       <span className="w-9 shrink-0 select-none pr-1 text-right text-[11px] leading-5 text-neutral-400">
         {no ?? ""}
       </span>
       <span
         className={`w-3 shrink-0 select-none text-center text-[11px] leading-5 ${
-          line && op !== "equal" ? (op === "insert" ? "text-green-600" : "text-red-600") : "text-neutral-300"
+          line && op !== "equal"
+            ? op === "insert"
+              ? "text-green-600"
+              : "text-red-600"
+            : "text-neutral-300"
         }`}
       >
         {line ? (op === "insert" ? "+" : op === "delete" ? "-" : " ") : ""}
@@ -70,17 +89,26 @@ function Check({
 }) {
   return (
     <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
-      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       {label}
     </label>
   );
 }
 
 export default function DiffTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [left, setLeft] = useState("");
   const [right, setRight] = useState("");
   const [ignoreCase, setIgnoreCase] = useStoredState("diff.ignoreCase", false);
-  const [ignoreWhitespace, setIgnoreWhitespace] = useStoredState("diff.ignoreWhitespace", false);
+  const [ignoreWhitespace, setIgnoreWhitespace] = useStoredState(
+    "diff.ignoreWhitespace",
+    false,
+  );
   const [mode, setMode] = useState<"side" | "unified">("side");
 
   const summary = useMemo(
@@ -88,19 +116,22 @@ export default function DiffTool() {
     [left, right, ignoreCase, ignoreWhitespace],
   );
   const rows = useMemo(() => toRows(summary.lines), [summary.lines]);
-  const unified = useMemo(
-    () => unifiedDiff(summary, 3),
-    [summary],
-  );
+  const unified = useMemo(() => unifiedDiff(summary, 3), [summary]);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex overflow-hidden rounded border border-neutral-300 text-xs dark:border-neutral-700">
+        <div
+          role="radiogroup"
+          aria-label={L.view}
+          className="inline-flex overflow-hidden rounded border border-neutral-300 text-xs dark:border-neutral-700"
+        >
           {(["side", "unified"] as const).map((m, i) => (
             <button
               key={m}
               type="button"
+              role="radio"
+              aria-checked={mode === m}
               onClick={() => setMode(m)}
               className={`px-2.5 py-1 ${i > 0 ? "border-l border-neutral-300 dark:border-neutral-700" : ""} ${
                 mode === m
@@ -108,35 +139,47 @@ export default function DiffTool() {
                   : "bg-white text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300"
               }`}
             >
-              {m === "side" ? "Side by side" : "Unified"}
+              {m === "side" ? L.sideBySide : L.unified}
             </button>
           ))}
         </div>
-        <Check label="Ignore case" value={ignoreCase} onChange={setIgnoreCase} />
-        <Check label="Ignore whitespace" value={ignoreWhitespace} onChange={setIgnoreWhitespace} />
+        <Check
+          label={L.ignoreCase}
+          value={ignoreCase}
+          onChange={setIgnoreCase}
+        />
+        <Check
+          label={L.ignoreWhitespace}
+          value={ignoreWhitespace}
+          onChange={setIgnoreWhitespace}
+        />
         <span className="ml-auto text-xs text-neutral-500 dark:text-neutral-400">
-          <span className="text-green-600 dark:text-green-400">+{summary.added}</span>{" "}
-          <span className="text-red-600 dark:text-red-400">-{summary.removed}</span>{" "}
-          {summary.unchanged} unchanged
+          <span className="text-green-600 dark:text-green-400">
+            +{summary.added}
+          </span>{" "}
+          <span className="text-red-600 dark:text-red-400">
+            -{summary.removed}
+          </span>{" "}
+          {fill(L.unchanged, { count: summary.unchanged })}
         </span>
       </div>
 
       {mode === "side" && (
         <div className="grid min-h-0 flex-1 grid-cols-2 gap-2">
-          <Panel title="Original">
+          <Panel title={L.original}>
             <textarea
               className={editorClass}
               spellCheck={false}
-              placeholder="Original text…"
+              placeholder={L.originalHint}
               value={left}
               onChange={(e) => setLeft(e.target.value)}
             />
           </Panel>
-          <Panel title="Changed">
+          <Panel title={L.changed}>
             <textarea
               className={editorClass}
               spellCheck={false}
-              placeholder="Changed text…"
+              placeholder={L.changedHint}
               value={right}
               onChange={(e) => setRight(e.target.value)}
             />
@@ -145,14 +188,16 @@ export default function DiffTool() {
       )}
 
       <Panel
-        title={mode === "unified" ? "Unified diff" : "Result"}
+        title={mode === "unified" ? L.unifiedDiff : t.result}
         actions={
-          mode === "unified" ? <CopyButton getText={() => unified} /> : undefined
+          mode === "unified" ? (
+            <CopyButton getText={() => unified} />
+          ) : undefined
         }
       >
         {summary.truncated && (
           <p className="border-b border-neutral-100 px-2 py-1 text-xs text-amber-600 dark:border-neutral-800">
-            Too many changed lines for an exact diff; shown as block replacement.
+            {L.truncated}
           </p>
         )}
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -160,11 +205,12 @@ export default function DiffTool() {
             <pre className="whitespace-pre p-2 font-mono text-xs leading-5">
               {unified
                 ? unified.split("\n").map((line, i) => {
-                    const op: DiffOp = line.startsWith("+") && i > 1
-                      ? "insert"
-                      : line.startsWith("-") && i > 1
-                        ? "delete"
-                        : "equal";
+                    const op: DiffOp =
+                      line.startsWith("+") && i > 1
+                        ? "insert"
+                        : line.startsWith("-") && i > 1
+                          ? "delete"
+                          : "equal";
                     return (
                       <div key={i} className={cellClass[op]}>
                         {line}

@@ -9,27 +9,32 @@ import {
   editorClass,
   useStoredState,
 } from "@/components/kit";
+import { useLang, useText } from "@/lib/i18n";
 import { markdownToHtml, sanitizeHtml } from "./format";
+import { strings } from "./locale";
 
 type View = "html" | "preview";
-const viewOptions: { value: View; label: string }[] = [
-  { value: "html", label: "HTML" },
-  { value: "preview", label: "Preview" },
-];
 
 export default function MarkdownTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [input, setInput] = useState("");
   const [view, setView] = useStoredState<View>("markdown.view", "html");
   const html = useMemo(() => markdownToHtml(input), [input]);
+
+  const viewOptions: { value: View; label: string }[] = [
+    { value: "html", label: L.html },
+    { value: "preview", label: L.preview },
+  ];
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex items-center gap-2">
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          Output
+          {t.output}
         </span>
         <Segmented
-          ariaLabel="Output view"
+          ariaLabel={L.outputView}
           value={view}
           options={viewOptions}
           onChange={setView}
@@ -37,10 +42,10 @@ export default function MarkdownTool() {
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title="Markdown"
+          title={L.markdown}
           actions={
             <>
-              <ToolButton onClick={() => setInput("")}>Clear</ToolButton>
+              <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
               <CopyButton getText={() => input} />
             </>
           }
@@ -48,19 +53,22 @@ export default function MarkdownTool() {
           <textarea
             className={editorClass}
             spellCheck={false}
-            placeholder="# Heading&#10;&#10;**bold** *italic* `code` [link](https://example.com)&#10;&#10;- list item"
+            placeholder={L.sample}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
-        <Panel title={view === "html" ? "HTML" : "Preview"} actions={<CopyButton getText={() => html} />}>
+        <Panel
+          title={view === "html" ? L.html : L.preview}
+          actions={<CopyButton getText={() => html} />}
+        >
           {view === "html" ? (
             <textarea
               className={editorClass}
               spellCheck={false}
               readOnly
               value={html}
-              placeholder="HTML result"
+              placeholder={L.htmlResult}
             />
           ) : (
             <div
