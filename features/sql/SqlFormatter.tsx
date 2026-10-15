@@ -7,33 +7,43 @@ import {
   type Indent,
 } from "@/components/kit";
 import { SimpleTransform } from "@/components/transform";
+import { useText } from "@/lib/i18n";
 import { formatSql, type KeywordCase } from "./format";
-
-const caseOptions: { value: KeywordCase; label: string }[] = [
-  { value: "upper", label: "UPPER" },
-  { value: "lower", label: "lower" },
-  { value: "preserve", label: "Keep" },
-];
+import { strings } from "./locale";
 
 export default function SqlFormatter() {
+  const L = useText(strings);
   const indentOptions = useIndentOptions();
-  const [keywordCase, setKeywordCase] = useStoredState<KeywordCase>("sql.case", "upper");
+  const [keywordCase, setKeywordCase] = useStoredState<KeywordCase>(
+    "sql.case",
+    "upper",
+  );
   const [indent, setIndent] = useStoredState<Indent>("sql.indent", "2");
+
+  const caseOptions: { value: KeywordCase; label: string }[] = [
+    { value: "upper", label: L.upper },
+    { value: "lower", label: L.lower },
+    { value: "preserve", label: L.keep },
+  ];
 
   return (
     <SimpleTransform
       controls={
         <>
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">Keywords</span>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {L.keywords}
+          </span>
           <Segmented
-            ariaLabel="Keyword case"
+            ariaLabel={L.keywordCase}
             value={keywordCase}
             options={caseOptions}
             onChange={setKeywordCase}
           />
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">Indent</span>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {L.indent}
+          </span>
           <Segmented
-            ariaLabel="Indentation"
+            ariaLabel={L.indentation}
             value={indent}
             options={indentOptions}
             onChange={setIndent}
@@ -45,11 +55,15 @@ export default function SqlFormatter() {
         const minify = indent === "none";
         const unit =
           indent === "tab" ? "\t" : minify ? "" : " ".repeat(Number(indent));
-        const { output, error } = formatSql(input, { keywordCase, indent: unit, minify });
+        const { output, error } = formatSql(input, {
+          keywordCase,
+          indent: unit,
+          minify,
+        });
         return {
           output,
           error,
-          note: error ? undefined : minify ? "minified" : "formatted",
+          note: error ? undefined : minify ? L.minified : L.formatted,
         };
       }}
       inputPlaceholder="select a, b from t where a > 1 order by b desc"

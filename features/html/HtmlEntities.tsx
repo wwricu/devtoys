@@ -2,33 +2,32 @@
 
 import { Segmented, useStoredState } from "@/components/kit";
 import { SimpleTransform } from "@/components/transform";
+import { useText } from "@/lib/i18n";
 import { decodeHtml, encodeHtml } from "./format";
+import { strings } from "./locale";
 
 type Mode = "encode" | "decode";
 
-const modeOptions: { value: Mode; label: string }[] = [
-  { value: "encode", label: "Encode" },
-  { value: "decode", label: "Decode" },
-];
-
 export default function HtmlEntities() {
+  const L = useText(strings);
   const [mode, setMode] = useStoredState<Mode>("html.mode", "encode");
   const [encodeNonAscii, setEncodeNonAscii] = useStoredState<boolean>(
     "html.nonascii",
-    false
+    false,
   );
+
+  const modeOptions: { value: Mode; label: string }[] = [
+    { value: "encode", label: L.encode },
+    { value: "decode", label: L.decode },
+  ];
 
   return (
     <SimpleTransform
-      inputPlaceholder={
-        mode === "encode"
-          ? "Text with < & > \" characters…"
-          : "Text with &amp; entities…"
-      }
+      inputPlaceholder={mode === "encode" ? L.encodeHint : L.decodeHint}
       controls={
         <>
           <Segmented
-            ariaLabel="Mode"
+            ariaLabel={L.mode}
             value={mode}
             options={modeOptions}
             onChange={setMode}
@@ -41,7 +40,7 @@ export default function HtmlEntities() {
                 onChange={(e) => setEncodeNonAscii(e.target.checked)}
                 className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
               />
-              Encode non-ASCII (&amp;#…;)
+              {L.nonAscii}
             </label>
           )}
         </>

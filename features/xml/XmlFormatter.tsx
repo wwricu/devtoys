@@ -12,21 +12,25 @@ import {
   useStoredState,
   type Indent,
 } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { processXml } from "./format";
+import { strings } from "./locale";
 
 export default function XmlFormatter() {
+  const { t } = useLang();
+  const L = useText(strings);
   const indentOptions = useIndentOptions();
   const [input, setInput] = useState("");
   const [indent, setIndent] = useStoredState<Indent>("xml-format.indent", "2");
   const [preserveComments, setPreserveComments] = useStoredState<boolean>(
     "xml-format.comments",
-    true
+    true,
   );
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const result = useMemo(
     () => processXml(input, { indent, preserveComments }),
-    [input, indent, preserveComments]
+    [input, indent, preserveComments],
   );
 
   const download = useCallback(() => {
@@ -60,10 +64,10 @@ export default function XmlFormatter() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          Indent
+          {L.fmtIndent}
         </span>
         <Segmented
-          ariaLabel="Indentation"
+          ariaLabel={L.fmtIndentation}
           value={indent}
           options={indentOptions}
           onChange={setIndent}
@@ -75,26 +79,26 @@ export default function XmlFormatter() {
             onChange={(e) => setPreserveComments(e.target.checked)}
             className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
           />
-          Keep comments
+          {L.fmtKeepComments}
         </label>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title="Input"
+          title={t.input}
           actions={
             <>
-              <ToolButton onClick={loadFile} title="Load from a local file">
-                Open file
+              <ToolButton onClick={loadFile} title={L.fmtOpenFileHint}>
+                {L.fmtOpenFile}
               </ToolButton>
               <ToolButton
                 onClick={() => {
                   setInput("");
                   inputRef.current?.focus();
                 }}
-                title="Clear input"
+                title={L.fmtClearHint}
               >
-                Clear
+                {t.clear}
               </ToolButton>
               <CopyButton getText={() => input} />
             </>
@@ -104,18 +108,18 @@ export default function XmlFormatter() {
             ref={inputRef}
             className={editorClass}
             spellCheck={false}
-            placeholder="Paste XML here…"
+            placeholder={L.fmtPasteHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
 
         <Panel
-          title="Output"
+          title={t.output}
           actions={
             <>
-              <ToolButton onClick={download} title="Download the output file">
-                Download
+              <ToolButton onClick={download} title={L.fmtDownloadHint}>
+                {L.fmtDownload}
               </ToolButton>
               <CopyButton getText={() => result.output} />
             </>
@@ -125,7 +129,7 @@ export default function XmlFormatter() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder="Formatted result"
+            placeholder={L.fmtFormatted}
             value={result.output}
           />
         </Panel>
@@ -135,9 +139,13 @@ export default function XmlFormatter() {
         error={result.error}
         info={
           result.output
-            ? `Input ${inLines} lines / ${input.length} chars · Output ${result.output.length} chars`
+            ? fill(L.fmtStats, {
+                lines: inLines,
+                chars: input.length,
+                out: result.output.length,
+              })
             : input
-              ? "Valid XML, no errors"
+              ? L.fmtValid
               : ""
         }
       />
