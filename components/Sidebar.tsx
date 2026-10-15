@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getCategories, tools, type ToolDefinition } from "@/lib/tools";
 import { useStoredState } from "@/components/kit";
+import { useLang } from "@/lib/i18n";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -47,6 +48,7 @@ function BadgeTile({
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { t, toolName, categoryName, toolSearchText } = useLang();
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useStoredState<Record<string, boolean>>(
     "sidebar.collapsed",
@@ -57,19 +59,16 @@ export default function Sidebar() {
     const q = query.trim().toLowerCase();
     const filtered = !q
       ? tools
-      : tools.filter(
-          (t) =>
-            t.name.toLowerCase().includes(q) ||
-            t.description.toLowerCase().includes(q) ||
-            t.keywords.some((k) => k.includes(q)),
+      : tools.filter((tool) =>
+          toolSearchText(tool).some((text) => text.toLowerCase().includes(q)),
         );
     return getCategories()
       .map((c) => ({
         ...c,
-        tools: filtered.filter((t) => t.category === c.name),
+        tools: filtered.filter((tool) => tool.category === c.name),
       }))
       .filter((c) => c.tools.length > 0);
-  }, [query]);
+  }, [query, toolSearchText]);
 
   // While filtering, every matched group is revealed so results stay readable.
   const searching = query.trim() !== "";
@@ -84,19 +83,19 @@ export default function Sidebar() {
           href="/"
           className="shrink-0 text-xs font-semibold text-neutral-700 dark:text-neutral-200"
         >
-          Dev Toys
+          {t.siteName}
         </Link>
-        {tools.map((t) => (
+        {tools.map((tool) => (
           <Link
-            key={t.id}
-            href={`/tools/${t.id}`}
+            key={tool.id}
+            href={`/tools/${tool.id}`}
             className={`shrink-0 rounded border px-2 py-1 text-xs ${
-              pathname === `/tools/${t.id}`
+              pathname === `/tools/${tool.id}`
                 ? "border-neutral-400 bg-neutral-200 font-medium dark:border-neutral-600 dark:bg-neutral-800"
                 : "border-neutral-200 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400"
             }`}
           >
-            {t.name}
+            {toolName(tool)}
           </Link>
         ))}
       </div>
@@ -108,14 +107,15 @@ export default function Sidebar() {
           <span className="inline-block size-5 rounded bg-neutral-800 text-center text-[11px] leading-5 text-white dark:bg-neutral-200 dark:text-neutral-900">
             D
           </span>
-          Dev Toys
+          {t.siteName}
         </Link>
         <div className="px-3 pb-2">
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tools"
+            placeholder={t.search}
+            aria-label={t.search}
             className="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
@@ -131,27 +131,29 @@ export default function Sidebar() {
                   className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
                 >
                   <Chevron open={open} />
-                  <span className="flex-1 text-left">{c.name}</span>
-                  <span className="text-[10px] font-normal normal-case tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+                  <span className="flex-1 text-left">
+                    {categoryName(c.name)}
+                  </span>
+                  <span className="text-[10px] font-normal tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
                     {c.tools.length}
                   </span>
                 </button>
                 {open ? (
                   <ul className="space-y-0.5">
-                    {c.tools.map((t) => {
-                      const active = pathname === `/tools/${t.id}`;
+                    {c.tools.map((tool) => {
+                      const active = pathname === `/tools/${tool.id}`;
                       return (
-                        <li key={t.id}>
+                        <li key={tool.id}>
                           <Link
-                            href={`/tools/${t.id}`}
+                            href={`/tools/${tool.id}`}
                             className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
                               active
                                 ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
                                 : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800/60"
                             }`}
                           >
-                            <BadgeTile tool={t} active={active} />
-                            {t.name}
+                            <BadgeTile tool={tool} active={active} />
+                            {toolName(tool)}
                           </Link>
                         </li>
                       );
@@ -159,21 +161,21 @@ export default function Sidebar() {
                   </ul>
                 ) : (
                   <div className="flex flex-wrap gap-1 px-2 pb-1.5">
-                    {c.tools.map((t) => {
-                      const active = pathname === `/tools/${t.id}`;
+                    {c.tools.map((tool) => {
+                      const active = pathname === `/tools/${tool.id}`;
                       return (
                         <Link
-                          key={t.id}
-                          href={`/tools/${t.id}`}
-                          title={t.name}
-                          aria-label={t.name}
+                          key={tool.id}
+                          href={`/tools/${tool.id}`}
+                          title={toolName(tool)}
+                          aria-label={toolName(tool)}
                           className={`rounded transition-transform hover:-translate-y-px ${
                             active
                               ? "ring-1 ring-neutral-400 dark:ring-neutral-500"
                               : ""
                           }`}
                         >
-                          <BadgeTile tool={t} active={active} />
+                          <BadgeTile tool={tool} active={active} />
                         </Link>
                       );
                     })}
@@ -184,7 +186,7 @@ export default function Sidebar() {
           })}
           {categories.length === 0 && (
             <p className="px-2 py-4 text-center text-xs text-neutral-400">
-              No matching tools
+              {t.noMatchingTools}
             </p>
           )}
         </nav>
