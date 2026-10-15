@@ -1,0 +1,26 @@
+export const strings = {
+  en: {
+    regenerate: "Regenerate",
+    regenerateHint: "Generate a new password",
+    length: "Length",
+    noAmbiguous: "No ambiguous",
+    requireEach: "Require each",
+    entropy: "~{bits} bits entropy",
+    weak: "Weak",
+    fair: "Fair",
+    strong: "Strong",
+    veryStrong: "Very strong",
+  },
+  zh: {
+    regenerate: "重新生成",
+    regenerateHint: "生成新密码",
+    length: "长度",
+    noAmbiguous: "排除易混字符",
+    requireEach: "每类至少一个",
+    entropy: "约 {bits} 位熵",
+    weak: "弱",
+    fair: "一般",
+    strong: "强",
+    veryStrong: "很强",
+  },
+};

@@ -5,13 +5,6 @@
 
 export type EcLevel = "L" | "M" | "Q" | "H";
 
-export const EC_LEVELS: { value: EcLevel; label: string }[] = [
-  { value: "L", label: "L · 7%" },
-  { value: "M", label: "M · 15%" },
-  { value: "Q", label: "Q · 25%" },
-  { value: "H", label: "H · 30%" },
-];
-
 const LEVEL_INDEX: Record<EcLevel, number> = { L: 0, M: 1, Q: 2, H: 3 };
 
 /** Total codewords (data + error correction) per version, index = version. */

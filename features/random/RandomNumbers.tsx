@@ -1,26 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, Panel, Segmented, StatusLine, ToolButton, editorClass, useStoredState } from "@/components/kit";
+import {
+  CopyButton,
+  Panel,
+  Segmented,
+  StatusLine,
+  ToolButton,
+  editorClass,
+  useStoredState,
+} from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { randomFloats, randomInts } from "./format";
+import { strings } from "./locale";
 
 type Kind = "integers" | "decimals";
 
-const kindOptions: { value: Kind; label: string }[] = [
-  { value: "integers", label: "Integers" },
-  { value: "decimals", label: "Decimals" },
-];
-
-const PRESETS: { label: string; kind: Kind; min: number; max: number; count: number }[] = [
-  { label: "Coin flip", kind: "integers", min: 1, max: 2, count: 1 },
-  { label: "Six-sided die", kind: "integers", min: 1, max: 6, count: 1 },
-  { label: "Two dice", kind: "integers", min: 1, max: 6, count: 2 },
-  { label: "D20 roll", kind: "integers", min: 1, max: 20, count: 1 },
-  { label: "Lotto 6 of 49", kind: "integers", min: 1, max: 49, count: 6 },
-  { label: "Random percentage", kind: "decimals", min: 0, max: 100, count: 1 },
-];
+type PresetId = "coin" | "die" | "dice" | "d20" | "lotto" | "percent";
 
 export default function RandomNumbers() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [kind, setKind] = useStoredState<Kind>("random.kind", "integers");
   const [min, setMin] = useStoredState<number>("random.min", 1);
   const [max, setMax] = useStoredState<number>("random.max", 100);
@@ -30,6 +30,55 @@ export default function RandomNumbers() {
   const [sort, setSort] = useStoredState<boolean>("random.sort", false);
   const [draw, setDraw] = useState(0);
 
+  const kindOptions: { value: Kind; label: string }[] = [
+    { value: "integers", label: L.integers },
+    { value: "decimals", label: L.decimals },
+  ];
+
+  const presets: {
+    id: PresetId;
+    label: string;
+    kind: Kind;
+    min: number;
+    max: number;
+    count: number;
+  }[] = [
+    {
+      id: "coin",
+      label: L.coinFlip,
+      kind: "integers",
+      min: 1,
+      max: 2,
+      count: 1,
+    },
+    { id: "die", label: L.die, kind: "integers", min: 1, max: 6, count: 1 },
+    {
+      id: "dice",
+      label: L.twoDice,
+      kind: "integers",
+      min: 1,
+      max: 6,
+      count: 2,
+    },
+    { id: "d20", label: L.d20, kind: "integers", min: 1, max: 20, count: 1 },
+    {
+      id: "lotto",
+      label: L.lotto,
+      kind: "integers",
+      min: 1,
+      max: 49,
+      count: 6,
+    },
+    {
+      id: "percent",
+      label: L.percentage,
+      kind: "decimals",
+      min: 0,
+      max: 100,
+      count: 1,
+    },
+  ];
+
   const { output, error } = useMemo(() => {
     try {
       const values =
@@ -38,13 +87,21 @@ export default function RandomNumbers() {
           : randomFloats({ min, max, count, decimals });
       return { output: values.join("\n"), error: null as string | null };
     } catch (err) {
-      return { output: "", error: err instanceof Error ? err.message : String(err) };
+      return {
+        output: "",
+        // Validation messages from the engine stay in English.
+        error: err instanceof Error ? err.message : String(err),
+      };
     }
     // draw is a nonce: bumping it re-rolls without changing any option
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, min, max, count, decimals, unique, sort, draw]);
 
-  const numberField = (label: string, value: number, set: (n: number) => void) => (
+  const numberField = (
+    label: string,
+    value: number,
+    set: (n: number) => void,
+  ) => (
     <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
       {label}
       <input
@@ -59,11 +116,17 @@ export default function RandomNumbers() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <Segmented value={kind} options={kindOptions} onChange={setKind} ariaLabel="Number type" />
-        {numberField("From", min, setMin)}
-        {numberField("To", max, setMax)}
-        {numberField("How many", count, setCount)}
-        {kind === "decimals" && numberField("Decimals", decimals, setDecimals)}
+        <Segmented
+          value={kind}
+          options={kindOptions}
+          onChange={setKind}
+          ariaLabel={L.numberType}
+        />
+        {numberField(L.from, min, setMin)}
+        {numberField(L.to, max, setMax)}
+        {numberField(L.howMany, count, setCount)}
+        {kind === "decimals" &&
+          numberField(L.decimalPlaces, decimals, setDecimals)}
         {kind === "integers" && (
           <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
             <input
@@ -71,7 +134,7 @@ export default function RandomNumbers() {
               checked={unique}
               onChange={(e) => setUnique(e.target.checked)}
             />
-            No repeats
+            {L.noRepeats}
           </label>
         )}
         {kind === "integers" && (
@@ -81,24 +144,26 @@ export default function RandomNumbers() {
               checked={sort}
               onChange={(e) => setSort(e.target.checked)}
             />
-            Sort
+            {L.sort}
           </label>
         )}
-        <ToolButton onClick={() => setDraw((d) => d + 1)}>Draw again</ToolButton>
+        <ToolButton onClick={() => setDraw((d) => d + 1)}>
+          {L.drawAgain}
+        </ToolButton>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
-        <Panel title="Presets">
+        <Panel title={L.presets}>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-3">
-            {PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <ToolButton
-                key={preset.label}
+                key={preset.id}
                 onClick={() => {
                   setKind(preset.kind);
                   setMin(preset.min);
                   setMax(preset.max);
                   setCount(preset.count);
-                  if (preset.label === "Lotto 6 of 49") {
+                  if (preset.id === "lotto") {
                     setUnique(true);
                     setSort(true);
                   }
@@ -109,13 +174,14 @@ export default function RandomNumbers() {
               </ToolButton>
             ))}
             <p className="mt-1 text-xs text-neutral-400">
-              Values come from <span className="font-mono">crypto.getRandomValues</span>, drawn in
-              your browser.
+              {L.noteBefore}{" "}
+              <span className="font-mono">crypto.getRandomValues</span>
+              {L.noteAfter}
             </p>
           </div>
         </Panel>
         <Panel
-          title="Numbers"
+          title={L.numbers}
           actions={
             <>
               <CopyButton getText={() => output} />
@@ -126,7 +192,7 @@ export default function RandomNumbers() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder="Numbers"
+            placeholder={L.numbers}
             value={output}
           />
         </Panel>
@@ -134,7 +200,11 @@ export default function RandomNumbers() {
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}
-        info={output ? `${output.split("\n").length} values from ${min} to ${max}` : "Ready"}
+        info={
+          output
+            ? fill(L.stats, { count: output.split("\n").length, min, max })
+            : t.ready
+        }
       />
     </div>
   );

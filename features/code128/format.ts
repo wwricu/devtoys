@@ -413,18 +413,28 @@ export function renderSvg(
   ].join("");
 }
 
-/** Human readable summary of which code sets the encoder settled on */
-export function codesetSummary(result: Code128Result): string {
+export interface CodesetSummary {
+  /** Code sets carrying data symbols, in A/B/C order */
+  sets: CodeSet[];
+  symbols: number;
+  checksum: number;
+  switches: number;
+}
+
+/** Which code sets the encoder settled on; the sentence is composed in the UI */
+export function codesetSummary(result: Code128Result): CodesetSummary {
   const used = new Set<CodeSet>();
   let switches = 0;
   for (const symbol of result.symbols) {
     if (symbol.role === "switch") switches++;
     else if (symbol.role === "data") used.add(symbol.codeset);
   }
-  const sets = (["A", "B", "C"] as CodeSet[]).filter((set) => used.has(set));
-  return `${sets.join("/")} · ${result.symbols.length} symbols · check digit ${result.checksum}${
-    switches ? ` · ${switches} code set switch${switches > 1 ? "es" : ""}` : ""
-  }`;
+  return {
+    sets: (["A", "B", "C"] as CodeSet[]).filter((set) => used.has(set)),
+    symbols: result.symbols.length,
+    checksum: result.checksum,
+    switches,
+  };
 }
 
 export function describe(result: Code128Result): string {

@@ -28,9 +28,12 @@ export function computeStats(text: string): TextStats {
     .map(([word, count]) => ({ word, count }));
 
   const trimmed = text.trim();
-  const sentences = trimmed === "" ? 0 : (trimmed.match(/[.!?]+(\s|$)/g) ?? []).length;
+  const sentences =
+    trimmed === "" ? 0 : (trimmed.match(/[.!?]+(\s|$)/g) ?? []).length;
   const paragraphs =
-    trimmed === "" ? 0 : trimmed.split(/\n\s*\n/).filter((p) => p.trim() !== "").length;
+    trimmed === ""
+      ? 0
+      : trimmed.split(/\n\s*\n/).filter((p) => p.trim() !== "").length;
   const lines = text === "" ? 0 : text.split(/\r?\n/).length;
   const longest = words.reduce((a, b) => (b.length > a.length ? b : a), "");
   const chars = [...text].length;
@@ -45,7 +48,10 @@ export function computeStats(text: string): TextStats {
     paragraphs,
     lines,
     bytes: new TextEncoder().encode(text).length,
-    avgWordLength: words.length === 0 ? 0 : Math.round((totalWordLength / words.length) * 10) / 10,
+    avgWordLength:
+      words.length === 0
+        ? 0
+        : Math.round((totalWordLength / words.length) * 10) / 10,
     longestWord: longest,
     readingSeconds: Math.round((words.length / 200) * 60),
     speakingSeconds: Math.round((words.length / 130) * 60),
@@ -53,9 +59,11 @@ export function computeStats(text: string): TextStats {
   };
 }
 
-export function duration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return s === 0 ? `${m}m` : `${m}m ${s}s`;
+/** Split a duration for the status cards; the sentence is composed in the UI. */
+export function duration(seconds: number): {
+  minutes: number;
+  seconds: number;
+} {
+  if (seconds < 60) return { minutes: 0, seconds };
+  return { minutes: Math.floor(seconds / 60), seconds: seconds % 60 };
 }

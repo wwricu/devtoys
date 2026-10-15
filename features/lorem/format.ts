@@ -97,7 +97,12 @@ export function generateLorem(options: LoremOptions): string {
 }
 
 /** Word and character counts for the status line */
-export function loremStats(text: string): string {
-  const words = (text.match(/\S+/g) ?? []).length;
-  return `${words} words · ${text.length} characters`;
+export function loremStats(text: string): {
+  words: number;
+  characters: number;
+} {
+  return {
+    words: (text.match(/\S+/g) ?? []).length,
+    characters: text.length,
+  };
 }

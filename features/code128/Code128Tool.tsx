@@ -10,6 +10,7 @@ import {
   editorClass,
   useStoredState,
 } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import {
   codesetSummary,
   defaultSvgOptions,
@@ -17,26 +18,7 @@ import {
   renderSvg,
   type SvgOptions,
 } from "./format";
-
-const HEIGHTS: { value: string; label: string }[] = [
-  { value: "40", label: "S" },
-  { value: "60", label: "M" },
-  { value: "90", label: "L" },
-  { value: "130", label: "XL" },
-];
-
-const MODULES: { value: string; label: string }[] = [
-  { value: "1", label: "1 px" },
-  { value: "2", label: "2 px" },
-  { value: "3", label: "3 px" },
-  { value: "4", label: "4 px" },
-];
-
-const QUIET_ZONES: { value: string; label: string }[] = [
-  { value: "0", label: "No margin" },
-  { value: "10", label: "10 modules" },
-  { value: "20", label: "20 modules" },
-];
+import { strings } from "./locale";
 
 const SAMPLES = ["ORDER-2026-000123", "1234567890", "SN:9f-2c"];
 
@@ -50,11 +32,34 @@ function saveBlob(blob: Blob, name: string): void {
 }
 
 export default function Code128Tool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [input, setInput] = useState("ORDER-2026-000123");
   const [height, setHeight] = useStoredState<string>("c128.height", "60");
   const [module, setModule] = useStoredState<string>("c128.module", "2");
   const [quiet, setQuiet] = useStoredState<string>("c128.quiet", "10");
   const [showText, setShowText] = useStoredState<boolean>("c128.text", true);
+
+  // Sizes are unit notation, so those labels read the same in both languages.
+  const heights: { value: string; label: string }[] = [
+    { value: "40", label: "S" },
+    { value: "60", label: "M" },
+    { value: "90", label: "L" },
+    { value: "130", label: "XL" },
+  ];
+
+  const modules: { value: string; label: string }[] = [
+    { value: "1", label: "1 px" },
+    { value: "2", label: "2 px" },
+    { value: "3", label: "3 px" },
+    { value: "4", label: "4 px" },
+  ];
+
+  const quietZones: { value: string; label: string }[] = [
+    { value: "0", label: L.noMargin },
+    { value: "10", label: L.modules10 },
+    { value: "20", label: L.modules20 },
+  ];
 
   const result = encodeCode128(input);
   const options: SvgOptions = {
@@ -103,26 +108,28 @@ export default function Code128Tool() {
       saveBlob(new Blob([markup], { type: "image/svg+xml" }), "code128.svg");
   };
 
+  const summary = codesetSummary(result);
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
           value={module}
-          options={MODULES}
+          options={modules}
           onChange={setModule}
-          ariaLabel="Module width"
+          ariaLabel={L.moduleWidth}
         />
         <Segmented
           value={height}
-          options={HEIGHTS}
+          options={heights}
           onChange={setHeight}
-          ariaLabel="Height"
+          ariaLabel={L.height}
         />
         <Segmented
           value={quiet}
-          options={QUIET_ZONES}
+          options={quietZones}
           onChange={setQuiet}
-          ariaLabel="Quiet zone"
+          ariaLabel={L.quietZone}
         />
         <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
           <input
@@ -130,7 +137,7 @@ export default function Code128Tool() {
             checked={showText}
             onChange={(e) => setShowText(e.target.checked)}
           />
-          Caption
+          {L.caption}
         </label>
         {SAMPLES.map((sample) => (
           <ToolButton
@@ -146,7 +153,7 @@ export default function Code128Tool() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
-        <Panel title="Text" actions={<CopyButton getText={() => input} />}>
+        <Panel title={t.input} actions={<CopyButton getText={() => input} />}>
           <textarea
             className={editorClass}
             spellCheck={false}
@@ -156,18 +163,18 @@ export default function Code128Tool() {
           />
         </Panel>
         <Panel
-          title="Symbol"
+          title={L.symbol}
           className="md:w-[46%]"
           actions={
             <>
               <CopyButton getText={() => markup} />
-              <ToolButton onClick={downloadSvg}>Save SVG</ToolButton>
+              <ToolButton onClick={downloadSvg}>{L.saveSvg}</ToolButton>
             </>
           }
         >
           {result.error ? (
             <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500">
-              The symbol appears here once the text can be encoded.
+              {L.previewHint}
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto bg-white p-3">
@@ -187,8 +194,18 @@ export default function Code128Tool() {
         }
         info={
           result.error
-            ? "Code 128 covers the ASCII range 0-127"
-            : `${codesetSummary(result)} · drawn in this tab`
+            ? L.asciiRange
+            : `${fill(L.stats, {
+                sets: summary.sets.join("/"),
+                symbols: summary.symbols,
+                checksum: summary.checksum,
+              })}${
+                summary.switches > 0
+                  ? fill(summary.switches === 1 ? L.switchOne : L.switchMany, {
+                      count: summary.switches,
+                    })
+                  : ""
+              } · ${L.localNote}`
         }
       />
     </div>

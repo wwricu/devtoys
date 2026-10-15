@@ -10,20 +10,13 @@ import {
   editorClass,
   useStoredState,
 } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import { generateLorem, loremStats, type LoremUnit } from "./format";
-
-const UNITS: { value: LoremUnit; label: string }[] = [
-  { value: "words", label: "Words" },
-  { value: "sentences", label: "Sentences" },
-  { value: "paragraphs", label: "Paragraphs" },
-];
-
-const YES_NO: { value: "yes" | "no"; label: string }[] = [
-  { value: "yes", label: "yes" },
-  { value: "no", label: "no" },
-];
+import { strings } from "./locale";
 
 export default function LoremTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [unit, setUnit] = useStoredState<LoremUnit>("lorem.unit", "paragraphs");
   const [count, setCount] = useStoredState<string>("lorem.count", "3");
   const [html, setHtml] = useStoredState<"yes" | "no">("lorem.html", "no");
@@ -39,6 +32,19 @@ export default function LoremTool() {
       traditional: true,
     }),
   );
+
+  // The filler itself always comes from the Latin word bank; only these
+  // control labels follow the UI language.
+  const units: { value: LoremUnit; label: string }[] = [
+    { value: "words", label: L.words },
+    { value: "sentences", label: L.sentences },
+    { value: "paragraphs", label: L.paragraphs },
+  ];
+
+  const yesNo: { value: "yes" | "no"; label: string }[] = [
+    { value: "yes", label: L.yes },
+    { value: "no", label: L.no },
+  ];
 
   const run = () => {
     setOutput(
@@ -56,12 +62,12 @@ export default function LoremTool() {
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
           value={unit}
-          options={UNITS}
+          options={units}
           onChange={setUnit}
-          ariaLabel="Unit"
+          ariaLabel={L.unit}
         />
         <label className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-300">
-          Count
+          {L.count}
           <input
             type="number"
             min={1}
@@ -72,30 +78,30 @@ export default function LoremTool() {
           />
         </label>
         <span className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-300">
-          HTML
+          {L.html}
           <Segmented
             value={html}
-            options={YES_NO}
+            options={yesNo}
             onChange={setHtml}
-            ariaLabel="HTML markup"
+            ariaLabel={L.htmlMarkup}
           />
         </span>
         <span className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-300">
-          Classic opener
+          {L.classicOpener}
           <Segmented
             value={traditional}
-            options={YES_NO}
+            options={yesNo}
             onChange={setTraditional}
-            ariaLabel="Classic opener"
+            ariaLabel={L.classicOpener}
           />
         </span>
-        <ToolButton onClick={run}>Generate</ToolButton>
-        <ToolButton onClick={() => setOutput("")}>Clear</ToolButton>
+        <ToolButton onClick={run}>{L.generate}</ToolButton>
+        <ToolButton onClick={() => setOutput("")}>{t.clear}</ToolButton>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title="Filler text"
+          title={L.filler}
           className="flex-1"
           actions={<CopyButton getText={() => output} />}
         >
@@ -107,7 +113,7 @@ export default function LoremTool() {
           />
         </Panel>
         {html === "yes" && (
-          <Panel title="Preview" className="md:w-[38%]">
+          <Panel title={L.preview} className="md:w-[38%]">
             <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3 text-sm leading-relaxed text-neutral-800 dark:text-neutral-100">
               {output
                 .split(/\n\n+/)
@@ -122,9 +128,7 @@ export default function LoremTool() {
       </div>
 
       <StatusLine
-        info={
-          output === "" ? "Nothing runs outside this tab" : loremStats(output)
-        }
+        info={output === "" ? L.runsLocally : fill(L.stats, loremStats(output))}
       />
     </div>
   );

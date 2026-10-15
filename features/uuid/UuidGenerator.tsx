@@ -1,43 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   CopyButton,
   Segmented,
   ToolButton,
   useStoredState,
 } from "@/components/kit";
-import { generateUuids, type UuidOptions } from "./format";
-
-const versionOptions: { value: "1" | "4"; label: string }[] = [
-  { value: "4", label: "v4 (random)" },
-  { value: "1", label: "v1 (time)" },
-];
+import { useLang, useText } from "@/lib/i18n";
+import { generateUuids } from "./format";
+import { strings } from "./locale";
 
 export default function UuidGenerator() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [version, setVersion] = useStoredState<"1" | "4">("uuid.version", "4");
   const [count, setCount] = useStoredState<number>("uuid.count", 5);
   const [uppercase, setUppercase] = useStoredState<boolean>(
     "uuid.upper",
-    false
+    false,
   );
-  const [noDashes, setNoDashes] = useStoredState<boolean>(
-    "uuid.dashes",
-    false
-  );
-  const [list, setList] = useState<string[]>([]);
+  const [noDashes, setNoDashes] = useStoredState<boolean>("uuid.dashes", false);
+  // Generated once on mount, exactly like the previous effect did; the tool
+  // chunk is client-only (dynamic ssr:false), so the random ids never hydrate.
+  const buildList = () =>
+    generateUuids({
+      version: Number(version) as 1 | 4,
+      count: Math.min(500, Math.max(1, count)),
+      uppercase,
+      noDashes,
+    });
 
-  const gen = () =>
-    setList(
-      generateUuids({
-        version: Number(version) as 1 | 4,
-        count: Math.min(500, Math.max(1, count)),
-        uppercase,
-        noDashes,
-      })
-    );
+  const [list, setList] = useState<string[]>(buildList);
 
-  useEffect(gen, []);
+  const versionOptions: { value: "1" | "4"; label: string }[] = [
+    { value: "4", label: L.v4 },
+    { value: "1", label: L.v1 },
+  ];
 
   const all = list.join("\n");
 
@@ -45,13 +44,13 @@ export default function UuidGenerator() {
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
-          ariaLabel="Version"
+          ariaLabel={L.version}
           value={version}
           options={versionOptions}
           onChange={setVersion}
         />
         <label className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-          Count
+          {L.count}
           <input
             type="number"
             min={1}
@@ -68,7 +67,7 @@ export default function UuidGenerator() {
             onChange={(e) => setUppercase(e.target.checked)}
             className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
           />
-          Uppercase
+          {L.uppercase}
         </label>
         <label className="flex cursor-pointer items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
           <input
@@ -77,15 +76,22 @@ export default function UuidGenerator() {
             onChange={(e) => setNoDashes(e.target.checked)}
             className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
           />
-          No dashes
+          {L.noDashes}
         </label>
-        <ToolButton onClick={gen}>Regenerate</ToolButton>
+        <ToolButton onClick={() => setList(buildList())}>
+          {L.regenerate}
+        </ToolButton>
         <CopyButton getText={() => all} />
       </div>
-      <div className="flex flex-col rounded border border-neutral-200 dark:border-neutral-800">
+      <div
+        role="list"
+        aria-label={t.result}
+        className="flex flex-col rounded border border-neutral-200 dark:border-neutral-800"
+      >
         {list.map((u, i) => (
           <div
             key={i}
+            role="listitem"
             className="flex items-center justify-between gap-2 border-b border-neutral-100 px-2 py-1 last:border-0 dark:border-neutral-800"
           >
             <span className="font-mono text-xs">{u}</span>
