@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getCategories, tools, type ToolDefinition } from "@/lib/tools";
 import { useStoredState } from "@/components/kit";
-import { useLang } from "@/lib/i18n";
+import { fill, useLang } from "@/lib/i18n";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -124,20 +124,31 @@ export default function Sidebar() {
             const open = searching || collapsed[c.name] !== true;
             return (
               <div key={c.name} className="mb-1">
-                <button
-                  type="button"
-                  onClick={() => toggle(c.name)}
-                  aria-expanded={open}
-                  className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
-                >
-                  <Chevron open={open} />
-                  <span className="flex-1 text-left">
-                    {categoryName(c.name)}
-                  </span>
-                  <span className="text-[10px] font-normal tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
-                    {c.tools.length}
-                  </span>
-                </button>
+                <div className="flex items-center gap-1 rounded pr-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60">
+                  <button
+                    type="button"
+                    onClick={() => toggle(c.name)}
+                    aria-expanded={open}
+                    aria-label={fill(
+                      open ? t.collapseCategory : t.expandCategory,
+                      { name: categoryName(c.name) },
+                    )}
+                    className="flex size-6 shrink-0 items-center justify-center rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                  >
+                    <Chevron open={open} />
+                  </button>
+                  <Link
+                    href={`/?category=${encodeURIComponent(c.name)}`}
+                    className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  >
+                    <span className="flex-1 truncate">
+                      {categoryName(c.name)}
+                    </span>
+                    <span className="text-[10px] font-normal tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+                      {c.tools.length}
+                    </span>
+                  </Link>
+                </div>
                 {open ? (
                   <ul className="space-y-0.5">
                     {c.tools.map((tool) => {

@@ -1,7 +1,25 @@
 "use client";
 
-import { Segmented } from "@/components/kit";
-import { repoUrl, useLang, type Lang } from "@/lib/i18n";
+import { repoUrl, useLang } from "@/lib/i18n";
+
+const iconClass =
+  "flex h-7 items-center gap-1 rounded px-1.5 text-[11px] text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white";
+
+function GlobeMark() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className="size-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+    >
+      <circle cx="8" cy="8" r="6.5" />
+      <path d="M1.5 8h13M8 1.5c3 3.6 3 9.4 0 13-3-3.6-3-9.4 0-13Z" />
+    </svg>
+  );
+}
 
 function GitHubMark() {
   return (
@@ -17,18 +35,21 @@ function GitHubMark() {
 
 export default function HeaderBar() {
   const { lang, setLang, t } = useLang();
+  const next = lang === "en" ? "zh" : "en";
+  const nextLabel = lang === "en" ? t.chinese : t.english;
 
   return (
-    <header className="flex shrink-0 items-center justify-end gap-2 border-b border-neutral-200 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-900">
-      <Segmented<Lang>
-        value={lang}
-        ariaLabel={t.languageLabel}
-        options={[
-          { value: "en", label: t.english },
-          { value: "zh", label: t.chinese },
-        ]}
-        onChange={setLang}
-      />
+    <header className="flex shrink-0 items-center justify-end gap-1 border-b border-neutral-200 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-900">
+      <button
+        type="button"
+        onClick={() => setLang(next)}
+        aria-label={t.languageLabel}
+        title={`${t.switchTo} · ${nextLabel}`}
+        className={iconClass}
+      >
+        <GlobeMark />
+        <span className="tabular-nums">{nextLabel}</span>
+      </button>
       <a
         href={repoUrl}
         target="_blank"

@@ -21,7 +21,11 @@ const shell = {
     search: "Search tools",
     noMatchingTools: "No matching tools",
     languageLabel: "Language",
+    switchTo: "Switch language",
     repositoryLabel: "Dev Toys on GitHub",
+    allCategories: "All categories",
+    expandCategory: "Expand {name}",
+    collapseCategory: "Collapse {name}",
     homeIntro:
       "A collection of everyday developer tools, all running locally in your browser. Nothing is uploaded.",
     english: "EN",
@@ -49,7 +53,11 @@ const shell = {
     search: "搜索工具",
     noMatchingTools: "没有匹配的工具",
     languageLabel: "语言",
+    switchTo: "切换语言",
     repositoryLabel: "在 GitHub 查看源码",
+    allCategories: "全部分类",
+    expandCategory: "展开 {name}",
+    collapseCategory: "收起 {name}",
     homeIntro:
       "常用开发者工具合集，全部在你自己的浏览器里运行，不会上传任何数据。",
     english: "EN",
