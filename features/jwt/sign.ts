@@ -26,7 +26,11 @@ function b64urlToBytes(part: string): Uint8Array {
   return out;
 }
 
-async function hmac(alg: HmacAlg, secret: string, data: string): Promise<Uint8Array> {
+async function hmac(
+  alg: HmacAlg,
+  secret: string,
+  data: string,
+): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -34,7 +38,11 @@ async function hmac(alg: HmacAlg, secret: string, data: string): Promise<Uint8Ar
     false,
     ["sign"],
   );
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(data),
+  );
   return new Uint8Array(sig);
 }
 
@@ -66,42 +74,70 @@ export async function signJwt(opts: SignOptions): Promise<string> {
   return `${data}.${bytesToB64url(sig)}`;
 }
 
+/** Which check produced the verdict; the UI turns this into a sentence. */
+export type VerifyCode =
+  "segments" | "header" | "unsupported-alg" | "matches" | "mismatch";
+
 export interface VerifyResult {
   verified: boolean;
-  message: string;
+  code: VerifyCode;
   alg: string | null;
+  /** Algorithm named in the token header, only set for `unsupported-alg` */
+  reportedAlg: string | null;
 }
 
-export async function verifyJwt(token: string, secret: string): Promise<VerifyResult> {
+export async function verifyJwt(
+  token: string,
+  secret: string,
+): Promise<VerifyResult> {
   const trimmed = token.trim().replace(/^Bearer\s+/i, "");
   const parts = trimmed.split(".");
   if (parts.length !== 3)
-    return { verified: false, message: "Expected three dot-separated segments", alg: null };
+    return {
+      verified: false,
+      code: "segments",
+      alg: null,
+      reportedAlg: null,
+    };
 
   let alg: unknown;
   try {
-    const header = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])));
+    const header = JSON.parse(
+      new TextDecoder().decode(b64urlToBytes(parts[0])),
+    );
     alg = header.alg;
   } catch {
-    return { verified: false, message: "Header is not valid Base64URL JSON", alg: null };
+    return {
+      verified: false,
+      code: "header",
+      alg: null,
+      reportedAlg: null,
+    };
   }
 
   if (typeof alg !== "string" || !(alg in ALG_HASH))
     return {
       verified: false,
-      message: `Only HS256/HS384/HS512 can be verified here (token says ${String(alg)})`,
+      code: "unsupported-alg",
       alg: typeof alg === "string" ? alg : null,
+      reportedAlg: String(alg),
     };
 
-  const expected = await hmac(alg as HmacAlg, secret, `${parts[0]}.${parts[1]}`);
+  const expected = await hmac(
+    alg as HmacAlg,
+    secret,
+    `${parts[0]}.${parts[1]}`,
+  );
   const actual = b64urlToBytes(parts[2]);
   let diff = expected.length ^ actual.length;
   const len = Math.min(expected.length, actual.length);
   for (let i = 0; i < len; i++) diff |= expected[i] ^ actual[i];
+  const verified = diff === 0 && expected.length === actual.length;
   return {
-    verified: diff === 0 && expected.length === actual.length,
-    message: diff === 0 && expected.length === actual.length ? "Signature matches" : "Signature does not match",
+    verified,
+    code: verified ? "matches" : "mismatch",
     alg,
+    reportedAlg: null,
   };
 }
 

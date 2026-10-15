@@ -94,8 +94,3 @@ export async function decrypt(
   }
   return fromBytes(new Uint8Array(plain));
 }
-
-export const ALGORITHMS: { value: AesAlgorithm; label: string }[] = [
-  { value: "A256GCM", label: "AES-256-GCM" },
-  { value: "A128GCM", label: "AES-128-GCM" },
-];

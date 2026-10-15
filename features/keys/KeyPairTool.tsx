@@ -10,6 +10,7 @@ import {
   editorClass,
   useStoredState,
 } from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
 import {
   curveNames,
   generateKeyPair,
@@ -19,19 +20,22 @@ import {
   verifyText,
   type KeyAlgorithm,
 } from "./format";
+import { strings } from "./locale";
 
-const algorithmOptions: { value: KeyAlgorithm; label: string }[] = [
-  { value: "RSA", label: "RSA" },
-  { value: "EC", label: "ECDSA" },
-];
-
-const optionsFor = (algorithm: KeyAlgorithm) =>
-  (algorithm === "RSA" ? rsaModuli.map(String) : curveNames).map((value) => ({
-    value,
-    label: value,
-  }));
+/** What the last action produced; turned into text only while rendering. */
+type Status =
+  | { kind: "idle" }
+  | { kind: "noPair" }
+  | { kind: "pair"; alg: string; size: string; hash: string }
+  | { kind: "unsigned" }
+  | { kind: "signed"; chars: number }
+  | { kind: "unchecked" }
+  | { kind: "valid" }
+  | { kind: "invalid" };
 
 export default function KeyPairTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [algorithm, setAlgorithm] = useStoredState<KeyAlgorithm>(
     "keys.algorithm",
     "RSA",
@@ -46,11 +50,44 @@ export default function KeyPairTool() {
   } | null>(null);
   const [message, setMessage] = useState("payload to be signed");
   const [signature, setSignature] = useState("");
-  const [status, setStatus] = useState(
-    "Generate a key pair or paste a PEM block",
-  );
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Key type names (RSA / ECDSA) and curve names are language-neutral.
+  const algorithmOptions: { value: KeyAlgorithm; label: string }[] = [
+    { value: "RSA", label: "RSA" },
+    { value: "EC", label: "ECDSA" },
+  ];
+
+  const sizeOptions = (
+    algorithm === "RSA" ? rsaModuli.map(String) : curveNames
+  ).map((value) => ({ value, label: value }));
+
+  const statusText = () => {
+    switch (status.kind) {
+      case "noPair":
+        return L.statusNoPair;
+      case "pair":
+        return fill(L.statusPair, {
+          alg: status.alg,
+          size: status.size,
+          hash: status.hash,
+        });
+      case "unsigned":
+        return L.statusUnsigned;
+      case "signed":
+        return fill(L.statusSigned, { chars: status.chars });
+      case "unchecked":
+        return L.statusUnchecked;
+      case "valid":
+        return L.statusValid;
+      case "invalid":
+        return L.statusInvalid;
+      default:
+        return L.statusIdle;
+    }
+  };
 
   const generate = async () => {
     setBusy(true);
@@ -59,16 +96,19 @@ export default function KeyPairTool() {
     setBusy(false);
     if (read.error) {
       setError(read.error);
-      setStatus("No key pair was produced");
+      setStatus({ kind: "noPair" });
       return;
     }
     setPrivatePem(read.privatePem);
     setPublicPem(read.publicPem);
     setKeyPair({ publicJwk: read.publicJwk, privateJwk: read.privateJwk });
     setSignature("");
-    setStatus(
-      `${algorithm} ${size} pair, signs with ${signatureHash(algorithm, size)}`,
-    );
+    setStatus({
+      kind: "pair",
+      alg: algorithm,
+      size,
+      hash: signatureHash(algorithm, size),
+    });
   };
 
   const sign = async () => {
@@ -78,11 +118,11 @@ export default function KeyPairTool() {
     setBusy(false);
     if (read.error) {
       setError(read.error);
-      setStatus("The message was not signed");
+      setStatus({ kind: "unsigned" });
       return;
     }
     setSignature(read.signature);
-    setStatus(`Signature created, ${read.signature.length} base64 characters`);
+    setStatus({ kind: "signed", chars: read.signature.length });
   };
 
   const verify = async () => {
@@ -98,17 +138,11 @@ export default function KeyPairTool() {
     setBusy(false);
     if (read.error) {
       setError(read.error);
-      setStatus("The signature could not be checked");
+      setStatus({ kind: "unchecked" });
       return;
     }
-    setError(
-      read.ok ? null : "The signature does not verify against this public key",
-    );
-    setStatus(
-      read.ok
-        ? "Signature is valid for this message"
-        : "Signature does not match",
-    );
+    setError(read.ok ? null : L.errorNotVerified);
+    setStatus(read.ok ? { kind: "valid" } : { kind: "invalid" });
   };
 
   const clear = () => {
@@ -118,7 +152,7 @@ export default function KeyPairTool() {
     setSignature("");
     setJwk(false);
     setError(null);
-    setStatus("Generate a key pair or paste a PEM block");
+    setStatus({ kind: "idle" });
   };
 
   return (
@@ -131,34 +165,29 @@ export default function KeyPairTool() {
             setAlgorithm(value);
             setSize(value === "RSA" ? "2048" : "P-256");
           }}
-          ariaLabel="Algorithm"
+          ariaLabel={L.algorithm}
         />
         <Segmented
           value={size}
-          options={optionsFor(algorithm)}
+          options={sizeOptions}
           onChange={setSize}
-          ariaLabel="Key size"
+          ariaLabel={L.keySize}
         />
-        <ToolButton
-          onClick={() => void generate()}
-          title="Create a new pair in this tab"
-        >
-          {busy ? "Working…" : "Generate"}
+        <ToolButton onClick={() => void generate()} title={L.createHint}>
+          {busy ? L.working : L.generate}
         </ToolButton>
         <ToolButton
           onClick={() => setJwk(!jwk)}
-          title={
-            keyPair ? "Switch between PEM and JWK" : "Generate a pair first"
-          }
+          title={keyPair ? L.toggleHint : L.needPairHint}
         >
-          {jwk ? "Show PEM" : "Show JWK"}
+          {jwk ? L.showPem : L.showJwk}
         </ToolButton>
-        <ToolButton onClick={clear}>Clear</ToolButton>
+        <ToolButton onClick={clear}>{t.clear}</ToolButton>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-rows-2 gap-2 md:grid-cols-2 md:grid-rows-2">
         <Panel
-          title="Private key"
+          title={L.privateKey}
           actions={
             <CopyButton
               getText={() => (jwk ? (keyPair?.privateJwk ?? "") : privatePem)}
@@ -183,7 +212,7 @@ export default function KeyPairTool() {
           )}
         </Panel>
         <Panel
-          title="Public key"
+          title={L.publicKey}
           actions={
             <CopyButton
               getText={() => (jwk ? (keyPair?.publicJwk ?? "") : publicPem)}
@@ -207,30 +236,24 @@ export default function KeyPairTool() {
             />
           )}
         </Panel>
-        <Panel title="Message">
+        <Panel title={L.message}>
           <textarea
             className={editorClass}
             spellCheck={false}
-            placeholder="Text to sign"
+            placeholder={L.messageHint}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
         </Panel>
         <Panel
-          title="Signature"
+          title={L.signature}
           actions={
             <>
-              <ToolButton
-                onClick={() => void sign()}
-                title="Sign the message with the private key"
-              >
-                Sign
+              <ToolButton onClick={() => void sign()} title={L.signHint}>
+                {L.sign}
               </ToolButton>
-              <ToolButton
-                onClick={() => void verify()}
-                title="Check the signature against the public key"
-              >
-                Verify
+              <ToolButton onClick={() => void verify()} title={L.verifyHint}>
+                {L.verify}
               </ToolButton>
               <CopyButton getText={() => signature} />
             </>
@@ -240,7 +263,7 @@ export default function KeyPairTool() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder="Base64 signature"
+            placeholder={L.signatureHint}
             value={signature}
           />
         </Panel>
@@ -248,7 +271,7 @@ export default function KeyPairTool() {
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}
-        info={status}
+        info={statusText()}
       />
     </div>
   );

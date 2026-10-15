@@ -1,24 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { CopyButton, Panel, Segmented, StatusLine, ToolButton, editorClass, useStoredState } from "@/components/kit";
-import { ALGORITHMS, decrypt, encrypt, type AesAlgorithm } from "./format";
-
-const modeOptions: { value: Mode; label: string }[] = [
-  { value: "encrypt", label: "Encrypt" },
-  { value: "decrypt", label: "Decrypt" },
-];
+import {
+  CopyButton,
+  Panel,
+  Segmented,
+  StatusLine,
+  ToolButton,
+  editorClass,
+  useStoredState,
+} from "@/components/kit";
+import { fill, useLang, useText } from "@/lib/i18n";
+import { decrypt, encrypt, type AesAlgorithm } from "./format";
+import { strings } from "./locale";
 
 type Mode = "encrypt" | "decrypt";
 
 export default function AesTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [mode, setMode] = useStoredState<Mode>("aes.mode", "encrypt");
-  const [algorithm, setAlgorithm] = useStoredState<AesAlgorithm>("aes.algorithm", "A256GCM");
+  const [algorithm, setAlgorithm] = useStoredState<AesAlgorithm>(
+    "aes.algorithm",
+    "A256GCM",
+  );
   const [secret, setSecret] = useStoredState<string>("aes.key", "");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const modeOptions: { value: Mode; label: string }[] = [
+    { value: "encrypt", label: L.encrypt },
+    { value: "decrypt", label: L.decrypt },
+  ];
+
+  // GCM parameter names are language-neutral, so the labels stay as printed.
+  const algorithmOptions: { value: AesAlgorithm; label: string }[] = [
+    { value: "A256GCM", label: "AES-256-GCM" },
+    { value: "A128GCM", label: "AES-128-GCM" },
+  ];
 
   const run = async () => {
     if (input.trim() === "") {
@@ -45,26 +66,45 @@ export default function AesTool() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <Segmented value={mode} options={modeOptions} onChange={setMode} ariaLabel="Direction" />
-        <Segmented value={algorithm} options={ALGORITHMS} onChange={setAlgorithm} ariaLabel="Algorithm" />
+        <Segmented
+          value={mode}
+          options={modeOptions}
+          onChange={setMode}
+          ariaLabel={L.direction}
+        />
+        <Segmented
+          value={algorithm}
+          options={algorithmOptions}
+          onChange={setAlgorithm}
+          ariaLabel={L.algorithm}
+        />
         <input
           type="password"
           className="w-52 rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none focus:border-emerald-500 dark:border-neutral-700 dark:bg-neutral-800"
-          placeholder="Passphrase"
+          placeholder={L.passphrase}
           autoComplete="off"
           spellCheck={false}
           value={secret}
           onChange={(e) => setSecret(e.target.value)}
         />
-        <ToolButton onClick={run}>{busy ? "Working…" : mode === "encrypt" ? "Encrypt" : "Decrypt"}</ToolButton>
+        <ToolButton onClick={run}>
+          {busy ? L.working : mode === "encrypt" ? L.encrypt : L.decrypt}
+        </ToolButton>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
         <Panel
-          title={mode === "encrypt" ? "Plain text" : "Encrypted payload"}
+          title={mode === "encrypt" ? L.plainText : L.payload}
           actions={
             <>
-              <ToolButton onClick={() => { setInput(""); setOutput(""); }}>Clear</ToolButton>
+              <ToolButton
+                onClick={() => {
+                  setInput("");
+                  setOutput("");
+                }}
+              >
+                {t.clear}
+              </ToolButton>
               <CopyButton getText={() => input} />
             </>
           }
@@ -72,17 +112,20 @@ export default function AesTool() {
           <textarea
             className={editorClass}
             spellCheck={false}
-            placeholder={mode === "encrypt" ? "Text to encrypt…" : "Paste Base64 payload…"}
+            placeholder={mode === "encrypt" ? L.encryptHint : L.payloadHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
         <Panel
-          title={mode === "encrypt" ? "Encrypted payload" : "Plain text"}
+          title={mode === "encrypt" ? L.payload : L.plainText}
           actions={
             <>
-              <ToolButton onClick={() => setInput(output)} title="Move output back into the input">
-                Output to Input
+              <ToolButton
+                onClick={() => setInput(output)}
+                title={t.outputToInputHint}
+              >
+                {t.outputToInput}
               </ToolButton>
               <CopyButton getText={() => output} />
             </>
@@ -92,7 +135,7 @@ export default function AesTool() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder="Result"
+            placeholder={t.result}
             value={output}
           />
         </Panel>
@@ -102,10 +145,10 @@ export default function AesTool() {
         error={error ? { message: error, line: 1, column: 1 } : null}
         info={
           busy
-            ? "Deriving a key with PBKDF2-SHA-256, 150 000 iterations…"
+            ? L.deriving
             : output
-              ? `${algorithm} · salt + IV + tag are inside the Base64 payload`
-              : "Encryption runs in your browser with the Web Crypto API"
+              ? fill(L.payloadNote, { alg: algorithm })
+              : L.localNote
         }
       />
     </div>

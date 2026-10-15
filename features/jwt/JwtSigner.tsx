@@ -1,15 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { CopyButton, Panel, Segmented, ToolButton, editorClass, useStoredState } from "@/components/kit";
-import { HMAC_ALGS, signJwt, verifyJwt, type HmacAlg, type VerifyResult } from "./sign";
+import {
+  CopyButton,
+  Panel,
+  Segmented,
+  ToolButton,
+  editorClass,
+  useStoredState,
+} from "@/components/kit";
+import { fill, useText } from "@/lib/i18n";
+import {
+  HMAC_ALGS,
+  signJwt,
+  verifyJwt,
+  type HmacAlg,
+  type VerifyResult,
+} from "./sign";
+import { strings } from "./locale";
 
 const DEFAULT_HEADER = '{\n  "alg": "HS256",\n  "typ": "JWT"\n}';
-const DEFAULT_PAYLOAD = '{\n  "sub": "1234567890",\n  "name": "Ada",\n  "iat": 1700000000\n}';
-
-const algOptions = HMAC_ALGS.map((a) => ({ value: a, label: a }));
+const DEFAULT_PAYLOAD =
+  '{\n  "sub": "1234567890",\n  "name": "Ada",\n  "iat": 1700000000\n}';
 
 export default function JwtSigner() {
+  const L = useText(strings);
   const [alg, setAlg] = useStoredState<HmacAlg>("jwt.alg", "HS256");
   const [header, setHeader] = useState(DEFAULT_HEADER);
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
@@ -18,6 +33,9 @@ export default function JwtSigner() {
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState("");
   const [result, setResult] = useState<VerifyResult | null>(null);
+
+  // JWA algorithm ids are language-neutral, so the labels stay as printed.
+  const algOptions = HMAC_ALGS.map((a) => ({ value: a, label: a }));
 
   const sign = async () => {
     try {
@@ -35,12 +53,32 @@ export default function JwtSigner() {
     setResult(await verifyJwt(verifying, secret));
   };
 
+  const verdict = (r: VerifyResult) => {
+    switch (r.code) {
+      case "segments":
+        return L.verifySegments;
+      case "header":
+        return L.verifyHeader;
+      case "unsupported-alg":
+        return fill(L.verifyOnlyHmac, { alg: r.reportedAlg ?? "" });
+      case "matches":
+        return L.verifyMatches;
+      default:
+        return L.verifyMismatch;
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-2">
-        <Segmented value={alg} options={algOptions} onChange={setAlg} ariaLabel="Algorithm" />
+        <Segmented
+          value={alg}
+          options={algOptions}
+          onChange={setAlg}
+          ariaLabel={L.algorithm}
+        />
         <label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
-          Secret
+          {L.secret}
           <input
             className="w-56 rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs outline-none dark:border-neutral-700 dark:bg-neutral-800"
             spellCheck={false}
@@ -48,7 +86,7 @@ export default function JwtSigner() {
             onChange={(e) => setSecret(e.target.value)}
           />
         </label>
-        <ToolButton onClick={sign}>Sign</ToolButton>
+        <ToolButton onClick={sign}>{L.sign}</ToolButton>
       </div>
 
       {error && (
@@ -58,7 +96,7 @@ export default function JwtSigner() {
       )}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
-        <Panel title="Header">
+        <Panel title={L.header}>
           <textarea
             className={editorClass}
             spellCheck={false}
@@ -66,7 +104,7 @@ export default function JwtSigner() {
             onChange={(e) => setHeader(e.target.value)}
           />
         </Panel>
-        <Panel title="Payload">
+        <Panel title={L.payload}>
           <textarea
             className={editorClass}
             spellCheck={false}
@@ -76,25 +114,31 @@ export default function JwtSigner() {
         </Panel>
       </div>
 
-      <Panel title="Signed token" actions={token ? <CopyButton getText={() => token} /> : undefined}>
+      <Panel
+        title={L.signedToken}
+        actions={token ? <CopyButton getText={() => token} /> : undefined}
+      >
         <textarea
           className={editorClass + " min-h-16 flex-none"}
           spellCheck={false}
           readOnly
-          placeholder="Press Sign to create a token…"
+          placeholder={L.pressSign}
           value={token}
         />
       </Panel>
 
       <Panel
-        title="Verify"
-        actions={<ToolButton onClick={verify}>Check signature</ToolButton>}
+        title={L.verify}
+        actions={<ToolButton onClick={verify}>{L.checkSignature}</ToolButton>}
       >
         <div className="flex flex-col gap-1 p-2">
           <textarea
-            className={editorClass + " min-h-14 flex-none rounded border border-neutral-200 dark:border-neutral-800"}
+            className={
+              editorClass +
+              " min-h-14 flex-none rounded border border-neutral-200 dark:border-neutral-800"
+            }
             spellCheck={false}
-            placeholder="Paste a token to verify with the same secret…"
+            placeholder={L.verifyHint}
             value={verifying}
             onChange={(e) => setVerifying(e.target.value)}
           />
@@ -107,7 +151,7 @@ export default function JwtSigner() {
               }`}
             >
               {result.alg ? `${result.alg}: ` : ""}
-              {result.message}
+              {verdict(result)}
             </p>
           )}
         </div>

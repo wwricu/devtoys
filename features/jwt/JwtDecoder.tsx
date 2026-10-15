@@ -2,20 +2,25 @@
 
 import { useMemo, useState } from "react";
 import { CopyButton, Panel, ToolButton, editorClass } from "@/components/kit";
+import { useLang, useText } from "@/lib/i18n";
 import { claimDate, decodeJwt, NUMERIC_CLAIMS } from "./format";
+import { strings } from "./locale";
 
-function status(payload: Record<string, unknown> | null): {
-  label: string;
-  tone: "ok" | "warn" | "bad";
-} | null {
+type Expiry = "expired" | "pending" | "active";
+
+function expiryOf(payload: Record<string, unknown> | null): Expiry | null {
   if (!payload) return null;
   const now = Math.floor(Date.now() / 1000);
-  if (typeof payload.exp === "number" && now >= payload.exp)
-    return { label: "Expired", tone: "bad" };
-  if (typeof payload.nbf === "number" && now < payload.nbf)
-    return { label: "Not yet valid", tone: "warn" };
-  return { label: "Active", tone: "ok" };
+  if (typeof payload.exp === "number" && now >= payload.exp) return "expired";
+  if (typeof payload.nbf === "number" && now < payload.nbf) return "pending";
+  return "active";
 }
+
+const toneOf: Record<Expiry, "ok" | "warn" | "bad"> = {
+  active: "ok",
+  pending: "warn",
+  expired: "bad",
+};
 
 const toneClass = {
   ok: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
@@ -24,19 +29,28 @@ const toneClass = {
 };
 
 export default function JwtDecoder() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [input, setInput] = useState("");
   const result = useMemo(() => decodeJwt(input), [input]);
-  const stat = status(result.payload?.data ?? null);
-
   const claims = result.payload?.data;
+  const expiry = expiryOf(claims ?? null);
+  const expiryLabel =
+    expiry === null
+      ? ""
+      : expiry === "expired"
+        ? L.expired
+        : expiry === "pending"
+          ? L.notYetValid
+          : L.active;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <Panel
-        title="Token"
+        title={L.token}
         actions={
           <>
-            <ToolButton onClick={() => setInput("")}>Clear</ToolButton>
+            <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
             <CopyButton getText={() => input} />
           </>
         }
@@ -44,7 +58,7 @@ export default function JwtDecoder() {
         <textarea
           className={editorClass + " min-h-20 flex-none"}
           spellCheck={false}
-          placeholder="Paste a JWT (optionally with the Bearer prefix)…"
+          placeholder={L.pasteToken}
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
@@ -58,26 +72,29 @@ export default function JwtDecoder() {
 
       {claims && (
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-neutral-500">Signature:</span>
+          <span className="text-neutral-500">{L.signatureLabel}</span>
           <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-            not verified (decoding only)
+            {L.notVerified}
           </span>
-          {stat && (
+          {expiry && (
             <span
-              className={`rounded px-1.5 py-0.5 font-medium ${toneClass[stat.tone]}`}
+              className={`rounded px-1.5 py-0.5 font-medium ${toneClass[toneOf[expiry]]}`}
             >
-              {stat.label}
+              {expiryLabel}
             </span>
           )}
         </div>
       )}
 
       {claims && (
-        <Panel title="Registered claims">
+        <Panel title={L.registeredClaims}>
           <table className="w-full text-left text-xs">
             <tbody>
               {NUMERIC_CLAIMS.filter((k) => k in claims).map((k) => (
-                <tr key={k} className="border-b border-neutral-100 dark:border-neutral-800">
+                <tr
+                  key={k}
+                  className="border-b border-neutral-100 dark:border-neutral-800"
+                >
                   <td className="py-1 pr-2 font-mono text-neutral-500">{k}</td>
                   <td className="py-1 pr-2 font-mono">{String(claims[k])}</td>
                   <td className="py-1 text-neutral-500">
@@ -90,7 +107,7 @@ export default function JwtDecoder() {
                 NUMERIC_CLAIMS.filter((k) => k in claims).length === 0 && (
                   <tr>
                     <td className="py-1 text-neutral-400" colSpan={3}>
-                      No exp/nbf/iat claims
+                      {L.noClaims}
                     </td>
                   </tr>
                 )}
@@ -100,22 +117,36 @@ export default function JwtDecoder() {
       )}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
-        <Panel title="Header" actions={result.header?.json ? <CopyButton getText={() => result.header!.json!} /> : undefined}>
+        <Panel
+          title={L.header}
+          actions={
+            result.header?.json ? (
+              <CopyButton getText={() => result.header!.json!} />
+            ) : undefined
+          }
+        >
           <textarea
             className={editorClass}
             spellCheck={false}
             readOnly
             value={result.header?.json ?? ""}
-            placeholder="Header"
+            placeholder={L.header}
           />
         </Panel>
-        <Panel title="Payload" actions={result.payload?.json ? <CopyButton getText={() => result.payload!.json!} /> : undefined}>
+        <Panel
+          title={L.payload}
+          actions={
+            result.payload?.json ? (
+              <CopyButton getText={() => result.payload!.json!} />
+            ) : undefined
+          }
+        >
           <textarea
             className={editorClass}
             spellCheck={false}
             readOnly
             value={result.payload?.json ?? ""}
-            placeholder="Payload"
+            placeholder={L.payload}
           />
         </Panel>
       </div>

@@ -2,19 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { CopyButton, ToolButton, editorClass } from "@/components/kit";
+import { useLang, useText } from "@/lib/i18n";
 import { hashAll, type HashOutput } from "./format";
+import { strings } from "./locale";
 
 export default function HashTool() {
+  const { t } = useLang();
+  const L = useText(strings);
   const [input, setInput] = useState("");
   const [hashes, setHashes] = useState<HashOutput[]>([]);
 
   useEffect(() => {
-    if (input === "") {
-      setHashes([]);
-      return;
-    }
     let alive = true;
     const id = setTimeout(() => {
+      if (input === "") {
+        setHashes([]);
+        return;
+      }
       hashAll(input).then((h) => {
         if (alive) setHashes(h);
       });
@@ -29,9 +33,9 @@ export default function HashTool() {
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <div className="flex items-center gap-2">
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          Input
+          {t.input}
         </span>
-        <ToolButton onClick={() => setInput("")}>Clear</ToolButton>
+        <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
       </div>
       <textarea
         className={
@@ -39,7 +43,7 @@ export default function HashTool() {
           " min-h-24 flex-none rounded border border-neutral-200 dark:border-neutral-800"
         }
         spellCheck={false}
-        placeholder="Text to hash…"
+        placeholder={L.hashHint}
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
@@ -59,7 +63,7 @@ export default function HashTool() {
           </div>
         ))}
         {input !== "" && hashes.length === 0 && (
-          <p className="py-2 text-xs text-neutral-400">Computing…</p>
+          <p className="py-2 text-xs text-neutral-400">{L.computing}</p>
         )}
       </div>
     </div>

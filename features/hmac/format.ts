@@ -1,12 +1,5 @@
 export type Digest = "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
 
-export const DIGESTS: { value: Digest; label: string }[] = [
-  { value: "SHA-1", label: "SHA-1" },
-  { value: "SHA-256", label: "SHA-256" },
-  { value: "SHA-384", label: "SHA-384" },
-  { value: "SHA-512", label: "SHA-512" },
-];
-
 export function toHex(bytes: Uint8Array): string {
   let s = "";
   for (const b of bytes) s += b.toString(16).padStart(2, "0");

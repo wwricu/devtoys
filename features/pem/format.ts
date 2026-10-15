@@ -5,7 +5,8 @@ export { parseDer, derToBytes, type DerNode } from "./der";
 export interface FieldRow {
   label: string;
   value: string;
-  hint?: string;
+  /** whole days left in the validity window; the UI words this sentence */
+  hintDays?: number;
   tone?: "ok" | "warn" | "bad";
 }
 
@@ -493,7 +494,7 @@ function tbsSections(tbs: DerNode): FieldSection[] {
       validityRows.push({
         label: "Status",
         value: "Valid",
-        hint: `${days} day${days === 1 ? "" : "s"} remaining`,
+        hintDays: days,
         tone: "ok",
       });
     }
