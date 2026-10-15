@@ -3,11 +3,55 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getCategories, tools } from "@/lib/tools";
+import { getCategories, tools, type ToolDefinition } from "@/lib/tools";
+import { useStoredState } from "@/components/kit";
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 12 12"
+      aria-hidden="true"
+      className={`size-3 shrink-0 transition-transform ${open ? "rotate-90" : ""}`}
+    >
+      <path
+        d="M4 2.5 8 6 4 9.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BadgeTile({
+  tool,
+  active,
+}: {
+  tool: ToolDefinition;
+  active: boolean;
+}) {
+  return (
+    <span
+      className={`flex size-7 shrink-0 items-center justify-center overflow-hidden rounded border px-0.5 font-mono text-[8px] leading-none ${
+        active
+          ? "border-neutral-400 bg-neutral-200 text-neutral-900 dark:border-neutral-500 dark:bg-neutral-700 dark:text-white"
+          : "border-neutral-200 bg-white text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+      }`}
+    >
+      {tool.badge}
+    </span>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const [collapsed, setCollapsed] = useStoredState<Record<string, boolean>>(
+    "sidebar.collapsed",
+    {},
+  );
 
   const categories = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -17,7 +61,7 @@ export default function Sidebar() {
           (t) =>
             t.name.toLowerCase().includes(q) ||
             t.description.toLowerCase().includes(q) ||
-            t.keywords.some((k) => k.includes(q))
+            t.keywords.some((k) => k.includes(q)),
         );
     return getCategories()
       .map((c) => ({
@@ -26,6 +70,11 @@ export default function Sidebar() {
       }))
       .filter((c) => c.tools.length > 0);
   }, [query]);
+
+  // While filtering, every matched group is revealed so results stay readable.
+  const searching = query.trim() !== "";
+  const toggle = (name: string) =>
+    setCollapsed({ ...collapsed, [name]: !collapsed[name] });
 
   return (
     <>
@@ -52,60 +101,93 @@ export default function Sidebar() {
         ))}
       </div>
       <aside className="hidden w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 md:flex">
-      <Link
-        href="/"
-        className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-800 hover:text-neutral-950 dark:text-neutral-200 dark:hover:text-white"
-      >
-        <span className="inline-block size-5 rounded bg-neutral-800 text-center text-[11px] leading-5 text-white dark:bg-neutral-200 dark:text-neutral-900">
-          D
-        </span>
-        Dev Toys
-      </Link>
-      <div className="px-3 pb-2">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search tools"
-          className="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
-        />
-      </div>
-      <nav className="flex-1 overflow-y-auto px-2 pb-3">
-        {categories.map((c) => (
-          <div key={c.name} className="mb-2">
-            <div className="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-              {c.name}
-            </div>
-            <ul className="space-y-0.5">
-              {c.tools.map((t) => {
-                const active = pathname === `/tools/${t.id}`;
-                return (
-                  <li key={t.id}>
-                    <Link
-                      href={`/tools/${t.id}`}
-                      className={`flex items-center gap-2 rounded px-2 py-1.5 text-xs transition-colors ${
-                        active
-                          ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                          : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800/60"
-                      }`}
-                    >
-                      <span className="w-6 shrink-0 text-center font-mono text-[10px] text-neutral-400 dark:text-neutral-500">
-                        {t.badge}
-                      </span>
-                      {t.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-        {categories.length === 0 && (
-          <p className="px-2 py-4 text-center text-xs text-neutral-400">
-            No matching tools
-          </p>
-        )}
-      </nav>
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-800 hover:text-neutral-950 dark:text-neutral-200 dark:hover:text-white"
+        >
+          <span className="inline-block size-5 rounded bg-neutral-800 text-center text-[11px] leading-5 text-white dark:bg-neutral-200 dark:text-neutral-900">
+            D
+          </span>
+          Dev Toys
+        </Link>
+        <div className="px-3 pb-2">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search tools"
+            className="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
+          />
+        </div>
+        <nav className="flex-1 overflow-y-auto px-2 pb-3">
+          {categories.map((c) => {
+            const open = searching || collapsed[c.name] !== true;
+            return (
+              <div key={c.name} className="mb-1">
+                <button
+                  type="button"
+                  onClick={() => toggle(c.name)}
+                  aria-expanded={open}
+                  className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
+                >
+                  <Chevron open={open} />
+                  <span className="flex-1 text-left">{c.name}</span>
+                  <span className="text-[10px] font-normal normal-case tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+                    {c.tools.length}
+                  </span>
+                </button>
+                {open ? (
+                  <ul className="space-y-0.5">
+                    {c.tools.map((t) => {
+                      const active = pathname === `/tools/${t.id}`;
+                      return (
+                        <li key={t.id}>
+                          <Link
+                            href={`/tools/${t.id}`}
+                            className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
+                              active
+                                ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                                : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800/60"
+                            }`}
+                          >
+                            <BadgeTile tool={t} active={active} />
+                            {t.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="flex flex-wrap gap-1 px-2 pb-1.5">
+                    {c.tools.map((t) => {
+                      const active = pathname === `/tools/${t.id}`;
+                      return (
+                        <Link
+                          key={t.id}
+                          href={`/tools/${t.id}`}
+                          title={t.name}
+                          aria-label={t.name}
+                          className={`rounded transition-transform hover:-translate-y-px ${
+                            active
+                              ? "ring-1 ring-neutral-400 dark:ring-neutral-500"
+                              : ""
+                          }`}
+                        >
+                          <BadgeTile tool={t} active={active} />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {categories.length === 0 && (
+            <p className="px-2 py-4 text-center text-xs text-neutral-400">
+              No matching tools
+            </p>
+          )}
+        </nav>
       </aside>
     </>
   );

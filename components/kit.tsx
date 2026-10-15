@@ -5,27 +5,30 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Persist tool options (localStorage); each tool uses its own key */
 export function useStoredState<T>(key: string, initial: T) {
   const [state, setState] = useState<T>(initial);
-  const loaded = useRef(false);
+  const [ready, setReady] = useState(false);
+  const fallback = useRef(initial);
 
   useEffect(() => {
+    let stored = fallback.current;
     try {
       const raw = localStorage.getItem(`tool:${key}`);
-      if (raw !== null) setState(JSON.parse(raw));
+      if (raw !== null) stored = JSON.parse(raw);
     } catch {
       /* ignore corrupted storage */
     }
-    loaded.current = true;
+    // Set after the value is known so the persist pass never overwrites it.
+    setState(stored);
+    setReady(true);
   }, [key]);
 
   useEffect(() => {
-    if (loaded.current) {
-      try {
-        localStorage.setItem(`tool:${key}`, JSON.stringify(state));
-      } catch {
-        /* silently ignore when storage is unavailable */
-      }
+    if (!ready) return;
+    try {
+      localStorage.setItem(`tool:${key}`, JSON.stringify(state));
+    } catch {
+      /* silently ignore when storage is unavailable */
     }
-  }, [key, state]);
+  }, [ready, key, state]);
 
   return [state, setState] as const;
 }
