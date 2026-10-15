@@ -127,6 +127,86 @@ export function CopyButton({ getText }: { getText: () => string }) {
   );
 }
 
+const MIN_PANEL_HEIGHT = 80;
+
+/** A panel's height comes from flex sizing while it fills the viewport, which
+ *  makes an explicit height meaningless. Releasing the chain to content sizing
+ *  lets a dragged panel grow past the fold and the page scroll instead. */
+function releaseHeightChain(panel: HTMLElement) {
+  for (let el = panel.parentElement; el; el = el.parentElement) {
+    const cs = getComputedStyle(el);
+    if (cs.overflowY === "auto" || cs.overflowY === "scroll") break;
+    if (cs.height !== "auto") el.style.height = "auto";
+    if (cs.flexDirection === "column" && cs.flexGrow !== "0") {
+      el.style.flexGrow = "0";
+      el.style.flexBasis = "auto";
+    }
+  }
+}
+
+function resetHeightChain(panel: HTMLElement) {
+  panel.style.height = "";
+  panel.style.flexGrow = "";
+  panel.style.flexBasis = "";
+  for (let el = panel.parentElement; el; el = el.parentElement) {
+    if (el.style.height === "auto") el.style.height = "";
+    if (el.style.flexGrow === "0") {
+      el.style.flexGrow = "";
+      el.style.flexBasis = "";
+    }
+  }
+}
+
+/** The panel's own bottom edge: dragging it pins a height instead of the
+ *  viewport-derived one. The panel is this element's parent, so nothing needs
+ *  a ref. */
+function ResizeGrip() {
+  const { t } = useLang();
+  const drag = useRef<{ y: number; h: number } | null>(null);
+
+  // In a stacked (narrow) layout the panel grows along the height axis, so the
+  // pinned height needs the growth switched off there only.
+  const begin = (el: HTMLElement) => {
+    releaseHeightChain(el);
+    const parent = el.parentElement;
+    if (parent && getComputedStyle(parent).flexDirection === "column") {
+      el.style.flexGrow = "0";
+      el.style.flexBasis = "auto";
+    }
+  };
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="horizontal"
+      title={t.resizeEditor}
+      onPointerDown={(e) => {
+        const el = e.currentTarget.parentElement;
+        if (!el) return;
+        begin(el);
+        drag.current = { y: e.clientY, h: el.getBoundingClientRect().height };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current;
+        const el = e.currentTarget.parentElement;
+        if (!d || !el) return;
+        el.style.height = `${Math.round(Math.max(MIN_PANEL_HEIGHT, d.h + (e.clientY - d.y)))}px`;
+      }}
+      onPointerUp={() => {
+        drag.current = null;
+      }}
+      onDoubleClick={(e) => {
+        const el = e.currentTarget.parentElement;
+        if (el) resetHeightChain(el);
+      }}
+      className="group flex h-2 shrink-0 cursor-row-resize touch-none items-center justify-center"
+    >
+      <span className="h-px w-6 rounded bg-neutral-200 group-hover:bg-neutral-400 dark:bg-neutral-800 dark:group-hover:bg-neutral-600" />
+    </div>
+  );
+}
+
 export function Panel({
   title,
   actions,
@@ -149,12 +229,20 @@ export function Panel({
         <div className="flex items-center gap-1.5">{actions}</div>
       </header>
       {children}
+      <ResizeGrip />
     </section>
   );
 }
 
-export const editorClass =
-  "min-h-0 flex-1 w-full resize-none bg-transparent p-2 font-mono text-xs leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400 dark:text-neutral-200";
+const editorBase =
+  "w-full bg-transparent p-2 font-mono text-xs leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400 dark:text-neutral-200";
+
+/** Fills its panel; the panel's bottom grip sets the height. */
+export const editorClass = `${editorBase} min-h-0 flex-1 resize-none`;
+
+/** For editors that sit in a scrollable page instead of a panel: content-sized,
+ *  so the browser's own corner handle resizes them. */
+export const flowEditorClass = `${editorBase} flex-none min-h-24 resize-y rounded border border-neutral-200 dark:border-neutral-800`;
 
 export function StatusLine({
   error,

@@ -154,7 +154,7 @@ export default function Sidebar() {
                     </span>
                   </Link>
                 </div>
-                {open ? (
+                {open && (
                   <ul className="space-y-0.5">
                     {c.tools.map((tool) => {
                       const active = pathname === `/tools/${tool.id}`;
@@ -175,27 +175,6 @@ export default function Sidebar() {
                       );
                     })}
                   </ul>
-                ) : (
-                  <div className="flex flex-wrap gap-1 px-2 pb-1.5">
-                    {c.tools.map((tool) => {
-                      const active = pathname === `/tools/${tool.id}`;
-                      return (
-                        <Link
-                          key={tool.id}
-                          href={`/tools/${tool.id}`}
-                          title={toolName(tool)}
-                          aria-label={toolName(tool)}
-                          className={`rounded transition-transform hover:-translate-y-px ${
-                            active
-                              ? "ring-1 ring-neutral-400 dark:ring-neutral-500"
-                              : ""
-                          }`}
-                        >
-                          <BadgeTile tool={tool} active={active} />
-                        </Link>
-                      );
-                    })}
-                  </div>
                 )}
               </div>
             );

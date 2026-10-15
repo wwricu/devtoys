@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CopyButton, ToolButton, editorClass } from "@/components/kit";
+import { CopyButton, ToolButton, flowEditorClass } from "@/components/kit";
 import { useLang, useText } from "@/lib/i18n";
 import { hashAll, type HashOutput } from "./format";
 import { strings } from "./locale";
@@ -38,10 +38,7 @@ export default function HashTool() {
         <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
       </div>
       <textarea
-        className={
-          editorClass +
-          " min-h-24 flex-none rounded border border-neutral-200 dark:border-neutral-800"
-        }
+        className={flowEditorClass}
         spellCheck={false}
         placeholder={L.hashHint}
         value={input}
