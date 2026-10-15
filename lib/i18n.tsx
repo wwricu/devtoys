@@ -383,6 +383,16 @@ export function useLang(): Value {
   return useContext(LangContext);
 }
 
+/** Get current language (safe to call in client components) */
+export function getLang(): Lang {
+  return readLang();
+}
+
+/** Switch language programmatically */
+export function switchLang(lang: Lang) {
+  writeLang(lang);
+}
+
 /**
  * Feature strings live in `features/<tool>/locale.ts`, so each dictionary is
  * bundled inside that tool's lazy chunk instead of the shared first paint.

@@ -9,7 +9,7 @@ import {
   tools,
   type ToolDefinition,
 } from "@/lib/tools";
-import { getFavouritesCategory } from "@/lib/favorites";
+import { useFavourites } from "@/lib/favorites";
 import { useStoredState } from "@/components/kit";
 import { fill, useLang } from "@/lib/i18n";
 
@@ -60,6 +60,7 @@ export default function Sidebar() {
     "sidebar.collapsed",
     {},
   );
+  const { favs } = useFavourites();
 
   const categories = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -69,7 +70,20 @@ export default function Sidebar() {
           toolSearchText(tool).some((text) => text.toLowerCase().includes(q)),
         );
 
-    const favCat = getFavouritesCategory();
+    // Build Favourites category from reactive favs set
+    let favCat: { name: string; tools: ToolDefinition[] } | null = null;
+    if (favs.size > 0) {
+      const allTools = getCategories().flatMap((c) => c.tools);
+      const favTools: ToolDefinition[] = [];
+      for (const id of favs) {
+        const t = allTools.find((x) => x.id === id);
+        if (t) favTools.push(t);
+      }
+      if (favTools.length > 0) {
+        favCat = { name: "Favourites", tools: favTools };
+      }
+    }
+
     const realCats = getCategories()
       .map((c) => ({
         ...c,
@@ -79,7 +93,7 @@ export default function Sidebar() {
 
     // Prepend the Favourites category when it has items.
     return favCat ? [favCat, ...realCats] : realCats;
-  }, [query, toolSearchText]);
+  }, [query, toolSearchText, favs]);
 
   // While filtering, every matched group is revealed so results stay readable.
   const searching = query.trim() !== "";
