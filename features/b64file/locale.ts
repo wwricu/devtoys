@@ -1,0 +1,28 @@
+export const strings = {
+  en: {
+    source: "Base64 or data URI",
+    result: "File",
+    pasteHint: "Paste Base64 text or a data URI…",
+    waiting: "Decode a paste to see the file it holds.",
+    fileName: "File name",
+    download: "Download",
+    fileInfo: "{label} - {mime} - {size}",
+    declaredNote: "The prefix declared {mime}; the bytes say {label}.",
+    textNote: "Showing the first {count} characters.",
+    noPreview: "This type has no inline preview - download it instead.",
+    altPreview: "decoded file preview",
+  },
+  zh: {
+    source: "Base64 或 data URI",
+    result: "文件",
+    pasteHint: "粘贴 Base64 文本或 data URI…",
+    waiting: "粘贴内容后即可看到它对应的文件。",
+    fileName: "文件名",
+    download: "下载",
+    fileInfo: "{label} - {mime} - {size}",
+    declaredNote: "前缀写的是 {mime}，按字节识别为 {label}。",
+    textNote: "只显示了前 {count} 个字符。",
+    noPreview: "这种类型无法内联预览，请直接下载。",
+    altPreview: "解码结果预览",
+  },
+};

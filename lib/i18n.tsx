@@ -294,6 +294,14 @@ const zhTools: Record<string, { name: string; description: string }> = {
     name: "Lorem Ipsum 生成",
     description: "按词、句或段落生成占位文本，可选 HTML",
   },
+  "json-java": {
+    name: "JSON / Java 类转换",
+    description: "由 JSON 生成 Java POJO，或由 Java 类生成 JSON 样本",
+  },
+  "base64-file": {
+    name: "Base64 转文件",
+    description: "把 Base64 解码成可下载文件，并识别它的真实类型",
+  },
 };
 
 type Value = {
