@@ -3,15 +3,13 @@
 // Registry entry "url-encode".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const UrlEncoder = dynamic(() => import("@/features/url/UrlEncoder"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function UrlEncoderEntry() {
   return (
     <ToolShell id="url-encode">
-      <UrlEncoder />
+      <ToolMount id="url-encode" />
     </ToolShell>
   );
 }

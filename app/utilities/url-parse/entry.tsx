@@ -3,15 +3,13 @@
 // Registry entry "url-parse".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const UrlParser = dynamic(() => import("@/features/urlparser/UrlParser"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function UrlParserEntry() {
   return (
     <ToolShell id="url-parse">
-      <UrlParser />
+      <ToolMount id="url-parse" />
     </ToolShell>
   );
 }

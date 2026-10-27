@@ -3,15 +3,13 @@
 // Registry entry "keypair".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const KeyPairTool = dynamic(() => import("@/features/keys/KeyPairTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function KeyPairToolEntry() {
   return (
     <ToolShell id="keypair">
-      <KeyPairTool />
+      <ToolMount id="keypair" />
     </ToolShell>
   );
 }

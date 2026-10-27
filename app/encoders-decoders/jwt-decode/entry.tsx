@@ -3,15 +3,13 @@
 // Registry entry "jwt-decode".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const JwtDecoder = dynamic(() => import("@/features/jwt/JwtDecoder"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function JwtDecoderEntry() {
   return (
     <ToolShell id="jwt-decode">
-      <JwtDecoder />
+      <ToolMount id="jwt-decode" />
     </ToolShell>
   );
 }

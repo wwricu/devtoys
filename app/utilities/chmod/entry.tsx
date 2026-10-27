@@ -3,15 +3,13 @@
 // Registry entry "chmod".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const ChmodCalculator = dynamic(() => import("@/features/chmod/ChmodCalculator"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function ChmodCalculatorEntry() {
   return (
     <ToolShell id="chmod">
-      <ChmodCalculator />
+      <ToolMount id="chmod" />
     </ToolShell>
   );
 }

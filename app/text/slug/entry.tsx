@@ -3,15 +3,13 @@
 // Registry entry "slug".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const SlugTool = dynamic(() => import("@/features/slug/SlugTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function SlugToolEntry() {
   return (
     <ToolShell id="slug">
-      <SlugTool />
+      <ToolMount id="slug" />
     </ToolShell>
   );
 }

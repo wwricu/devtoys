@@ -3,15 +3,13 @@
 // Registry entry "number-base".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const NumberBase = dynamic(() => import("@/features/ibase/NumberBase"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function NumberBaseEntry() {
   return (
     <ToolShell id="number-base">
-      <NumberBase />
+      <ToolMount id="number-base" />
     </ToolShell>
   );
 }

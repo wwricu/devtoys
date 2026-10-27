@@ -3,15 +3,13 @@
 // Registry entry "jwt-sign".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const JwtSigner = dynamic(() => import("@/features/jwt/JwtSigner"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function JwtSignerEntry() {
   return (
     <ToolShell id="jwt-sign">
-      <JwtSigner />
+      <ToolMount id="jwt-sign" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "lorem".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const LoremTool = dynamic(() => import("@/features/lorem/LoremTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function LoremToolEntry() {
   return (
     <ToolShell id="lorem">
-      <LoremTool />
+      <ToolMount id="lorem" />
     </ToolShell>
   );
 }

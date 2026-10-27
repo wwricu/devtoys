@@ -3,15 +3,13 @@
 // Registry entry "cidr".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const CidrTool = dynamic(() => import("@/features/cidr/CidrTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function CidrToolEntry() {
   return (
     <ToolShell id="cidr">
-      <CidrTool />
+      <ToolMount id="cidr" />
     </ToolShell>
   );
 }

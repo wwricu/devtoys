@@ -3,15 +3,13 @@
 // Registry entry "sql-format".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const SqlFormatter = dynamic(() => import("@/features/sql/SqlFormatter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function SqlFormatterEntry() {
   return (
     <ToolShell id="sql-format">
-      <SqlFormatter />
+      <ToolMount id="sql-format" />
     </ToolShell>
   );
 }

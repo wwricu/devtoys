@@ -3,15 +3,13 @@
 // Registry entry "line-tools".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const LineTools = dynamic(() => import("@/features/lines/LineTools"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function LineToolsEntry() {
   return (
     <ToolShell id="line-tools">
-      <LineTools />
+      <ToolMount id="line-tools" />
     </ToolShell>
   );
 }

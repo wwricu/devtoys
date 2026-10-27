@@ -3,15 +3,13 @@
 // Registry entry "cron".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const CronParser = dynamic(() => import("@/features/cron/CronParser"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function CronParserEntry() {
   return (
     <ToolShell id="cron">
-      <CronParser />
+      <ToolMount id="cron" />
     </ToolShell>
   );
 }

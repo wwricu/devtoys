@@ -3,15 +3,13 @@
 // Registry entry "html-md".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const HtmlMarkdownTool = dynamic(() => import("@/features/htmlmd/HtmlMarkdownTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function HtmlMarkdownToolEntry() {
   return (
     <ToolShell id="html-md">
-      <HtmlMarkdownTool />
+      <ToolMount id="html-md" />
     </ToolShell>
   );
 }

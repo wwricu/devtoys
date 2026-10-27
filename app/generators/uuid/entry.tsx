@@ -3,15 +3,13 @@
 // Registry entry "uuid".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const UuidGenerator = dynamic(() => import("@/features/uuid/UuidGenerator"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function UuidGeneratorEntry() {
   return (
     <ToolShell id="uuid">
-      <UuidGenerator />
+      <ToolMount id="uuid" />
     </ToolShell>
   );
 }

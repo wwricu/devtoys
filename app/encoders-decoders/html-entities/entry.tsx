@@ -3,15 +3,13 @@
 // Registry entry "html-entities".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const HtmlEntities = dynamic(() => import("@/features/html/HtmlEntities"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function HtmlEntitiesEntry() {
   return (
     <ToolShell id="html-entities">
-      <HtmlEntities />
+      <ToolMount id="html-entities" />
     </ToolShell>
   );
 }

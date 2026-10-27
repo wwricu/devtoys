@@ -3,15 +3,13 @@
 // Registry entry "code128".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const Code128Tool = dynamic(() => import("@/features/code128/Code128Tool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function Code128ToolEntry() {
   return (
     <ToolShell id="code128">
-      <Code128Tool />
+      <ToolMount id="code128" />
     </ToolShell>
   );
 }

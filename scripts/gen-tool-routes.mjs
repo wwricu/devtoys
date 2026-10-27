@@ -41,15 +41,13 @@ for (const [, id, category, specifier] of entries) {
     join(dir, "entry.tsx"),
     `${banner(id)}"use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const ${name} = dynamic(() => import("${specifier}"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function ${name}Entry() {
   return (
     <ToolShell id="${id}">
-      <${name} />
+      <ToolMount id="${id}" />
     </ToolShell>
   );
 }
@@ -79,16 +77,11 @@ export default function ${name}Page() {
 writeFileSync(
   join(root, "lib", "toolPreload.ts"),
   `${banner("chunk warm-up")}
-const loaders: Record<string, () => Promise<unknown>> = {
+import type { ComponentType } from "react";
+
+export const toolLoaders: Record<string, () => Promise<{ default: ComponentType }>> = {
 ${entries.map(([, id, , spec]) => `  "${id}": () => import("${spec}"),`).join("\n")}
 };
-
-/** Fetch a tool's own chunk before the click. The route payload is prefetched
- * by Link, but a client-only body is not, so the first visit would otherwise
- * wait on that download. */
-export function warmTool(id: string) {
-  void loaders[id]?.();
-}
 `,
 );
 

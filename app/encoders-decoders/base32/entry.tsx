@@ -3,15 +3,13 @@
 // Registry entry "base32".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const Base32Tool = dynamic(() => import("@/features/b32/Base32Tool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function Base32ToolEntry() {
   return (
     <ToolShell id="base32">
-      <Base32Tool />
+      <ToolMount id="base32" />
     </ToolShell>
   );
 }

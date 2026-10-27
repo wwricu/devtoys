@@ -3,15 +3,13 @@
 // Registry entry "bytes".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const ByteConverter = dynamic(() => import("@/features/bytes/ByteConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function ByteConverterEntry() {
   return (
     <ToolShell id="bytes">
-      <ByteConverter />
+      <ToolMount id="bytes" />
     </ToolShell>
   );
 }

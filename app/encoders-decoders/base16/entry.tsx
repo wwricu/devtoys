@@ -3,15 +3,13 @@
 // Registry entry "base16".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const Base16Tool = dynamic(() => import("@/features/b16/Base16Tool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function Base16ToolEntry() {
   return (
     <ToolShell id="base16">
-      <Base16Tool />
+      <ToolMount id="base16" />
     </ToolShell>
   );
 }

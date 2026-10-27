@@ -3,15 +3,13 @@
 // Registry entry "pem-decode".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const PemDecoder = dynamic(() => import("@/features/pem/PemDecoder"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function PemDecoderEntry() {
   return (
     <ToolShell id="pem-decode">
-      <PemDecoder />
+      <ToolMount id="pem-decode" />
     </ToolShell>
   );
 }

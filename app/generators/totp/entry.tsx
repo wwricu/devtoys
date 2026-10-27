@@ -3,15 +3,13 @@
 // Registry entry "totp".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const TotpTool = dynamic(() => import("@/features/totp/TotpTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function TotpToolEntry() {
   return (
     <ToolShell id="totp">
-      <TotpTool />
+      <ToolMount id="totp" />
     </ToolShell>
   );
 }

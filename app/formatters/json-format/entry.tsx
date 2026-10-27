@@ -3,15 +3,13 @@
 // Registry entry "json-format".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const JsonFormatter = dynamic(() => import("@/features/json/JsonFormatter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function JsonFormatterEntry() {
   return (
     <ToolShell id="json-format">
-      <JsonFormatter />
+      <ToolMount id="json-format" />
     </ToolShell>
   );
 }

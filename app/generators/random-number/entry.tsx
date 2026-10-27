@@ -3,15 +3,13 @@
 // Registry entry "random-number".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const RandomNumbers = dynamic(() => import("@/features/random/RandomNumbers"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function RandomNumbersEntry() {
   return (
     <ToolShell id="random-number">
-      <RandomNumbers />
+      <ToolMount id="random-number" />
     </ToolShell>
   );
 }

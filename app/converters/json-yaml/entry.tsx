@@ -3,15 +3,13 @@
 // Registry entry "json-yaml".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const YamlConverter = dynamic(() => import("@/features/yaml/YamlConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function YamlConverterEntry() {
   return (
     <ToolShell id="json-yaml">
-      <YamlConverter />
+      <ToolMount id="json-yaml" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "idn".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const IdnTool = dynamic(() => import("@/features/idn/IdnTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function IdnToolEntry() {
   return (
     <ToolShell id="idn">
-      <IdnTool />
+      <ToolMount id="idn" />
     </ToolShell>
   );
 }

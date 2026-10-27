@@ -3,15 +3,13 @@
 // Registry entry "markdown".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const MarkdownTool = dynamic(() => import("@/features/markdown/MarkdownTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function MarkdownToolEntry() {
   return (
     <ToolShell id="markdown">
-      <MarkdownTool />
+      <ToolMount id="markdown" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "qr-code".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const QrTool = dynamic(() => import("@/features/qr/QrTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function QrToolEntry() {
   return (
     <ToolShell id="qr-code">
-      <QrTool />
+      <ToolMount id="qr-code" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "hmac".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const HmacTool = dynamic(() => import("@/features/hmac/HmacTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function HmacToolEntry() {
   return (
     <ToolShell id="hmac">
-      <HmacTool />
+      <ToolMount id="hmac" />
     </ToolShell>
   );
 }

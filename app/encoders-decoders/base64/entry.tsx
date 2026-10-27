@@ -3,15 +3,13 @@
 // Registry entry "base64".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const Base64Tool = dynamic(() => import("@/features/base64/Base64Tool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function Base64ToolEntry() {
   return (
     <ToolShell id="base64">
-      <Base64Tool />
+      <ToolMount id="base64" />
     </ToolShell>
   );
 }

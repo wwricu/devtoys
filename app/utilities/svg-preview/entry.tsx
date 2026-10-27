@@ -3,15 +3,13 @@
 // Registry entry "svg-preview".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const SvgPreviewTool = dynamic(() => import("@/features/svg/SvgPreviewTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function SvgPreviewToolEntry() {
   return (
     <ToolShell id="svg-preview">
-      <SvgPreviewTool />
+      <ToolMount id="svg-preview" />
     </ToolShell>
   );
 }

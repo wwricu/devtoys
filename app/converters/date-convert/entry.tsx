@@ -3,15 +3,13 @@
 // Registry entry "date-convert".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const DateConverter = dynamic(() => import("@/features/date/DateConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function DateConverterEntry() {
   return (
     <ToolShell id="date-convert">
-      <DateConverter />
+      <ToolMount id="date-convert" />
     </ToolShell>
   );
 }

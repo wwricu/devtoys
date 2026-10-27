@@ -3,15 +3,13 @@
 // Registry entry "text-escape".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const TextEscape = dynamic(() => import("@/features/escape/TextEscape"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function TextEscapeEntry() {
   return (
     <ToolShell id="text-escape">
-      <TextEscape />
+      <ToolMount id="text-escape" />
     </ToolShell>
   );
 }

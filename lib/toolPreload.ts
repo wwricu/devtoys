@@ -2,7 +2,9 @@
 // page bundle down to that tool. Add tools in lib/tools.ts, then npm run gen:routes.
 // Registry entry "chunk warm-up".
 
-const loaders: Record<string, () => Promise<unknown>> = {
+import type { ComponentType } from "react";
+
+export const toolLoaders: Record<string, () => Promise<{ default: ComponentType }>> = {
   "json-format": () => import("@/features/json/JsonFormatter"),
   "xml-format": () => import("@/features/xml/XmlFormatter"),
   "text-escape": () => import("@/features/escape/TextEscape"),
@@ -58,10 +60,3 @@ const loaders: Record<string, () => Promise<unknown>> = {
   "json-java": () => import("@/features/java/JsonJavaTool"),
   "base64-file": () => import("@/features/b64file/Base64FileTool"),
 };
-
-/** Fetch a tool's own chunk before the click. The route payload is prefetched
- * by Link, but a client-only body is not, so the first visit would otherwise
- * wait on that download. */
-export function warmTool(id: string) {
-  void loaders[id]?.();
-}

@@ -3,15 +3,13 @@
 // Registry entry "hash".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const HashTool = dynamic(() => import("@/features/hash/HashTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function HashToolEntry() {
   return (
     <ToolShell id="hash">
-      <HashTool />
+      <ToolMount id="hash" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "json-java".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const JsonJavaTool = dynamic(() => import("@/features/java/JsonJavaTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function JsonJavaToolEntry() {
   return (
     <ToolShell id="json-java">
-      <JsonJavaTool />
+      <ToolMount id="json-java" />
     </ToolShell>
   );
 }

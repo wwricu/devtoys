@@ -3,15 +3,13 @@
 // Registry entry "regex".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const RegexTester = dynamic(() => import("@/features/regex/RegexTester"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function RegexTesterEntry() {
   return (
     <ToolShell id="regex">
-      <RegexTester />
+      <ToolMount id="regex" />
     </ToolShell>
   );
 }

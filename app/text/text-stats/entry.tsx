@@ -3,15 +3,13 @@
 // Registry entry "text-stats".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const TextStatsTool = dynamic(() => import("@/features/stats/TextStatsTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function TextStatsToolEntry() {
   return (
     <ToolShell id="text-stats">
-      <TextStatsTool />
+      <ToolMount id="text-stats" />
     </ToolShell>
   );
 }

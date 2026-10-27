@@ -3,15 +3,13 @@
 // Registry entry "json-ts".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const TsTypesTool = dynamic(() => import("@/features/ts-types/TsTypesTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function TsTypesToolEntry() {
   return (
     <ToolShell id="json-ts">
-      <TsTypesTool />
+      <ToolMount id="json-ts" />
     </ToolShell>
   );
 }

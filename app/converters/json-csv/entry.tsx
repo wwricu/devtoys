@@ -3,15 +3,13 @@
 // Registry entry "json-csv".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const CsvConverter = dynamic(() => import("@/features/csv/CsvConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function CsvConverterEntry() {
   return (
     <ToolShell id="json-csv">
-      <CsvConverter />
+      <ToolMount id="json-csv" />
     </ToolShell>
   );
 }

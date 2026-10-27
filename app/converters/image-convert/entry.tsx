@@ -3,15 +3,13 @@
 // Registry entry "image-convert".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const ImageConverter = dynamic(() => import("@/features/image/ImageConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function ImageConverterEntry() {
   return (
     <ToolShell id="image-convert">
-      <ImageConverter />
+      <ToolMount id="image-convert" />
     </ToolShell>
   );
 }

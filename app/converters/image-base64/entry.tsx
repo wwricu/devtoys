@@ -3,15 +3,13 @@
 // Registry entry "image-base64".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const ImageBase64 = dynamic(() => import("@/features/imgb64/ImageBase64"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function ImageBase64Entry() {
   return (
     <ToolShell id="image-base64">
-      <ImageBase64 />
+      <ToolMount id="image-base64" />
     </ToolShell>
   );
 }

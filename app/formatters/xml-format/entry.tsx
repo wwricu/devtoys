@@ -3,15 +3,13 @@
 // Registry entry "xml-format".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const XmlFormatter = dynamic(() => import("@/features/xml/XmlFormatter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function XmlFormatterEntry() {
   return (
     <ToolShell id="xml-format">
-      <XmlFormatter />
+      <ToolMount id="xml-format" />
     </ToolShell>
   );
 }

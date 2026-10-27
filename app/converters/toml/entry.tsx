@@ -3,15 +3,13 @@
 // Registry entry "toml".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const TomlConverter = dynamic(() => import("@/features/toml/TomlConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function TomlConverterEntry() {
   return (
     <ToolShell id="toml">
-      <TomlConverter />
+      <ToolMount id="toml" />
     </ToolShell>
   );
 }

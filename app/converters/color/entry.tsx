@@ -3,15 +3,13 @@
 // Registry entry "color".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const ColorConverter = dynamic(() => import("@/features/color/ColorConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function ColorConverterEntry() {
   return (
     <ToolShell id="color">
-      <ColorConverter />
+      <ToolMount id="color" />
     </ToolShell>
   );
 }

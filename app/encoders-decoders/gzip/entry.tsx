@@ -3,15 +3,13 @@
 // Registry entry "gzip".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const GzipTool = dynamic(() => import("@/features/gzip/GzipTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function GzipToolEntry() {
   return (
     <ToolShell id="gzip">
-      <GzipTool />
+      <ToolMount id="gzip" />
     </ToolShell>
   );
 }

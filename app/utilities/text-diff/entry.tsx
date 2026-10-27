@@ -3,15 +3,13 @@
 // Registry entry "text-diff".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const DiffTool = dynamic(() => import("@/features/diff/DiffTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function DiffToolEntry() {
   return (
     <ToolShell id="text-diff">
-      <DiffTool />
+      <ToolMount id="text-diff" />
     </ToolShell>
   );
 }

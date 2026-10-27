@@ -3,15 +3,13 @@
 // Registry entry "xml-json".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const XmlJsonConverter = dynamic(() => import("@/features/xml/XmlJsonConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function XmlJsonConverterEntry() {
   return (
     <ToolShell id="xml-json">
-      <XmlJsonConverter />
+      <ToolMount id="xml-json" />
     </ToolShell>
   );
 }

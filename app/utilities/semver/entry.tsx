@@ -3,15 +3,13 @@
 // Registry entry "semver".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const SemverTool = dynamic(() => import("@/features/semver/SemverTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function SemverToolEntry() {
   return (
     <ToolShell id="semver">
-      <SemverTool />
+      <ToolMount id="semver" />
     </ToolShell>
   );
 }

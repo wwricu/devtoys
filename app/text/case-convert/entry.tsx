@@ -3,15 +3,13 @@
 // Registry entry "case-convert".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const CaseConverter = dynamic(() => import("@/features/case/CaseConverter"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function CaseConverterEntry() {
   return (
     <ToolShell id="case-convert">
-      <CaseConverter />
+      <ToolMount id="case-convert" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "password".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const PasswordGenerator = dynamic(() => import("@/features/password/PasswordGenerator"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function PasswordGeneratorEntry() {
   return (
     <ToolShell id="password">
-      <PasswordGenerator />
+      <ToolMount id="password" />
     </ToolShell>
   );
 }

@@ -3,15 +3,13 @@
 // Registry entry "aes".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const AesTool = dynamic(() => import("@/features/aes/AesTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function AesToolEntry() {
   return (
     <ToolShell id="aes">
-      <AesTool />
+      <ToolMount id="aes" />
     </ToolShell>
   );
 }

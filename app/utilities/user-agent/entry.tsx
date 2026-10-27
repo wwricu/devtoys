@@ -3,15 +3,13 @@
 // Registry entry "user-agent".
 "use client";
 
-import dynamic from "next/dynamic";
 import ToolShell from "@/components/ToolShell";
-
-const UserAgentTool = dynamic(() => import("@/features/useragent/UserAgentTool"), { ssr: false });
+import { ToolMount } from "@/lib/toolModule";
 
 export default function UserAgentToolEntry() {
   return (
     <ToolShell id="user-agent">
-      <UserAgentTool />
+      <ToolMount id="user-agent" />
     </ToolShell>
   );
 }
