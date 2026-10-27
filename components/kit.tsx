@@ -149,8 +149,7 @@ export function Panel({
   className?: string;
 }) {
   const { t } = useLang();
-  const paneSide = useContext(PaneSideContext);
-  const collapsePane = useContext(PaneActionsContext);
+  const pane = useContext(PaneControlsContext);
   return (
     <section
       className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 ${className ?? ""}`}
@@ -161,15 +160,15 @@ export function Panel({
         </span>
         <div className="flex items-center gap-1.5">
           {actions}
-          {paneSide && collapsePane && (
+          {pane && (
             <button
               type="button"
-              onClick={() => collapsePane(paneSide)}
+              onClick={pane.collapse}
               title={t.hidePane}
               aria-label={t.hidePane}
               className="rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
             >
-              <PaneChevron side={paneSide} />
+              <PaneChevron edge={pane.edge} orientation={pane.orientation} />
             </button>
           )}
         </div>
@@ -191,20 +190,40 @@ export const flowEditorClass = `${editorBase} flex-none min-h-24 resize rounded 
 const MIN_SHARE = 0.15;
 const KEY_STEP = 0.05;
 
-type PaneSide = "left" | "right";
+type PaneEdge = "start" | "end";
+type SplitOrientation = "row" | "column";
 
-/** Which side a pane sits on, so its header button knows where to collapse. */
-const PaneSideContext = createContext<PaneSide | null>(null);
-/** Provided only by a two-pane group; null elsewhere, which hides the buttons. */
-const PaneActionsContext = createContext<((side: PaneSide) => void) | null>(
-  null,
-);
+type PaneControls = {
+  /** Which edge the pane collapses toward, so its header button points there. */
+  edge: PaneEdge;
+  orientation: SplitOrientation;
+  collapse: () => void;
+};
 
-function PaneChevron({ side }: { side: PaneSide }) {
+/** Null outside a split group, which hides the header buttons. */
+const PaneControlsContext = createContext<PaneControls | null>(null);
+
+function PaneChevron({
+  edge,
+  orientation,
+}: {
+  edge: PaneEdge;
+  orientation: SplitOrientation;
+}) {
+  // A row group only turns sideways on md+; below that its panes stack, so the
+  // chevron turns with them.
+  const turn =
+    orientation === "column"
+      ? edge === "start"
+        ? "rotate-90"
+        : "-rotate-90"
+      : edge === "start"
+        ? "rotate-90 md:rotate-0"
+        : "-rotate-90 md:rotate-180";
   return (
     <svg
       viewBox="0 0 16 16"
-      className={`size-3.5 ${side === "left" ? "rotate-90 md:rotate-0" : "-rotate-90 md:rotate-180"}`}
+      className={`size-3.5 ${turn}`}
       fill="none"
       stroke="currentColor"
       strokeWidth={2}
@@ -219,10 +238,12 @@ function PaneChevron({ side }: { side: PaneSide }) {
 
 /** The sliver that replaces a collapsed pane; clicking it brings the pane back. */
 function RestorePane({
-  side,
+  edge,
+  orientation,
   onRestore,
 }: {
-  side: PaneSide;
+  edge: PaneEdge;
+  orientation: SplitOrientation;
   onRestore: () => void;
 }) {
   const { t } = useLang();
@@ -232,9 +253,11 @@ function RestorePane({
       onClick={onRestore}
       title={t.showPane}
       aria-label={t.showPane}
-      className="flex h-6 w-full shrink-0 items-center justify-center rounded border border-neutral-200 bg-neutral-50 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 md:h-full md:w-6"
+      className={`flex h-6 w-full shrink-0 items-center justify-center rounded border border-neutral-200 bg-neutral-50 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 ${
+        orientation === "row" ? "md:h-full md:w-6" : ""
+      }`}
     >
-      <PaneChevron side={side} />
+      <PaneChevron edge={edge} orientation={orientation} />
     </button>
   );
 }
@@ -242,10 +265,17 @@ function RestorePane({
 /**
  * Panes across draggable gutters. The group keeps the size the page gave it; a
  * drag only moves one boundary, trading space between its two neighbours. One
- * site-wide ratio per pane count, so a user sets it once and every tool with
- * that many panes follows.
+ * site-wide ratio per pane count and axis, so a user sets it once and every
+ * tool with that many panes follows.
  */
-export function Split({ children }: { children: React.ReactNode }) {
+export function Split({
+  children,
+  orientation = "row",
+}: {
+  children: React.ReactNode;
+  /** "column" stacks panes top/bottom on desktop as well as on mobile. */
+  orientation?: SplitOrientation;
+}) {
   const { t } = useLang();
   // A branch may return its panes as one fragment; flatten it so each pane is
   // still a resizable sibling.
@@ -257,20 +287,33 @@ export function Split({ children }: { children: React.ReactNode }) {
   );
   const count = panes.length;
   const [stored, setStored] = useStoredState<number[]>(
-    `split.shares.${count}`,
+    orientation === "column"
+      ? `split.shares.column.${count}`
+      : `split.shares.${count}`,
     [],
   );
   const box = useRef<HTMLDivElement>(null);
   const values =
     stored.length === count ? stored : panes.map(() => 1 / count);
   // Hiding a pane is a momentary zoom, not a preference: it stays in memory so
-  // a tool always opens with both panes.
-  const [collapsed, setCollapsed] = useState<PaneSide | null>(null);
-  const collapsible = count === 2;
-  const sideOf = (index: number): PaneSide => (index === 0 ? "left" : "right");
+  // a tool always opens with every pane.
+  const [collapsed, setCollapsed] = useState<number | null>(null);
+  const edgeOf = (index: number): PaneEdge =>
+    index === 0
+      ? "start"
+      : index === count - 1
+        ? "end"
+        : index < count / 2
+          ? "start"
+          : "end";
   const share = (index: number) => {
-    if (!collapsible || !collapsed) return `${values[index]} 1 0%`;
-    return collapsed === sideOf(index) ? undefined : "1 1 0%";
+    if (collapsed === null) return `${values[index]} 1 0%`;
+    // The panes still visible keep their stored proportions of the room left.
+    const visible = values.reduce(
+      (sum, value, i) => (i === collapsed ? sum : sum + value),
+      0,
+    );
+    return `${values[index] / visible} 1 0%`;
   };
 
   const onPointerDown = (index: number) => (
@@ -324,48 +367,59 @@ export function Split({ children }: { children: React.ReactNode }) {
     );
 
   return (
-    <PaneActionsContext.Provider
-      value={collapsible && !collapsed ? setCollapsed : null}
+    <div
+      ref={box}
+      className={`flex min-h-0 flex-1 flex-col ${
+        orientation === "row" ? "md:flex-row" : ""
+      }`}
     >
-      <div ref={box} className="flex min-h-0 flex-1 flex-col md:flex-row">
-        {collapsed === "left" && (
-          <RestorePane side="left" onRestore={() => setCollapsed(null)} />
-        )}
-        {panes.map((pane, i) => (
-          <Fragment key={i}>
+      {panes.map((pane, i) => (
+        <Fragment key={i}>
+          {collapsed === i ? (
+            <RestorePane
+              edge={edgeOf(i)}
+              orientation={orientation}
+              onRestore={() => setCollapsed(null)}
+            />
+          ) : (
             <div
-              className={
-                collapsed === sideOf(i)
-                  ? "hidden"
-                  : "flex min-h-0 min-w-0 flex-col"
-              }
+              className="flex min-h-0 min-w-0 flex-col"
               style={{ flex: share(i) }}
             >
-              <PaneSideContext.Provider value={sideOf(i)}>
+              <PaneControlsContext.Provider
+                value={
+                  collapsed === null
+                    ? {
+                        edge: edgeOf(i),
+                        orientation,
+                        collapse: () => setCollapsed(i),
+                      }
+                    : null
+                }
+              >
                 {pane}
-              </PaneSideContext.Provider>
+              </PaneControlsContext.Provider>
             </div>
-            {i < count - 1 && !collapsed && (
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label={t.resizePanes}
-                aria-valuenow={Math.round(values[i] * 100)}
-                aria-valuemin={15}
-                aria-valuemax={85}
-                tabIndex={0}
-                onPointerDown={onPointerDown(i)}
-                onKeyDown={onKeyDown(i)}
-                className="h-1 w-full shrink-0 cursor-row-resize touch-none rounded bg-neutral-200 hover:bg-neutral-300 focus-visible:bg-neutral-400 focus-visible:outline-none dark:bg-neutral-800 dark:hover:bg-neutral-700 md:h-full md:w-1 md:cursor-col-resize"
-              />
-            )}
-          </Fragment>
-        ))}
-        {collapsed === "right" && (
-          <RestorePane side="right" onRestore={() => setCollapsed(null)} />
-        )}
-      </div>
-    </PaneActionsContext.Provider>
+          )}
+          {i < count - 1 && collapsed === null && (
+            <div
+              role="separator"
+              aria-orientation={orientation === "column" ? "horizontal" : "vertical"}
+              aria-label={t.resizePanes}
+              aria-valuenow={Math.round(values[i] * 100)}
+              aria-valuemin={15}
+              aria-valuemax={85}
+              tabIndex={0}
+              onPointerDown={onPointerDown(i)}
+              onKeyDown={onKeyDown(i)}
+              className={`h-1 w-full shrink-0 cursor-row-resize touch-none rounded bg-neutral-200 hover:bg-neutral-300 focus-visible:bg-neutral-400 focus-visible:outline-none dark:bg-neutral-800 dark:hover:bg-neutral-700 ${
+                orientation === "row" ? "md:h-full md:w-1 md:cursor-col-resize" : ""
+              }`}
+            />
+          )}
+        </Fragment>
+      ))}
+    </div>
   );
 }
 

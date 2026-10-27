@@ -165,78 +165,80 @@ export default function DiffTool() {
         </span>
       </div>
 
-      {mode === "side" && (
-        <Split>
-          <Panel title={L.original}>
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder={L.originalHint}
-              value={left}
-              onChange={(e) => setLeft(e.target.value)}
-            />
-          </Panel>
-          <Panel title={L.changed}>
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder={L.changedHint}
-              value={right}
-              onChange={(e) => setRight(e.target.value)}
-            />
-          </Panel>
-        </Split>
-      )}
-
-      <Panel
-        title={mode === "unified" ? L.unifiedDiff : t.result}
-        actions={
-          mode === "unified" ? (
-            <CopyButton getText={() => unified} />
-          ) : undefined
-        }
-      >
-        {summary.truncated && (
-          <p className="border-b border-neutral-100 px-2 py-1 text-xs text-amber-600 dark:border-neutral-800">
-            {L.truncated}
-          </p>
+      <Split orientation="column">
+        {mode === "side" && (
+          <Split>
+            <Panel title={L.original}>
+              <textarea
+                className={editorClass}
+                spellCheck={false}
+                placeholder={L.originalHint}
+                value={left}
+                onChange={(e) => setLeft(e.target.value)}
+              />
+            </Panel>
+            <Panel title={L.changed}>
+              <textarea
+                className={editorClass}
+                spellCheck={false}
+                placeholder={L.changedHint}
+                value={right}
+                onChange={(e) => setRight(e.target.value)}
+              />
+            </Panel>
+          </Split>
         )}
-        {/* One shared scroll container: a long line must not give every row its own bar. */}
-        <div className="min-h-0 flex-1 overflow-auto">
-          {mode === "unified" ? (
-            <pre className="whitespace-pre p-2 font-mono text-xs leading-5">
-              {unified
-                ? unified.split("\n").map((line, i) => {
-                    const op: DiffOp =
-                      line.startsWith("+") && i > 1
-                        ? "insert"
-                        : line.startsWith("-") && i > 1
-                          ? "delete"
-                          : "equal";
-                    return (
-                      <div key={i} className={cellClass[op]}>
-                        {line}
-                      </div>
-                    );
-                  })
-                : ""}
-            </pre>
-          ) : (
-            <div className="grid w-max min-w-full grid-cols-2 gap-px">
-              <div className="divide-y divide-neutral-50 dark:divide-neutral-800/50">
-                {rows.map((r, i) => (
-                  <Cell key={i} line={r.left} side="left" />
-                ))}
-              </div>
-              <div className="border-l border-neutral-200 dark:border-neutral-800">
-                {rows.map((r, i) => (
-                  <Cell key={i} line={r.right} side="right" />
-                ))}
-              </div>
-            </div>
+
+        <Panel
+          title={mode === "unified" ? L.unifiedDiff : t.result}
+          actions={
+            mode === "unified" ? (
+              <CopyButton getText={() => unified} />
+            ) : undefined
+          }
+        >
+          {summary.truncated && (
+            <p className="border-b border-neutral-100 px-2 py-1 text-xs text-amber-600 dark:border-neutral-800">
+              {L.truncated}
+            </p>
           )}
-        </div>
-      </Panel>
+          {/* One shared scroll container: a long line must not give every row its own bar. */}
+          <div className="min-h-0 flex-1 overflow-auto">
+            {mode === "unified" ? (
+              <pre className="whitespace-pre p-2 font-mono text-xs leading-5">
+                {unified
+                  ? unified.split("\n").map((line, i) => {
+                      const op: DiffOp =
+                        line.startsWith("+") && i > 1
+                          ? "insert"
+                          : line.startsWith("-") && i > 1
+                            ? "delete"
+                            : "equal";
+                      return (
+                        <div key={i} className={cellClass[op]}>
+                          {line}
+                        </div>
+                      );
+                    })
+                  : ""}
+              </pre>
+            ) : (
+              <div className="grid w-max min-w-full grid-cols-2 gap-px">
+                <div className="divide-y divide-neutral-50 dark:divide-neutral-800/50">
+                  {rows.map((r, i) => (
+                    <Cell key={i} line={r.left} side="left" />
+                  ))}
+                </div>
+                <div className="border-l border-neutral-200 dark:border-neutral-800">
+                  {rows.map((r, i) => (
+                    <Cell key={i} line={r.right} side="right" />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Panel>
+      </Split>
     </div>
   );
 }
