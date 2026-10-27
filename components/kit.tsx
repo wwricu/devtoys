@@ -3,8 +3,10 @@
 import {
   Children,
   Fragment,
+  createContext,
   isValidElement,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -146,6 +148,9 @@ export function Panel({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { t } = useLang();
+  const paneSide = useContext(PaneSideContext);
+  const collapsePane = useContext(PaneActionsContext);
   return (
     <section
       className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 ${className ?? ""}`}
@@ -154,7 +159,20 @@ export function Panel({
         <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {title}
         </span>
-        <div className="flex items-center gap-1.5">{actions}</div>
+        <div className="flex items-center gap-1.5">
+          {actions}
+          {paneSide && collapsePane && (
+            <button
+              type="button"
+              onClick={() => collapsePane(paneSide)}
+              title={t.hidePane}
+              aria-label={t.hidePane}
+              className="rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
+            >
+              <PaneChevron side={paneSide} />
+            </button>
+          )}
+        </div>
       </header>
       {children}
     </section>
@@ -172,6 +190,54 @@ export const flowEditorClass = `${editorBase} flex-none min-h-24 resize rounded 
 /** Smallest share any one pane may take, as a fraction of the whole group. */
 const MIN_SHARE = 0.15;
 const KEY_STEP = 0.05;
+
+type PaneSide = "left" | "right";
+
+/** Which side a pane sits on, so its header button knows where to collapse. */
+const PaneSideContext = createContext<PaneSide | null>(null);
+/** Provided only by a two-pane group; null elsewhere, which hides the buttons. */
+const PaneActionsContext = createContext<((side: PaneSide) => void) | null>(
+  null,
+);
+
+function PaneChevron({ side }: { side: PaneSide }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={`size-3.5 ${side === "left" ? "rotate-90 md:rotate-0" : "-rotate-90 md:rotate-180"}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m10 3-5 5 5 5" />
+    </svg>
+  );
+}
+
+/** The sliver that replaces a collapsed pane; clicking it brings the pane back. */
+function RestorePane({
+  side,
+  onRestore,
+}: {
+  side: PaneSide;
+  onRestore: () => void;
+}) {
+  const { t } = useLang();
+  return (
+    <button
+      type="button"
+      onClick={onRestore}
+      title={t.showPane}
+      aria-label={t.showPane}
+      className="flex h-6 w-full shrink-0 items-center justify-center rounded border border-neutral-200 bg-neutral-50 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 md:h-full md:w-6"
+    >
+      <PaneChevron side={side} />
+    </button>
+  );
+}
 
 /**
  * Panes across draggable gutters. The group keeps the size the page gave it; a
@@ -197,6 +263,15 @@ export function Split({ children }: { children: React.ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const values =
     stored.length === count ? stored : panes.map(() => 1 / count);
+  // Hiding a pane is a momentary zoom, not a preference: it stays in memory so
+  // a tool always opens with both panes.
+  const [collapsed, setCollapsed] = useState<PaneSide | null>(null);
+  const collapsible = count === 2;
+  const sideOf = (index: number): PaneSide => (index === 0 ? "left" : "right");
+  const share = (index: number) => {
+    if (!collapsible || !collapsed) return `${values[index]} 1 0%`;
+    return collapsed === sideOf(index) ? undefined : "1 1 0%";
+  };
 
   const onPointerDown = (index: number) => (
     event: React.PointerEvent<HTMLDivElement>,
@@ -249,32 +324,48 @@ export function Split({ children }: { children: React.ReactNode }) {
     );
 
   return (
-    <div ref={box} className="flex min-h-0 flex-1 flex-col md:flex-row">
-      {panes.map((pane, i) => (
-        <Fragment key={i}>
-          <div
-            className="flex min-h-0 min-w-0 flex-col"
-            style={{ flex: `${values[i]} 1 0%` }}
-          >
-            {pane}
-          </div>
-          {i < count - 1 && (
+    <PaneActionsContext.Provider
+      value={collapsible && !collapsed ? setCollapsed : null}
+    >
+      <div ref={box} className="flex min-h-0 flex-1 flex-col md:flex-row">
+        {collapsed === "left" && (
+          <RestorePane side="left" onRestore={() => setCollapsed(null)} />
+        )}
+        {panes.map((pane, i) => (
+          <Fragment key={i}>
             <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-label={t.resizePanes}
-              aria-valuenow={Math.round(values[i] * 100)}
-              aria-valuemin={15}
-              aria-valuemax={85}
-              tabIndex={0}
-              onPointerDown={onPointerDown(i)}
-              onKeyDown={onKeyDown(i)}
-              className="h-1 w-full shrink-0 cursor-row-resize touch-none rounded bg-neutral-200 hover:bg-neutral-300 focus-visible:bg-neutral-400 focus-visible:outline-none dark:bg-neutral-800 dark:hover:bg-neutral-700 md:h-full md:w-1 md:cursor-col-resize"
-            />
-          )}
-        </Fragment>
-      ))}
-    </div>
+              className={
+                collapsed === sideOf(i)
+                  ? "hidden"
+                  : "flex min-h-0 min-w-0 flex-col"
+              }
+              style={{ flex: share(i) }}
+            >
+              <PaneSideContext.Provider value={sideOf(i)}>
+                {pane}
+              </PaneSideContext.Provider>
+            </div>
+            {i < count - 1 && !collapsed && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label={t.resizePanes}
+                aria-valuenow={Math.round(values[i] * 100)}
+                aria-valuemin={15}
+                aria-valuemax={85}
+                tabIndex={0}
+                onPointerDown={onPointerDown(i)}
+                onKeyDown={onKeyDown(i)}
+                className="h-1 w-full shrink-0 cursor-row-resize touch-none rounded bg-neutral-200 hover:bg-neutral-300 focus-visible:bg-neutral-400 focus-visible:outline-none dark:bg-neutral-800 dark:hover:bg-neutral-700 md:h-full md:w-1 md:cursor-col-resize"
+              />
+            )}
+          </Fragment>
+        ))}
+        {collapsed === "right" && (
+          <RestorePane side="right" onRestore={() => setCollapsed(null)} />
+        )}
+      </div>
+    </PaneActionsContext.Provider>
   );
 }
 
