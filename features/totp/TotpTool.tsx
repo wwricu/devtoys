@@ -5,6 +5,7 @@ import {
   CopyButton,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
   useStoredState,
@@ -181,7 +182,7 @@ export default function TotpTool() {
         </label>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel title={L.currentCode}>
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-4">
             <p className="font-mono text-4xl tracking-widest text-neutral-800 dark:text-neutral-100">
@@ -247,7 +248,7 @@ export default function TotpTool() {
             </p>
           </div>
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

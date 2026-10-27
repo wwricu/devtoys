@@ -2,6 +2,7 @@
 
 import {
   Panel,
+  Split,
   StatusLine,
   ToolButton,
   useStoredState,
@@ -83,7 +84,7 @@ export default function SemverTool() {
         </ToolButton>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-3">
+      <Split>
         <Panel title={L.compare}>
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 p-3">
             <p className="font-mono text-3xl text-neutral-800 dark:text-neutral-100">
@@ -140,7 +141,7 @@ export default function SemverTool() {
             <p className="p-3 text-xs text-neutral-400">{L.notValid}</p>
           )}
         </Panel>
-      </div>
+      </Split>
 
       <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
         <span>{L.quickChecks}</span>

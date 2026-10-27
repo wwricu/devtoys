@@ -3,10 +3,11 @@
 import { useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useText } from "@/lib/i18n";
@@ -95,7 +96,7 @@ export default function JwtSigner() {
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel title={L.header}>
           <textarea
             className={editorClass}
@@ -112,7 +113,7 @@ export default function JwtSigner() {
             onChange={(e) => setPayload(e.target.value)}
           />
         </Panel>
-      </div>
+      </Split>
 
       <Panel
         title={L.signedToken}

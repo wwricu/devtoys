@@ -3,11 +3,12 @@
 import { useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -152,7 +153,7 @@ export default function Code128Tool() {
         <ToolButton onClick={downloadSvg}>SVG</ToolButton>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel title={t.input} actions={<CopyButton getText={() => input} />}>
           <textarea
             className={editorClass}
@@ -186,7 +187,7 @@ export default function Code128Tool() {
             </div>
           )}
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={

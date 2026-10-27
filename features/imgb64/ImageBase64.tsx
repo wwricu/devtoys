@@ -3,10 +3,11 @@
 import { useMemo, useRef, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -113,7 +114,7 @@ export default function ImageBase64() {
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         {direction === "toBase64" ? (
           <>
             <Panel title={L.source}>
@@ -217,7 +218,7 @@ export default function ImageBase64() {
             </Panel>
           </>
         )}
-      </div>
+      </Split>
     </div>
   );
 }

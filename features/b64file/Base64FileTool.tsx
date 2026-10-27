@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { decodeToBytes } from "./detect";
@@ -112,7 +113,7 @@ export default function Base64FileTool() {
         )}
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel
           title={L.source}
           actions={
@@ -146,7 +147,7 @@ export default function Base64FileTool() {
         >
           {body()}
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

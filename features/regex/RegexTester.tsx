@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import {
   CopyButton,
-  Panel,
-  ToolButton,
   editorClass,
+  Panel,
+  Split,
+  ToolButton,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -90,7 +91,7 @@ export default function RegexTester() {
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel
           title={L.testString}
           actions={
@@ -168,7 +169,7 @@ export default function RegexTester() {
             )}
           </div>
         </Panel>
-      </div>
+      </Split>
 
       <Panel
         title={L.replace}

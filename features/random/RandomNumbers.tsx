@@ -3,11 +3,12 @@
 import { useMemo, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -152,7 +153,7 @@ export default function RandomNumbers() {
         </ToolButton>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel title={L.presets}>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-3">
             {presets.map((preset) => (
@@ -196,7 +197,7 @@ export default function RandomNumbers() {
             value={output}
           />
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

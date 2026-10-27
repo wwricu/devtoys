@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { useLang, useText } from "@/lib/i18n";
@@ -40,7 +41,7 @@ export default function MarkdownTool() {
           onChange={setView}
         />
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel
           title={L.markdown}
           actions={
@@ -79,7 +80,7 @@ export default function MarkdownTool() {
             />
           )}
         </Panel>
-      </div>
+      </Split>
     </div>
   );
 }

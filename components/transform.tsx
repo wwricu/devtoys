@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CopyButton, Panel, StatusLine, ToolButton, editorClass } from "./kit";
+import {
+  CopyButton,
+  Panel,
+  Split,
+  StatusLine,
+  ToolButton,
+  editorClass,
+} from "./kit";
 import { fill, useLang } from "@/lib/i18n";
 
 export interface TransformResult {
@@ -41,7 +48,7 @@ export function SimpleTransform({
           {t.outputToInput}
         </ToolButton>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel
           title={t.input}
           actions={
@@ -68,7 +75,7 @@ export function SimpleTransform({
             value={output}
           />
         </Panel>
-      </div>
+      </Split>
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}
         info={

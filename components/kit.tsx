@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { fill, useLang } from "@/lib/i18n";
 
 /** Persist tool options (localStorage); each tool uses its own key */
@@ -155,12 +163,120 @@ export function Panel({
 
 const editorBase =
   "w-full bg-transparent p-2 font-mono text-xs leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400 dark:text-neutral-200";
-
 /** Fills its panel via flex layout. */
 export const editorClass = `${editorBase} min-h-0 flex-1 resize-none`;
 
 /** For editors in scrollable pages: content-sized with browser native resize. */
 export const flowEditorClass = `${editorBase} flex-none min-h-24 resize rounded border border-neutral-200 dark:border-neutral-800`;
+
+/** Smallest share any one pane may take, as a fraction of the whole group. */
+const MIN_SHARE = 0.15;
+const KEY_STEP = 0.05;
+
+/**
+ * Panes across draggable gutters. The group keeps the size the page gave it; a
+ * drag only moves one boundary, trading space between its two neighbours. One
+ * site-wide ratio per pane count, so a user sets it once and every tool with
+ * that many panes follows.
+ */
+export function Split({ children }: { children: React.ReactNode }) {
+  const { t } = useLang();
+  // A branch may return its panes as one fragment; flatten it so each pane is
+  // still a resizable sibling.
+  const panes = Children.toArray(children).flatMap((child) =>
+    isValidElement<{ children?: React.ReactNode }>(child) &&
+    child.type === Fragment
+      ? Children.toArray(child.props.children)
+      : [child],
+  );
+  const count = panes.length;
+  const [stored, setStored] = useStoredState<number[]>(
+    `split.shares.${count}`,
+    [],
+  );
+  const box = useRef<HTMLDivElement>(null);
+  const values =
+    stored.length === count ? stored : panes.map(() => 1 / count);
+
+  const onPointerDown = (index: number) => (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    const el = box.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const column = getComputedStyle(el).flexDirection === "column";
+    const span = column ? rect.height : rect.width;
+    const origin = column ? event.clientY : event.clientX;
+    const start = values[index];
+    const pair = values[index] + values[index + 1];
+    event.preventDefault();
+    const move = (e: PointerEvent) => {
+      const delta = ((column ? e.clientY : e.clientX) - origin) / span;
+      const next = [...values];
+      next[index] = Math.min(pair - MIN_SHARE, Math.max(MIN_SHARE, start + delta));
+      next[index + 1] = pair - next[index];
+      setStored(next);
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+  };
+
+  const onKeyDown = (index: number) => (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    const back = event.key === "ArrowLeft" || event.key === "ArrowUp";
+    const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+    if (!back && !forward) return;
+    const pair = values[index] + values[index + 1];
+    const value = values[index] + (back ? -KEY_STEP : KEY_STEP);
+    if (value < MIN_SHARE || value > pair - MIN_SHARE) return;
+    event.preventDefault();
+    const next = [...values];
+    next[index] = value;
+    next[index + 1] = pair - value;
+    setStored(next);
+  };
+
+  if (count < 2)
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-2">{children}</div>
+    );
+
+  return (
+    <div ref={box} className="flex min-h-0 flex-1 flex-col md:flex-row">
+      {panes.map((pane, i) => (
+        <Fragment key={i}>
+          <div
+            className="flex min-h-0 min-w-0 flex-col"
+            style={{ flex: `${values[i]} 1 0%` }}
+          >
+            {pane}
+          </div>
+          {i < count - 1 && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={t.resizePanes}
+              aria-valuenow={Math.round(values[i] * 100)}
+              aria-valuemin={15}
+              aria-valuemax={85}
+              tabIndex={0}
+              onPointerDown={onPointerDown(i)}
+              onKeyDown={onKeyDown(i)}
+              className="h-1 w-full shrink-0 cursor-row-resize touch-none rounded bg-neutral-200 hover:bg-neutral-300 focus-visible:bg-neutral-400 focus-visible:outline-none dark:bg-neutral-800 dark:hover:bg-neutral-700 md:h-full md:w-1 md:cursor-col-resize"
+            />
+          )}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
 
 export function StatusLine({
   error,

@@ -3,14 +3,15 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
+  type Indent,
   useIndentOptions,
   useStoredState,
-  type Indent,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { processJson, type SortKeys } from "./format";
@@ -89,7 +90,7 @@ export default function JsonFormatter() {
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel
           title={t.input}
           actions={
@@ -139,7 +140,7 @@ export default function JsonFormatter() {
             value={result.output}
           />
         </Panel>
-      </div>
+      </Split>
 
       {result.errors && result.errors.length > 1 && (
         <div className="max-h-28 shrink-0 overflow-y-auto rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">

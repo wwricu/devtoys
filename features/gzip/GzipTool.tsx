@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -135,7 +136,7 @@ export default function GzipTool() {
         </ToolButton>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel
           title={mode === "compress" ? L.plainText : L.payload}
           actions={
@@ -165,7 +166,7 @@ export default function GzipTool() {
             value={output}
           />
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

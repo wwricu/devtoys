@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useText } from "@/lib/i18n";
@@ -94,7 +95,7 @@ export default function HmacTool() {
         </label>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <Panel title={L.key} className="flex-none">
             <input
@@ -167,7 +168,7 @@ export default function HmacTool() {
             </div>
           </Panel>
         </div>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

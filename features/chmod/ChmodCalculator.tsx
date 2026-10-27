@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   CopyButton,
   Panel,
+  Split,
   StatusLine,
   ToolButton,
   useStoredState,
@@ -102,7 +103,7 @@ export default function ChmodCalculator() {
         ))}
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel title={L.permissions}>
           <div className="overflow-y-auto p-2">
             <table className="w-full text-xs">
@@ -211,7 +212,7 @@ export default function ChmodCalculator() {
             </dl>
           </div>
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

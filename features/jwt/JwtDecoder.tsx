@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, Panel, ToolButton, editorClass } from "@/components/kit";
+import { CopyButton, editorClass, Panel, Split, ToolButton } from "@/components/kit";
 import { useLang, useText } from "@/lib/i18n";
 import { claimDate, decodeJwt, NUMERIC_CLAIMS } from "./format";
 import { strings } from "./locale";
@@ -116,7 +116,7 @@ export default function JwtDecoder() {
         </Panel>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel
           title={L.header}
           actions={
@@ -149,7 +149,7 @@ export default function JwtDecoder() {
             placeholder={L.payload}
           />
         </Panel>
-      </div>
+      </Split>
     </div>
   );
 }

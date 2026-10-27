@@ -3,14 +3,15 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
+  type Indent,
   useIndentOptions,
   useStoredState,
-  type Indent,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { processXml } from "./format";
@@ -83,7 +84,7 @@ export default function XmlFormatter() {
         </label>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel
           title={t.input}
           actions={
@@ -133,7 +134,7 @@ export default function XmlFormatter() {
             value={result.output}
           />
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={result.error}

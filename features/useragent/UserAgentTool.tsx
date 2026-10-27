@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Panel, StatusLine, ToolButton, editorClass } from "@/components/kit";
+import { editorClass, Panel, Split, StatusLine, ToolButton } from "@/components/kit";
 import { fill, useText } from "@/lib/i18n";
 import { parseUserAgent, summariseAgent } from "./format";
 import { strings } from "./locale";
@@ -52,7 +52,7 @@ export default function UserAgentTool() {
         ))}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel title={L.userAgentString}>
           <textarea
             className={editorClass}
@@ -99,7 +99,7 @@ export default function UserAgentTool() {
             )}
           </div>
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={

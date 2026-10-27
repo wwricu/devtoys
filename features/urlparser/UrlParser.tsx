@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, Panel, ToolButton, editorClass } from "@/components/kit";
+import { CopyButton, editorClass, Panel, Split, ToolButton } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { parseUrl, type UrlParts } from "./format";
 import { strings } from "./locale";
@@ -69,7 +69,7 @@ export default function UrlParser() {
       )}
 
       {parts && (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-2">
+        <Split>
           <Panel title={L.components}>
             <div className="min-h-0 flex-1 overflow-y-auto px-2">
               <Row label={L.protocol} value={parts.protocol} />
@@ -118,7 +118,7 @@ export default function UrlParser() {
               ))}
             </div>
           </Panel>
-        </div>
+        </Split>
       )}
     </div>
   );

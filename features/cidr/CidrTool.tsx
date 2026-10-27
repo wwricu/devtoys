@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   CopyButton,
   Panel,
+  Split,
   StatusLine,
   ToolButton,
   useStoredState,
@@ -144,7 +145,7 @@ export default function CidrTool() {
         </ToolButton>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+      <Split>
         <Panel title={L.address}>
           {result.info ? (
             <div className="flex min-h-0 flex-1 flex-col justify-center gap-3 p-4">
@@ -172,7 +173,7 @@ export default function CidrTool() {
             <p className="p-3 text-xs text-neutral-400">{L.detailsEmpty}</p>
           </Panel>
         )}
-      </div>
+      </Split>
 
       <StatusLine
         error={

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   CopyButton,
   Panel,
+  Split,
   ToolButton,
   useStoredState,
 } from "@/components/kit";
@@ -169,7 +170,7 @@ export default function CronParser() {
       )}
 
       {result.spec && (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-2">
+        <Split>
           <Panel title={L.fields}>
             <div className="min-h-0 flex-1 overflow-y-auto">
               <table className="w-full text-left text-xs">
@@ -230,7 +231,7 @@ export default function CronParser() {
               )}
             </div>
           </Panel>
-        </div>
+        </Split>
       )}
     </div>
   );

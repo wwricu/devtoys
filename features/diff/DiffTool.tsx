@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   CopyButton,
   Panel,
+  Split,
   editorClass,
   useStoredState,
 } from "@/components/kit";
@@ -71,7 +72,7 @@ function Cell({
       >
         {line ? (op === "insert" ? "+" : op === "delete" ? "-" : " ") : ""}
       </span>
-      <pre className="min-w-0 flex-1 overflow-x-auto whitespace-pre font-mono text-xs leading-5">
+      <pre className="min-w-0 flex-1 whitespace-pre font-mono text-xs leading-5">
         {line?.text ?? ""}
       </pre>
     </div>
@@ -165,7 +166,7 @@ export default function DiffTool() {
       </div>
 
       {mode === "side" && (
-        <div className="grid min-h-0 flex-1 grid-cols-2 gap-2">
+        <Split>
           <Panel title={L.original}>
             <textarea
               className={editorClass}
@@ -184,7 +185,7 @@ export default function DiffTool() {
               onChange={(e) => setRight(e.target.value)}
             />
           </Panel>
-        </div>
+        </Split>
       )}
 
       <Panel
@@ -200,7 +201,8 @@ export default function DiffTool() {
             {L.truncated}
           </p>
         )}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* One shared scroll container: a long line must not give every row its own bar. */}
+        <div className="min-h-0 flex-1 overflow-auto">
           {mode === "unified" ? (
             <pre className="whitespace-pre p-2 font-mono text-xs leading-5">
               {unified
@@ -220,7 +222,7 @@ export default function DiffTool() {
                 : ""}
             </pre>
           ) : (
-            <div className="grid grid-cols-2 gap-px">
+            <div className="grid w-max min-w-full grid-cols-2 gap-px">
               <div className="divide-y divide-neutral-50 dark:divide-neutral-800/50">
                 {rows.map((r, i) => (
                   <Cell key={i} line={r.left} side="left" />

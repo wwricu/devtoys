@@ -12,6 +12,8 @@ import {
 import { useFavourites } from "@/lib/favorites";
 import { useStoredState } from "@/components/kit";
 import { fill, useLang, getLang, switchLang, type Lang, repoUrl } from "@/lib/i18n";
+import { ThemeToggle } from "./ThemeToggle";
+import { warmTool } from "@/lib/toolPreload";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -119,6 +121,7 @@ export default function Sidebar() {
             <Link
               key={tool.id}
               href={`/${cat}/${tool.id}`}
+              onPointerEnter={() => warmTool(tool.id)}
               className={`shrink-0 rounded border px-2 py-1 text-xs ${
                 pathname === `/${cat}/${tool.id}`
                   ? "border-neutral-400 bg-neutral-200 font-medium dark:border-neutral-600 dark:bg-neutral-800"
@@ -139,6 +142,7 @@ export default function Sidebar() {
             {t.siteName}
           </Link>
           <div className="flex shrink-0 items-center gap-0.5">
+            <ThemeToggle />
             <button
               type="button"
               onClick={() => switchLang(nextLang)}
@@ -219,6 +223,8 @@ export default function Sidebar() {
                         <li key={tool.id}>
                           <Link
                             href={`/${toolCat}/${tool.id}`}
+                            onPointerEnter={() => warmTool(tool.id)}
+                            onFocus={() => warmTool(tool.id)}
                             className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
                               active
                                 ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"

@@ -3,11 +3,12 @@
 import { useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -99,7 +100,7 @@ export default function LoremTool() {
         <ToolButton onClick={() => setOutput("")}>{t.clear}</ToolButton>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel
           title={L.filler}
           className="flex-1"
@@ -125,7 +126,7 @@ export default function LoremTool() {
             </div>
           </Panel>
         )}
-      </div>
+      </Split>
 
       <StatusLine
         info={output === "" ? L.runsLocally : fill(L.stats, loremStats(output))}

@@ -76,4 +76,20 @@ export default function ${name}Page() {
   );
 }
 
+writeFileSync(
+  join(root, "lib", "toolPreload.ts"),
+  `${banner("chunk warm-up")}
+const loaders: Record<string, () => Promise<unknown>> = {
+${entries.map(([, id, , spec]) => `  "${id}": () => import("${spec}"),`).join("\n")}
+};
+
+/** Fetch a tool's own chunk before the click. The route payload is prefetched
+ * by Link, but a client-only body is not, so the first visit would otherwise
+ * wait on that download. */
+export function warmTool(id: string) {
+  void loaders[id]?.();
+}
+`,
+);
+
 console.log(`Wrote ${entries.length} tool routes.`);

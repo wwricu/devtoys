@@ -3,11 +3,12 @@
 import { useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -73,7 +74,7 @@ export default function IdnTool() {
         <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel title={L.domainPanel}>
           <textarea
             className={editorClass}
@@ -116,7 +117,7 @@ export default function IdnTool() {
             )}
           </div>
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={read.error ? { message: read.error, line: 1, column: 1 } : null}

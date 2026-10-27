@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CopyButton,
+  editorClass,
   Panel,
   Segmented,
+  Split,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -23,6 +24,41 @@ import {
 import { strings } from "./locale";
 
 type Direction = "to58" | "from58" | "hexTo58" | "58ToHex";
+
+async function convert(
+  input: string,
+  direction: Direction,
+  alphabet: string,
+  checked: boolean,
+): Promise<string> {
+  const letters = alphabetFor(alphabet);
+  switch (direction) {
+    case "to58": {
+      const bytes = new TextEncoder().encode(input);
+      return checked
+        ? await encodeCheck(bytes, letters)
+        : bytesToBase58(bytes, letters);
+    }
+    case "from58": {
+      const bytes = checked
+        ? await decodeCheck(input, letters)
+        : base58ToBytes(input, letters);
+      return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    }
+    case "hexTo58": {
+      const bytes = hexToBytes(input);
+      return checked
+        ? await encodeCheck(bytes, letters)
+        : bytesToBase58(bytes, letters);
+    }
+    case "58ToHex": {
+      const bytes = checked
+        ? await decodeCheck(input, letters)
+        : base58ToBytes(input, letters);
+      return bytesToHex(bytes);
+    }
+  }
+}
 
 export default function Base58Tool() {
   const { t } = useLang();
@@ -52,49 +88,37 @@ export default function Base58Tool() {
     { value: "ripple", label: L.ripple },
   ];
 
-  const run = async () => {
-    setError(null);
-    const letters = alphabetFor(alphabet);
-    try {
-      switch (direction) {
-        case "to58": {
-          const bytes = new TextEncoder().encode(input);
-          setOutput(
-            checked
-              ? await encodeCheck(bytes, letters)
-              : bytesToBase58(bytes, letters),
-          );
-          break;
-        }
-        case "from58": {
-          const bytes = checked
-            ? await decodeCheck(input, letters)
-            : base58ToBytes(input, letters);
-          setOutput(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-          break;
-        }
-        case "hexTo58": {
-          const bytes = hexToBytes(input);
-          setOutput(
-            checked
-              ? await encodeCheck(bytes, letters)
-              : bytesToBase58(bytes, letters),
-          );
-          break;
-        }
-        case "58ToHex": {
-          const bytes = checked
-            ? await decodeCheck(input, letters)
-            : base58ToBytes(input, letters);
-          setOutput(bytesToHex(bytes));
-          break;
-        }
+  // Converts as you type, like the other encoders. Base58Check needs a hash,
+  // so this waits for the typing to settle; the guard drops a result from a
+  // keystroke that has already been superseded.
+  useEffect(() => {
+    let alive = true;
+    const id = setTimeout(() => {
+      if (input === "") {
+        setOutput("");
+        setError(null);
+        return;
       }
-    } catch (err) {
-      setOutput("");
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  };
+      convert(input, direction, alphabet, checked).then(
+        (value) => {
+          if (alive) {
+            setOutput(value);
+            setError(null);
+          }
+        },
+        (err: unknown) => {
+          if (alive) {
+            setOutput("");
+            setError(err instanceof Error ? err.message : String(err));
+          }
+        },
+      );
+    }, 120);
+    return () => {
+      alive = false;
+      clearTimeout(id);
+    };
+  }, [input, direction, alphabet, checked]);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
@@ -119,7 +143,6 @@ export default function Base58Tool() {
           />
           {L.base58check}
         </label>
-        <ToolButton onClick={run}>{L.convert}</ToolButton>
         <ToolButton
           onClick={() => setInput(output)}
           title={t.outputToInputHint}
@@ -129,7 +152,7 @@ export default function Base58Tool() {
         <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+      <Split>
         <Panel title={t.input} actions={<CopyButton getText={() => input} />}>
           <textarea
             className={editorClass}
@@ -150,7 +173,7 @@ export default function Base58Tool() {
             placeholder={t.result}
           />
         </Panel>
-      </div>
+      </Split>
 
       <StatusLine
         error={error ? { message: error, line: 1, column: 1 } : null}

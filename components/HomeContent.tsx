@@ -13,9 +13,6 @@ export default function HomeContent() {
     <div className="w-full">
       <div className="mx-auto w-full max-w-3xl">
         <h1 className="text-lg font-semibold">{t.siteName}</h1>
-        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          {t.homeIntro}
-        </p>
       </div>
       <div className="mt-4">
         <ToolGrid>
