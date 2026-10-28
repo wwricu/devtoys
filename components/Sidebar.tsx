@@ -374,9 +374,9 @@ export default function Sidebar() {
         onClick={() => setSidebarHidden(false)}
         title={t.showSidebar}
         aria-label={t.showSidebar}
-        className={`${hidden ? "hidden md:flex" : "hidden"} fixed top-2 left-2 z-20 size-8 items-center justify-center rounded border border-neutral-200 bg-white text-neutral-400 shadow-sm transition-colors hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-300`}
+        className={`${hidden ? "hidden md:flex" : "hidden"} fixed top-1/2 left-0 z-20 h-14 w-4 -translate-y-1/2 items-center justify-center rounded-r border border-l-0 border-neutral-200 bg-white text-neutral-400 shadow-sm transition-colors hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-300`}
       >
-        <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
+        <svg viewBox="0 0 16 16" className="size-3" aria-hidden="true">
           <path
             d="M6 3.5 10 8l-4 4.5"
             fill="none"
