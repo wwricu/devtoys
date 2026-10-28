@@ -3,7 +3,9 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -26,10 +28,15 @@ import {
   systemZone,
   wallParts,
   zoneAbbreviation,
+  zoneOptionLabel,
   type WallParts,
   type WallStatus,
 } from "./zone";
 import { strings } from "./locale";
+
+/** Layout effects only exist in the browser; the server pass stays quiet. */
+const useClientLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 type ParseError = "range" | "unrecognized" | null;
 
@@ -136,6 +143,20 @@ export default function DateConverter() {
   const [notice, setNotice] = useState<WallStatus | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
+  // The server has no clock, so the first render stays empty and this fills it
+  // before the first hydrated paint. Runs once; later edits and the ticking
+  // clock must not pull the fields back to "now".
+  const seeded = useRef(false);
+  useClientLayoutEffect(() => {
+    if (seeded.current) return;
+    seeded.current = true;
+    setInstant((prev) => {
+      if (prev) return prev;
+      const ms = Date.now();
+      return { ms, ns: BigInt(ms) * 1_000_000n, unit: "ms" };
+    });
+  }, []);
+
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
@@ -146,9 +167,19 @@ export default function DateConverter() {
     return system;
   }, [zone, system]);
 
-  const options = zoneOptions.includes(zoneId)
-    ? zoneOptions
-    : [zoneId, ...zoneOptions];
+  const options = useMemo(
+    () =>
+      zoneOptions.includes(zoneId) ? zoneOptions : [zoneId, ...zoneOptions],
+    [zoneOptions, zoneId],
+  );
+
+  // Labels carry each zone's offset at the displayed instant; the minute bucket
+  // keeps the 419-zone sweep off the per-second clock re-render.
+  const labelAnchor = Math.floor((instant?.ms ?? now) / 60_000) * 60_000;
+  const optionLabels = useMemo(
+    () => new Map(options.map((id) => [id, zoneOptionLabel(labelAnchor, id)])),
+    [options, labelAnchor],
+  );
 
   const zoneOffset = offsetSeconds(instant?.ms ?? now, zoneId);
   const zoneName = zoneAbbreviation(instant?.ms ?? now, zoneId);
@@ -329,7 +360,7 @@ export default function DateConverter() {
         </span>
         <select
           aria-label={L.timezone}
-          className={`${inputClass} w-56 max-w-full`}
+          className={`${inputClass} w-56 max-w-full lg:w-80`}
           value={zoneId}
           onChange={(e) => {
             setZone(e.target.value);
@@ -338,7 +369,7 @@ export default function DateConverter() {
         >
           {options.map((id) => (
             <option key={id} value={id}>
-              {id}
+              {optionLabels.get(id)}
             </option>
           ))}
         </select>

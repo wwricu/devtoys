@@ -368,29 +368,25 @@ export default function Sidebar() {
         </div>
         {navBody}
       </aside>
-      <div
+      <button
+        type="button"
         data-sidebar-restore
-        className={`${hidden ? "hidden md:flex" : "hidden"} w-6 shrink-0 flex-col items-center border-r border-neutral-200 bg-neutral-50 pt-2 dark:border-neutral-800 dark:bg-neutral-900`}
+        onClick={() => setSidebarHidden(false)}
+        title={t.showSidebar}
+        aria-label={t.showSidebar}
+        className={`${hidden ? "hidden md:flex" : "hidden"} fixed top-2 left-2 z-20 size-8 items-center justify-center rounded border border-neutral-200 bg-white text-neutral-400 shadow-sm transition-colors hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-300`}
       >
-        <button
-          type="button"
-          onClick={() => setSidebarHidden(false)}
-          title={t.showSidebar}
-          aria-label={t.showSidebar}
-          className="rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-        >
-          <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
-            <path
-              d="M6 3.5 10 8l-4 4.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
+        <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
+          <path
+            d="M6 3.5 10 8l-4 4.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
     </>
   );
 }

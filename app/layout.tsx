@@ -86,7 +86,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <LangProvider>
           <Sidebar />
           <main className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 md:p-4">
+            <div
+              data-main-scroll
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 md:p-4"
+            >
               {children}
             </div>
           </main>

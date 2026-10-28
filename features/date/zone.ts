@@ -206,6 +206,17 @@ export function zoneAbbreviation(ms: number, zone: string): string {
   return part?.value ?? "";
 }
 
+/**
+ * Picker label: the id plus the offset in effect at the instant, so the many
+ * same-named "America/..." zones can be told apart while scrolling. The
+ * abbreviation is dropped when it only restates the offset ("GMT+5:30").
+ */
+export function zoneOptionLabel(ms: number, zone: string): string {
+  const name = zoneAbbreviation(ms, zone);
+  const suffix = name && name !== "UTC" && !/\d/.test(name) ? ` · ${name}` : "";
+  return `${zone} · ${formatOffset(offsetSeconds(ms, zone))}${suffix}`;
+}
+
 /** "UTC+08:00" style; seconds are rounded away for display. */
 export function formatOffset(offset: number): string {
   const minutes = Math.round(offset / 60);
