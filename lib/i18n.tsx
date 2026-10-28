@@ -322,7 +322,7 @@ const zhTools: Record<string, { name: string; description: string }> = {
   },
   "base64-file": {
     name: "Base64 转文件",
-    description: "把 Base64 解码成可下载文件，并识别它的真实类型",
+    description: "把 Base64 解码成可下载文件，自动识别文本里的第一段 Base64 和文件类型",
   },
   "list-compare": {
     name: "列表比较",

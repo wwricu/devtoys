@@ -750,7 +750,8 @@ export const tools: ToolDefinition[] = [
   {
     id: "base64-file",
     name: "Base64 to File",
-    description: "Decode Base64 into a downloadable file and detect its type",
+    description:
+      "Decode Base64 into a downloadable file - auto-detects the first Base64 block in the text and the file type",
     keywords: [
       "base64",
       "file",
