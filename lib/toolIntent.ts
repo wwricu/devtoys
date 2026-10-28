@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { categorySlug, tools } from "./tools";
 import { preloadTool } from "./toolModule";
 import { recentToolIds } from "./recentTools";
+import { getSnapshot as favoriteIds } from "./favorites";
 
 /** Hover/focus prefetch for tool links: route data now, chunk now, nothing
  *  eager. The default viewport prefetch would queue every visible link's
@@ -20,10 +21,11 @@ let warmupStarted = false;
 /**
  * After the page settles, walk every tool in small steps and warm both its
  * route data and its chunk. Revisits are already instant; this gives first
- * visits the same caches without the eager-viewport-prefetch storm. Recently
- * opened tools go first, so switching back into them is covered within the
- * first couple of requests. Skipped on metered or 2G connections, and only
- * once per full page load.
+ * visits the same caches without the eager-viewport-prefetch storm.
+ * Favourites come first in sidebar order, then recently opened tools, then
+ * the registry order shown in the sidebar, so the tools most likely to be
+ * opened next are covered within the first couple of requests. Skipped on
+ * metered or 2G connections, and only once per full page load.
  */
 export function useToolWarmup() {
   const router = useRouter();
@@ -36,14 +38,19 @@ export function useToolWarmup() {
       return;
     }
 
-    const recent = recentToolIds();
-    const rank = new Map(recent.map((id, index) => [id, index]));
+    const favorites = [...favoriteIds()];
+    const favoriteRank = new Map(favorites.map((id, index) => [id, index]));
+    const priority = [
+      ...favorites,
+      ...recentToolIds().filter((id) => !favoriteRank.has(id)),
+    ];
+    const rank = new Map(priority.map((id, index) => [id, index]));
     const queue = tools
       .map((tool, index) => ({ tool, index }))
       .sort(
         (a, b) =>
-          (rank.get(a.tool.id) ?? recent.length) -
-            (rank.get(b.tool.id) ?? recent.length) || a.index - b.index,
+          (rank.get(a.tool.id) ?? priority.length) -
+            (rank.get(b.tool.id) ?? priority.length) || a.index - b.index,
       )
       .map(({ tool }) => ({
         id: tool.id,
