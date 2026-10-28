@@ -5,6 +5,8 @@ export type SortKeys = "none" | "asc" | "desc";
 export interface JsonOptions {
   indent: Indent;
   sortKeys: SortKeys;
+  /** Emit the input as a JSON string literal instead of parsing it. */
+  escapeString: boolean;
 }
 
 export interface JsonError {
@@ -67,6 +69,8 @@ function sortValue(value: unknown, order: SortKeys): unknown {
 }
 
 export function processJson(text: string, options: JsonOptions): JsonResult {
+  if (options.escapeString)
+    return { output: text === "" ? "" : JSON.stringify(text), error: null };
   if (text.trim() === "") return { output: "", error: null };
   let parsed: unknown;
   try {

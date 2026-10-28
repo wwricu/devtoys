@@ -27,6 +27,10 @@ export default function JsonFormatter() {
     "json-format.sort",
     "none",
   );
+  const [escapeString, setEscapeString] = useStoredState(
+    "json-format.escape",
+    false,
+  );
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const sortOptions: { value: SortKeys; label: string }[] = [
@@ -36,8 +40,8 @@ export default function JsonFormatter() {
   ];
 
   const result = useMemo(
-    () => processJson(input, { indent, sortKeys }),
-    [input, indent, sortKeys],
+    () => processJson(input, { indent, sortKeys, escapeString }),
+    [input, indent, sortKeys, escapeString],
   );
 
   const download = useCallback(() => {
@@ -70,24 +74,40 @@ export default function JsonFormatter() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          {L.indent}
-        </span>
-        <Segmented
-          ariaLabel={L.indentation}
-          value={indent}
-          options={indentOptions}
-          onChange={setIndent}
-        />
-        <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-          {L.sortKeys}
-        </span>
-        <Segmented
-          ariaLabel={L.sortKeys}
-          value={sortKeys}
-          options={sortOptions}
-          onChange={setSortKeys}
-        />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {L.indent}
+          </span>
+          <Segmented
+            ariaLabel={L.indentation}
+            value={indent}
+            options={indentOptions}
+            onChange={setIndent}
+          />
+        </div>
+        <div className="ml-2 flex items-center gap-2">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {L.sortKeys}
+          </span>
+          <Segmented
+            ariaLabel={L.sortKeys}
+            value={sortKeys}
+            options={sortOptions}
+            onChange={setSortKeys}
+          />
+        </div>
+        <label
+          title={L.escapeHint}
+          className="ml-2 flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400"
+        >
+          <input
+            type="checkbox"
+            checked={escapeString}
+            onChange={(e) => setEscapeString(e.target.checked)}
+            className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+          />
+          {L.escape}
+        </label>
       </div>
 
       <Split>
@@ -115,14 +135,14 @@ export default function JsonFormatter() {
             ref={inputRef}
             className={editorClass}
             spellCheck={false}
-            placeholder={L.pasteHint}
+            placeholder={escapeString ? L.escapePlaceholder : L.pasteHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
 
         <Panel
-          title={t.output}
+          title={escapeString ? L.escaped : t.output}
           actions={
             <>
               <ToolButton onClick={download} title={L.downloadHint}>
@@ -136,7 +156,7 @@ export default function JsonFormatter() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder={L.formatted}
+            placeholder={escapeString ? L.escaped : L.formatted}
             value={result.output}
           />
         </Panel>
@@ -161,7 +181,7 @@ export default function JsonFormatter() {
                 chars: input.length,
                 out: result.output.length,
               })
-            : input
+            : input && !escapeString
               ? L.valid
               : ""
         }
