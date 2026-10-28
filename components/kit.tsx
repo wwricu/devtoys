@@ -161,18 +161,24 @@ export function Panel({
         </span>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
           {actions}
-          {pane && (
-            <button
-              type="button"
-              onClick={pane.collapse}
-              title={t.hidePane}
-              aria-label={t.hidePane}
-              className="shrink-0 rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
-            >
-              <PaneChevron edge={pane.edge} orientation={pane.orientation} />
-            </button>
-          )}
         </div>
+        {pane && (
+          <button
+            type="button"
+            onClick={pane.collapse}
+            title={t.hidePane}
+            aria-label={t.hidePane}
+            // Each pane hides toward its own outer edge; stacked panes keep the
+            // button trailing like every other collapse control.
+            className={`shrink-0 rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 ${
+              pane.edge === "start" && pane.orientation === "row"
+                ? "md:order-first"
+                : ""
+            }`}
+          >
+            <PaneChevron edge={pane.edge} orientation={pane.orientation} />
+          </button>
+        )}
       </header>
       {children}
     </section>
