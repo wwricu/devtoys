@@ -138,7 +138,7 @@ export default function Base64FileTool() {
               <a
                 href={url}
                 download={fileName}
-                className="rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                className="whitespace-nowrap rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
               >
                 {L.download}
               </a>

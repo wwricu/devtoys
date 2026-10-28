@@ -108,7 +108,7 @@ export function ToolButton({
       type="button"
       title={title}
       onClick={onClick}
-      className="rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+      className="whitespace-nowrap rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
     >
       {children}
     </button>
@@ -154,11 +154,12 @@ export function Panel({
     <section
       className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900 ${className ?? ""}`}
     >
-      <header className="flex h-8 shrink-0 items-center justify-between border-b border-neutral-200 bg-neutral-50 px-2 dark:border-neutral-800 dark:bg-neutral-800/60">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+      <header className="flex min-h-8 shrink-0 items-center justify-between gap-2 border-b border-neutral-200 bg-neutral-50 px-2 py-0.5 dark:border-neutral-800 dark:bg-neutral-800/60">
+        {/* A narrow pane truncates the title instead of squeezing the buttons. */}
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {title}
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
           {actions}
           {pane && (
             <button
@@ -166,7 +167,7 @@ export function Panel({
               onClick={pane.collapse}
               title={t.hidePane}
               aria-label={t.hidePane}
-              className="rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
+              className="shrink-0 rounded p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
             >
               <PaneChevron edge={pane.edge} orientation={pane.orientation} />
             </button>
@@ -431,6 +432,8 @@ export function StatusLine({
   info: string;
 }) {
   const { t } = useLang();
+  // Like JWT Decoder: no hint, no bar. An empty bordered strip only costs space.
+  if (!error && !info) return null;
   return (
     <div
       className={`flex h-7 shrink-0 items-center gap-3 rounded border px-2 text-xs ${

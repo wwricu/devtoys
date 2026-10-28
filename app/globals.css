@@ -28,3 +28,19 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* A squeezed pane must shrink the row, not stack a button label word by word. */
+button {
+  white-space: nowrap;
+}
+
+/* The pre-paint script sets this before hydration, so a reload with the
+   sidebar hidden never flashes the full panel. React state keeps it in sync. */
+@media (min-width: 48rem) {
+  html.sidebar-hidden [data-sidebar] {
+    display: none;
+  }
+  html.sidebar-hidden [data-sidebar-restore] {
+    display: flex;
+  }
+}

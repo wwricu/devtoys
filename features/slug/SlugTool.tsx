@@ -25,10 +25,6 @@ export default function SlugTool() {
     { value: "_", label: L.underscore },
     { value: " ", label: L.space },
   ];
-  const yesNo: { value: "yes" | "no"; label: string }[] = [
-    { value: "yes", label: L.yes },
-    { value: "no", label: L.no },
-  ];
 
   return (
     <SimpleTransform
@@ -42,18 +38,24 @@ export default function SlugTool() {
             onChange={setSeparator}
             ariaLabel={L.separator}
           />
-          <Segmented
-            value={lower}
-            options={yesNo}
-            onChange={setLower}
-            ariaLabel={L.lowerCase}
-          />
-          <Segmented
-            value={unicode}
-            options={yesNo}
-            onChange={setUnicode}
-            ariaLabel={L.keepLatin}
-          />
+          <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-300">
+            <input
+              type="checkbox"
+              checked={lower === "yes"}
+              onChange={(e) => setLower(e.target.checked ? "yes" : "no")}
+              className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+            />
+            {L.lowerCase}
+          </label>
+          <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-300">
+            <input
+              type="checkbox"
+              checked={unicode === "yes"}
+              onChange={(e) => setUnicode(e.target.checked ? "yes" : "no")}
+              className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+            />
+            {L.keepUnicode}
+          </label>
           <label className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-300">
             {L.max}
             <input

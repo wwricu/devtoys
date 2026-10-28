@@ -188,7 +188,7 @@ export default function ImageBase64() {
                   <a
                     href={decoded.image.uri}
                     download={`image.${decoded.image.mime.split("/")[1] ?? "bin"}`}
-                    className="rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                    className="whitespace-nowrap rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                   >
                     {L.download}
                   </a>

@@ -13,7 +13,7 @@ import { useFavourites } from "@/lib/favorites";
 import { useStoredState } from "@/components/kit";
 import { fill, useLang, getLang, switchLang, type Lang, repoUrl } from "@/lib/i18n";
 import { ThemeToggle } from "./ThemeToggle";
-import { useToolIntent } from "@/lib/toolIntent";
+import { useToolIntent, useToolWarmup } from "@/lib/toolIntent";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -62,8 +62,16 @@ export default function Sidebar() {
     "sidebar.collapsed",
     {},
   );
+  const [hidden, setHidden] = useStoredState<boolean>("sidebar.hidden", false);
+  // The pre-paint script owns the class on load; toggles update it directly so
+  // React never removes it before useStoredState has read the stored value.
+  const setSidebarHidden = (next: boolean) => {
+    setHidden(next);
+    document.documentElement.classList.toggle("sidebar-hidden", next);
+  };
   const { favs } = useFavourites();
   const intent = useToolIntent();
+  useToolWarmup();
 
   const currentLang = getLang();
   const nextLang: Lang = currentLang === "zh" ? "en" : "zh";
@@ -137,7 +145,10 @@ export default function Sidebar() {
           );
         })}
       </div>
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 md:flex">
+      <aside
+        data-sidebar
+        className={`${hidden ? "hidden" : "hidden md:flex"} w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
+      >
         <div className="flex items-center justify-between px-3 py-2">
           <Link
             href="/"
@@ -176,6 +187,24 @@ export default function Sidebar() {
                 />
               </svg>
             </a>
+            <button
+              type="button"
+              onClick={() => setSidebarHidden(true)}
+              title={t.hideSidebar}
+              aria-label={t.hideSidebar}
+              className="rounded p-1 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+            >
+              <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
+                <path
+                  d="M8.5 3.5 4.5 8l4 4.5M13 3.5 9 8l4 4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
         </div>
         <div className="px-3 pb-2">
@@ -258,6 +287,29 @@ export default function Sidebar() {
           )}
         </nav>
       </aside>
+      <div
+        data-sidebar-restore
+        className={`${hidden ? "hidden md:flex" : "hidden"} w-6 shrink-0 flex-col items-center border-r border-neutral-200 bg-neutral-50 pt-2 dark:border-neutral-800 dark:bg-neutral-900`}
+      >
+        <button
+          type="button"
+          onClick={() => setSidebarHidden(false)}
+          title={t.showSidebar}
+          aria-label={t.showSidebar}
+          className="rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+        >
+          <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
+            <path
+              d="M6 3.5 10 8l-4 4.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
     </>
   );
 }

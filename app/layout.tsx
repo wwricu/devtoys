@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dev Toys - Free Online Developer Tools",
+    default: "Dev Toys - Developer Tools",
     template: "%s | Dev Toys",
   },
   description:
@@ -47,14 +47,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    title: "Dev Toys - Free Online Developer Tools",
+    title: "Dev Toys - Developer Tools",
     description:
       "Free online developer tools that run entirely in your browser. No data is uploaded.",
     siteName: "Dev Toys",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dev Toys - Free Online Developer Tools",
+    title: "Dev Toys - Developer Tools",
     description:
       "Free online developer tools that run entirely in your browser.",
   },
