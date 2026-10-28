@@ -434,6 +434,7 @@ export function formatDate(
   const hms = `${pad(wall.hour)}:${pad(wall.minute)}:${pad(wall.second)}`;
   const weekday = weekdayOf(wall.year, wall.month, wall.day);
   const dst = dstInfo(ms, zone);
+  const abbreviation = zoneAbbreviation(ms, zone);
   return {
     isoUtc: new Date(Math.trunc(ms)).toISOString(),
     isoZoned: `${ymd}T${hms}.${pad(wall.millisecond, 3)}${offsetLabel.slice(3)}`,
@@ -446,7 +447,8 @@ export function formatDate(
     weekday,
     timezone: zone,
     offset: offsetLabel,
-    abbreviation: zoneAbbreviation(ms, zone),
+    // Intl spells many zones "GMT+8"; use the UTC offset style instead.
+    abbreviation: /^(GMT|UTC)/.test(abbreviation) ? offsetLabel : abbreviation,
     dst: dst.active,
     unixSeconds: (stamp / 1_000_000_000n).toString(),
     unixMillis: (stamp / 1_000_000n).toString(),

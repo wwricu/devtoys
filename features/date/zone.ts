@@ -210,12 +210,12 @@ export function zoneAbbreviation(ms: number, zone: string): string {
 }
 
 /**
- * Picker label: the id plus the offset in effect at the instant, so the many
- * same-named "America/..." zones can be told apart while scrolling. The
- * abbreviation is dropped when it only restates the offset ("GMT+5:30").
- * The 419-string sweep is cached per minute anchor, so a remount or a
- * prewarmed first visit is a map lookup instead of another Intl round-trip;
- * oldest anchors fall out first.
+ * Picker label: the offset in effect at the instant in parentheses, then the
+ * zone name, so same-named zones can be told apart while scrolling and no
+ * two-letter abbreviation can be mistaken for a different region. The offset
+ * is always spelled UTC, never GMT. The 419-string sweep is cached per minute
+ * anchor, so a remount or a prewarmed first visit is a map lookup instead of
+ * another Intl round-trip; oldest anchors fall out first.
  */
 const labelCache = new Map<string, string>();
 const LABEL_CACHE_LIMIT = 2048;
@@ -224,9 +224,7 @@ export function zoneOptionLabel(ms: number, zone: string): string {
   const key = `${zone}\u0000${ms}`;
   const cached = labelCache.get(key);
   if (cached !== undefined) return cached;
-  const name = zoneAbbreviation(ms, zone);
-  const suffix = name && name !== "UTC" && !/\d/.test(name) ? ` · ${name}` : "";
-  const label = `${zone} · ${formatOffset(offsetSeconds(ms, zone))}${suffix}`;
+  const label = `(${formatOffset(offsetSeconds(ms, zone))}) ${zone}`;
   if (labelCache.size >= LABEL_CACHE_LIMIT) {
     const oldest = labelCache.keys().next().value;
     if (oldest !== undefined) labelCache.delete(oldest);
