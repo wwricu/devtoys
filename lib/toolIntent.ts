@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { categorySlug, tools } from "./tools";
 import { preloadTool } from "./toolModule";
+import { recentToolIds } from "./recentTools";
 
 /** Hover/focus prefetch for tool links: route data now, chunk now, nothing
  *  eager. The default viewport prefetch would queue every visible link's
@@ -19,8 +20,10 @@ let warmupStarted = false;
 /**
  * After the page settles, walk every tool in small steps and warm both its
  * route data and its chunk. Revisits are already instant; this gives first
- * visits the same caches without the eager-viewport-prefetch storm. Skipped
- * on metered or 2G connections, and only once per full page load.
+ * visits the same caches without the eager-viewport-prefetch storm. Recently
+ * opened tools go first, so switching back into them is covered within the
+ * first couple of requests. Skipped on metered or 2G connections, and only
+ * once per full page load.
  */
 export function useToolWarmup() {
   const router = useRouter();
@@ -33,11 +36,19 @@ export function useToolWarmup() {
       return;
     }
 
-    // The page in view is already loaded; a repeated prefetch is a cache hit.
-    const queue = tools.map((tool) => ({
-      id: tool.id,
-      href: `/${categorySlug(tool.category)}/${tool.id}`,
-    }));
+    const recent = recentToolIds();
+    const rank = new Map(recent.map((id, index) => [id, index]));
+    const queue = tools
+      .map((tool, index) => ({ tool, index }))
+      .sort(
+        (a, b) =>
+          (rank.get(a.tool.id) ?? recent.length) -
+            (rank.get(b.tool.id) ?? recent.length) || a.index - b.index,
+      )
+      .map(({ tool }) => ({
+        id: tool.id,
+        href: `/${categorySlug(tool.category)}/${tool.id}`,
+      }));
 
     let timer: number | undefined;
     const run = () => {

@@ -2,6 +2,7 @@
 
 import { createElement, useEffect, useSyncExternalStore, type ComponentType } from "react";
 import { toolLoaders } from "./toolPreload";
+import { rememberTool } from "./recentTools";
 
 const loaded = new Map<string, ComponentType>();
 const listeners = new Set<() => void>();
@@ -30,6 +31,7 @@ export function preloadTool(id: string) {
 export function ToolMount({ id }: { id: string }) {
   useEffect(() => {
     preloadTool(id);
+    rememberTool(id);
   }, [id]);
   const Tool = useSyncExternalStore(
     subscribe,
