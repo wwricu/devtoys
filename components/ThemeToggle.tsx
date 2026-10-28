@@ -1,9 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useStoredState } from "./kit";
 import { useLang } from "@/lib/i18n";
 import { THEME_KEY, type Theme } from "@/lib/theme";
+
+/** The class on <html> is the rendered theme; watch it instead of mirroring it. */
+function subscribeClass(notify: () => void) {
+  const observer = new MutationObserver(notify);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  return () => observer.disconnect();
+}
+
+const readIsDark = () => document.documentElement.classList.contains("dark");
 
 /**
  * Light/dark toggle. Nothing stored means "follow the system", which is what
@@ -13,25 +25,22 @@ import { THEME_KEY, type Theme } from "@/lib/theme";
 export function ThemeToggle() {
   const { t } = useLang();
   const [mode, setMode] = useStoredState<Theme | null>(THEME_KEY, null);
-  // Start from the class the head script already committed, so the icon and
-  // the page agree on the very first frame.
-  const [isDark, setIsDark] = useState(
-    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
-  );
+  // The server snapshot is light so hydration matches; the store then reads the
+  // class the head script already committed, before the first paint.
+  const isDark = useSyncExternalStore(subscribeClass, readIsDark, () => false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () =>
-      setIsDark(mode === null ? media.matches : mode === "dark");
+      document.documentElement.classList.toggle(
+        "dark",
+        mode === null ? media.matches : mode === "dark",
+      );
     apply();
     if (mode !== null) return;
     media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
   }, [mode]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark]);
 
   const label = isDark ? t.toLight : t.toDark;
   return (

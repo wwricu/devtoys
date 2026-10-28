@@ -11,7 +11,7 @@ import {
 } from "@/lib/tools";
 import { useFavourites } from "@/lib/favorites";
 import { useStoredState } from "@/components/kit";
-import { fill, useLang, getLang, switchLang, type Lang, repoUrl } from "@/lib/i18n";
+import { fill, useLang, switchLang, type Lang, repoUrl } from "@/lib/i18n";
 import { ThemeToggle } from "./ThemeToggle";
 import { useToolIntent, useToolWarmup } from "@/lib/toolIntent";
 
@@ -84,7 +84,7 @@ function BadgeTile({
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { t, toolName, categoryName, toolSearchText } = useLang();
+  const { t, lang: currentLang, toolName, categoryName, toolSearchText } = useLang();
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useStoredState<Record<string, boolean>>(
     "sidebar.collapsed",
@@ -120,7 +120,6 @@ export default function Sidebar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen, pathname]);
 
-  const currentLang = getLang();
   const nextLang: Lang = currentLang === "zh" ? "en" : "zh";
 
   const categories = useMemo(() => {
@@ -339,8 +338,8 @@ export default function Sidebar() {
             <button
               type="button"
               onClick={() => switchLang(nextLang)}
-              title={nextLang === "zh" ? "Switch to English" : "切换到中文"}
-              aria-label={nextLang === "zh" ? "Switch to English" : "切换到中文"}
+              title={nextLang === "zh" ? "切换到中文" : "Switch to English"}
+              aria-label={nextLang === "zh" ? "切换到中文" : "Switch to English"}
               className="rounded p-1 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
             >
               <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
