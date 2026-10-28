@@ -41,7 +41,7 @@ const shell = {
     result: "Result",
     ready: "Ready",
     loadingTool: "Loading tool…",
-    outputToInput: "Output → Input",
+    outputToInput: "Input ← Output",
     outputToInputHint: "Move output back into the input",
     ioChars: "Input {input} · Output {output} chars",
     resizePanes: "Resize panes",
