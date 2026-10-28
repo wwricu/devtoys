@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -29,6 +29,34 @@ function Chevron({ open }: { open: boolean }) {
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="size-4">
+      <path
+        d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="size-4">
+      <path
+        d="m4 4 8 8M12 4l-8 8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -73,6 +101,25 @@ export default function Sidebar() {
   const intent = useToolIntent();
   useToolWarmup();
 
+  // Narrow screens have no room for the category tree, so it moves into a
+  // drawer behind a menu button.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    // Land on the current tool instead of the top of the list.
+    drawerRef.current?.focus({ preventScroll: true });
+    drawerRef.current
+      ?.querySelector<HTMLElement>(`a[href="${pathname}"]`)
+      ?.scrollIntoView({ block: "center" });
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen, pathname]);
+
   const currentLang = getLang();
   const nextLang: Lang = currentLang === "zh" ? "en" : "zh";
 
@@ -114,37 +161,150 @@ export default function Sidebar() {
   const toggle = (name: string) =>
     setCollapsed({ ...collapsed, [name]: !collapsed[name] });
 
+  // Shared by the desktop sidebar and the narrow-screen drawer.
+  const navBody = (
+    <>
+      <div className="px-3 pb-2">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t.search}
+          aria-label={t.search}
+          className="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
+        />
+      </div>
+      <nav className="flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
+        {categories.map((c) => {
+          const open = searching || collapsed[c.name] !== true;
+          return (
+            <div key={c.name} className="mb-1">
+              <div className="flex items-center gap-1 rounded pr-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60">
+                <button
+                  type="button"
+                  onClick={() => toggle(c.name)}
+                  aria-expanded={open}
+                  aria-label={fill(
+                    open ? t.collapseCategory : t.expandCategory,
+                    { name: categoryName(c.name) },
+                  )}
+                  className="flex size-6 shrink-0 items-center justify-center rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                >
+                  <Chevron open={open} />
+                </button>
+                <Link
+                  href={`/${categorySlug(c.name)}`}
+                  prefetch={false}
+                  onPointerEnter={() => intent(`/${categorySlug(c.name)}`)}
+                  onFocus={() => intent(`/${categorySlug(c.name)}`)}
+                  className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-700 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
+                >
+                  <span className="flex-1 truncate">
+                    {categoryName(c.name)}
+                  </span>
+                  <span className="text-[10px] font-normal tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+                    {c.tools.length}
+                  </span>
+                </Link>
+              </div>
+              {open && (
+                <ul className="space-y-0.5">
+                  {c.tools.map((tool) => {
+                    const toolCat = categorySlug(tool.category);
+                    const href = `/${toolCat}/${tool.id}`;
+                    const active = pathname === `/${toolCat}/${tool.id}`;
+                    return (
+                      <li key={tool.id}>
+                        <Link
+                          href={href}
+                          prefetch={false}
+                          onPointerEnter={() => intent(href, tool.id)}
+                          onFocus={() => intent(href, tool.id)}
+                          className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
+                            active
+                              ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                              : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800/60"
+                          }`}
+                        >
+                          <BadgeTile tool={tool} active={active} />
+                          {toolName(tool)}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+        {categories.length === 0 && (
+          <p className="px-2 py-4 text-center text-xs text-neutral-400">
+            {t.noMatchingTools}
+          </p>
+        )}
+      </nav>
+    </>
+  );
+
   return (
     <>
-      {/* Mobile top horizontal nav */}
-      <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-neutral-200 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-900 md:hidden">
+      {/* Mobile top bar: the category tree lives in the drawer below */}
+      <div className="flex shrink-0 items-center gap-1.5 border-b border-neutral-200 bg-neutral-50 px-2 py-2 dark:border-neutral-800 dark:bg-neutral-900 md:hidden">
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label={t.openMenu}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
+          className="rounded p-1 text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+        >
+          <MenuIcon />
+        </button>
         <Link
           href="/"
-          className="shrink-0 text-xs font-semibold text-neutral-700 dark:text-neutral-200"
+          className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800 dark:text-neutral-200"
         >
           {t.siteName}
         </Link>
-        {tools.map((tool) => {
-          const cat = categorySlug(tool.category);
-          const href = `/${cat}/${tool.id}`;
-          return (
-            <Link
-              key={tool.id}
-              href={href}
-              prefetch={false}
-              onPointerEnter={() => intent(href, tool.id)}
-              onFocus={() => intent(href, tool.id)}
-              className={`shrink-0 rounded border px-2 py-1 text-xs ${
-                pathname === `/${cat}/${tool.id}`
-                  ? "border-neutral-400 bg-neutral-200 font-medium dark:border-neutral-600 dark:bg-neutral-800"
-                  : "border-neutral-200 text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
-              }`}
-            >
-              {toolName(tool)}
-            </Link>
-          );
-        })}
       </div>
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-neutral-950/30"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div
+            id="mobile-menu"
+            ref={drawerRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.siteName}
+            onClick={(event) => {
+              if ((event.target as HTMLElement).closest("a")) setMenuOpen(false);
+            }}
+            className="absolute inset-y-0 left-0 flex w-64 max-w-[85vw] flex-col border-r border-neutral-200 bg-neutral-50 shadow-xl outline-none dark:border-neutral-800 dark:bg-neutral-900"
+          >
+            <div className="flex items-center gap-1.5 px-2 py-2">
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                aria-label={t.closeMenu}
+                className="rounded p-1 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+              >
+                <CloseIcon />
+              </button>
+              <Link
+                href="/"
+                className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800 dark:text-neutral-200"
+              >
+                {t.siteName}
+              </Link>
+            </div>
+            {navBody}
+          </div>
+        </div>
+      )}
       <aside
         data-sidebar
         className={`${hidden ? "hidden" : "hidden md:flex"} w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
@@ -207,85 +367,7 @@ export default function Sidebar() {
             </a>
           </div>
         </div>
-        <div className="px-3 pb-2">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t.search}
-            aria-label={t.search}
-            className="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800"
-          />
-        </div>
-        <nav className="flex-1 overflow-y-auto px-2 pb-3">
-          {categories.map((c) => {
-            const open = searching || collapsed[c.name] !== true;
-            return (
-              <div key={c.name} className="mb-1">
-                <div className="flex items-center gap-1 rounded pr-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60">
-                  <button
-                    type="button"
-                    onClick={() => toggle(c.name)}
-                    aria-expanded={open}
-                    aria-label={fill(
-                      open ? t.collapseCategory : t.expandCategory,
-                      { name: categoryName(c.name) },
-                    )}
-                    className="flex size-6 shrink-0 items-center justify-center rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-                  >
-                    <Chevron open={open} />
-                  </button>
-                  <Link
-                    href={`/${categorySlug(c.name)}`}
-                    prefetch={false}
-                    onPointerEnter={() => intent(`/${categorySlug(c.name)}`)}
-                    onFocus={() => intent(`/${categorySlug(c.name)}`)}
-                    className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-700 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
-                  >
-                    <span className="flex-1 truncate">
-                      {categoryName(c.name)}
-                    </span>
-                    <span className="text-[10px] font-normal tracking-normal tabular-nums text-neutral-400 dark:text-neutral-500">
-                      {c.tools.length}
-                    </span>
-                  </Link>
-                </div>
-                {open && (
-                  <ul className="space-y-0.5">
-                    {c.tools.map((tool) => {
-                      const toolCat = categorySlug(tool.category);
-                      const href = `/${toolCat}/${tool.id}`;
-                      const active = pathname === `/${toolCat}/${tool.id}`;
-                      return (
-                        <li key={tool.id}>
-                          <Link
-                            href={href}
-                            prefetch={false}
-                            onPointerEnter={() => intent(href, tool.id)}
-                            onFocus={() => intent(href, tool.id)}
-                            className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
-                              active
-                                ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                                : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800/60"
-                            }`}
-                          >
-                            <BadgeTile tool={tool} active={active} />
-                            {toolName(tool)}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-          {categories.length === 0 && (
-            <p className="px-2 py-4 text-center text-xs text-neutral-400">
-              {t.noMatchingTools}
-            </p>
-          )}
-        </nav>
+        {navBody}
       </aside>
       <div
         data-sidebar-restore
