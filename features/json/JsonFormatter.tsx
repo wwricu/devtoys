@@ -27,8 +27,8 @@ export default function JsonFormatter() {
     "json-format.sort",
     "none",
   );
-  const [escapeString, setEscapeString] = useStoredState(
-    "json-format.escape",
+  const [unescape, setUnescape] = useStoredState(
+    "json-format.unescape",
     false,
   );
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -40,8 +40,8 @@ export default function JsonFormatter() {
   ];
 
   const result = useMemo(
-    () => processJson(input, { indent, sortKeys, escapeString }),
-    [input, indent, sortKeys, escapeString],
+    () => processJson(input, { indent, sortKeys, unescape }),
+    [input, indent, sortKeys, unescape],
   );
 
   const download = useCallback(() => {
@@ -97,16 +97,16 @@ export default function JsonFormatter() {
           />
         </div>
         <label
-          title={L.escapeHint}
+          title={L.unescapeHint}
           className="ml-2 flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400"
         >
           <input
             type="checkbox"
-            checked={escapeString}
-            onChange={(e) => setEscapeString(e.target.checked)}
+            checked={unescape}
+            onChange={(e) => setUnescape(e.target.checked)}
             className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
           />
-          {L.escape}
+          {L.unescape}
         </label>
       </div>
 
@@ -135,14 +135,14 @@ export default function JsonFormatter() {
             ref={inputRef}
             className={editorClass}
             spellCheck={false}
-            placeholder={escapeString ? L.escapePlaceholder : L.pasteHint}
+            placeholder={unescape ? L.unescapePlaceholder : L.pasteHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
 
         <Panel
-          title={escapeString ? L.escaped : t.output}
+          title={t.output}
           actions={
             <>
               <ToolButton onClick={download} title={L.downloadHint}>
@@ -156,7 +156,7 @@ export default function JsonFormatter() {
             className={editorClass}
             spellCheck={false}
             readOnly
-            placeholder={escapeString ? L.escaped : L.formatted}
+            placeholder={L.formatted}
             value={result.output}
           />
         </Panel>
@@ -181,7 +181,7 @@ export default function JsonFormatter() {
                 chars: input.length,
                 out: result.output.length,
               })
-            : input && !escapeString
+            : input
               ? L.valid
               : ""
         }

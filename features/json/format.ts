@@ -5,8 +5,8 @@ export type SortKeys = "none" | "asc" | "desc";
 export interface JsonOptions {
   indent: Indent;
   sortKeys: SortKeys;
-  /** Emit the input as a JSON string literal instead of parsing it. */
-  escapeString: boolean;
+  /** Unescape the input and use the result as the JSON source. */
+  unescape: boolean;
 }
 
 export interface JsonError {
@@ -68,16 +68,60 @@ function sortValue(value: unknown, order: SortKeys): unknown {
   return value;
 }
 
+const ESCAPE_SEQ = /\\(u[0-9a-fA-F]{4}|["\\/bfnrt])/g;
+const ESCAPED: Record<string, string> = {
+  '"': '"',
+  "\\": "\\",
+  "/": "/",
+  b: "\b",
+  f: "\f",
+  n: "\n",
+  r: "\r",
+  t: "\t",
+};
+
+function isJsonSource(text: string): boolean {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Turn an escaped representation into JSON source. Text that already parses
+ * is kept as-is so escapes inside string values keep their meaning; a quoted
+ * JSON string is unwrapped; anything else gets one level of escape sequences
+ * resolved. Unknown escapes keep their backslash.
+ */
+export function unescapeJsonInput(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length >= 2 && trimmed[0] === '"' && trimmed.at(-1) === '"') {
+    try {
+      const inner = JSON.parse(trimmed);
+      if (typeof inner === "string") return isJsonSource(inner) ? inner : trimmed;
+    } catch {
+      // Not a complete quoted string; unescape it as raw text below.
+    }
+  }
+  if (isJsonSource(trimmed)) return trimmed;
+  return trimmed.replace(ESCAPE_SEQ, (_, seq: string) =>
+    seq.length === 1
+      ? ESCAPED[seq]
+      : String.fromCharCode(parseInt(seq.slice(1), 16)),
+  );
+}
+
 export function processJson(text: string, options: JsonOptions): JsonResult {
-  if (options.escapeString)
-    return { output: text === "" ? "" : JSON.stringify(text), error: null };
-  if (text.trim() === "") return { output: "", error: null };
+  const source = options.unescape ? unescapeJsonInput(text) : text;
+  if (source.trim() === "") return { output: "", error: null };
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(source);
   } catch (err) {
-    const errors = validateAll(text);
-    const error = errors[0] ?? parseErrorFromException(text, err);
+    const errors = validateAll(source);
+    const error = errors[0] ?? parseErrorFromException(source, err);
     return { output: "", error, errors: errors.length > 0 ? errors : [error] };
   }
   const sorted =
