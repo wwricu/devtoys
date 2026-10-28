@@ -3,7 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
+import ServiceWorker from "@/components/ServiceWorker";
 import Sidebar from "@/components/Sidebar";
+import StandaloneTitle from "@/components/StandaloneTitle";
 import { LangProvider } from "@/lib/i18n";
 import { themeScript } from "@/lib/theme";
 
@@ -19,14 +21,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dev Toys - Developer Tools",
+    default: "Dev Toys",
     template: "%s | Dev Toys",
   },
   description:
     "Free online developer tools: JSON formatter, XML formatter, Base64 encoder, QR code generator and more. All tools run entirely in your browser — nothing is uploaded.",
   icons: {
     icon: "/favicon.svg",
-    apple: "/favicon.svg",
+    apple: "/icons/apple-touch-icon.png",
   },
   keywords: [
     "developer tools",
@@ -85,6 +87,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </div>
           </main>
         </LangProvider>
+        <ServiceWorker />
+        <StandaloneTitle />
         <Analytics />
         <SpeedInsights />
       </body>
