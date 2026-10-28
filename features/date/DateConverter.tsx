@@ -20,14 +20,11 @@ import {
   type TimeUnit,
 } from "./format";
 import {
-  formatOffset,
   isValidZone,
-  offsetSeconds,
   resolveWall,
   supportedZones,
   systemZone,
   wallParts,
-  zoneAbbreviation,
   zoneOptionLabel,
   type WallParts,
   type WallStatus,
@@ -176,13 +173,37 @@ export default function DateConverter() {
   // Labels carry each zone's offset at the displayed instant; the minute bucket
   // keeps the 419-zone sweep off the per-second clock re-render.
   const labelAnchor = Math.floor((instant?.ms ?? now) / 60_000) * 60_000;
-  const optionLabels = useMemo(
-    () => new Map(options.map((id) => [id, zoneOptionLabel(labelAnchor, id)])),
-    [options, labelAnchor],
-  );
+  // Computing every label is a full Intl sweep, so it runs after paint in
+  // frame-sized slices instead of inside the entry render. Until the map
+  // lands, the selected zone keeps its offset and the others show plain ids.
+  // zone.ts caches each label, so revisits within the same minute are just a
+  // map fill.
+  const [labelState, setLabelState] = useState<{
+    anchor: number;
+    labels: Map<string, string>;
+  } | null>(null);
 
-  const zoneOffset = offsetSeconds(instant?.ms ?? now, zoneId);
-  const zoneName = zoneAbbreviation(instant?.ms ?? now, zoneId);
+  useEffect(() => {
+    let frame = 0;
+    const labels = new Map<string, string>();
+    let index = 0;
+    const step = () => {
+      const end = performance.now() + 6;
+      while (index < options.length && performance.now() < end) {
+        const id = options[index];
+        labels.set(id, zoneOptionLabel(labelAnchor, id));
+        index += 1;
+      }
+      if (index < options.length) {
+        frame = requestAnimationFrame(step);
+      } else {
+        setLabelState({ anchor: labelAnchor, labels });
+      }
+    };
+    step();
+    return () => cancelAnimationFrame(frame);
+  }, [options, labelAnchor]);
+  const labels = labelState?.anchor === labelAnchor ? labelState.labels : null;
 
   const unitOptions: { value: TimeUnit; label: string }[] = [
     { value: "auto", label: L.auto },
@@ -360,7 +381,8 @@ export default function DateConverter() {
         </span>
         <select
           aria-label={L.timezone}
-          className={`${inputClass} w-56 max-w-full lg:w-80`}
+          // Full-width own row on narrow screens keeps the leading IANA id readable.
+          className={`${inputClass} order-last w-full sm:order-none sm:w-72 lg:w-96`}
           value={zoneId}
           onChange={(e) => {
             setZone(e.target.value);
@@ -369,13 +391,11 @@ export default function DateConverter() {
         >
           {options.map((id) => (
             <option key={id} value={id}>
-              {optionLabels.get(id)}
+              {labels?.get(id) ??
+                (id === zoneId ? zoneOptionLabel(labelAnchor, id) : id)}
             </option>
           ))}
         </select>
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          {formatOffset(zoneOffset)} · {zoneName}
-        </span>
         <div className="ml-auto flex items-center gap-2">
           <ToolButton onClick={useNow} title={L.nowHint}>
             {L.now}

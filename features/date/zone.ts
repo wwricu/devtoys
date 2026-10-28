@@ -54,6 +54,17 @@ function wallFormatter(zone: string): Intl.DateTimeFormat {
   return created;
 }
 
+function nameFormatter(zone: string): Intl.DateTimeFormat {
+  const cached = nameFormatters.get(zone);
+  if (cached) return cached;
+  const created = new Intl.DateTimeFormat("en-US", {
+    timeZone: zone,
+    timeZoneName: "short",
+  });
+  nameFormatters.set(zone, created);
+  return created;
+}
+
 let systemCache: string | null = null;
 
 export function systemZone(): string {
@@ -192,15 +203,7 @@ export function dstInfo(ms: number, zone: string): DstInfo {
 }
 
 export function zoneAbbreviation(ms: number, zone: string): string {
-  let formatter = nameFormatters.get(zone);
-  if (!formatter) {
-    formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: zone,
-      timeZoneName: "short",
-    });
-    nameFormatters.set(zone, formatter);
-  }
-  const part = formatter
+  const part = nameFormatter(zone)
     .formatToParts(new Date(ms))
     .find((item) => item.type === "timeZoneName");
   return part?.value ?? "";
@@ -210,11 +213,26 @@ export function zoneAbbreviation(ms: number, zone: string): string {
  * Picker label: the id plus the offset in effect at the instant, so the many
  * same-named "America/..." zones can be told apart while scrolling. The
  * abbreviation is dropped when it only restates the offset ("GMT+5:30").
+ * The 419-string sweep is cached per minute anchor, so a remount or a
+ * prewarmed first visit is a map lookup instead of another Intl round-trip;
+ * oldest anchors fall out first.
  */
+const labelCache = new Map<string, string>();
+const LABEL_CACHE_LIMIT = 2048;
+
 export function zoneOptionLabel(ms: number, zone: string): string {
+  const key = `${zone}\u0000${ms}`;
+  const cached = labelCache.get(key);
+  if (cached !== undefined) return cached;
   const name = zoneAbbreviation(ms, zone);
   const suffix = name && name !== "UTC" && !/\d/.test(name) ? ` · ${name}` : "";
-  return `${zone} · ${formatOffset(offsetSeconds(ms, zone))}${suffix}`;
+  const label = `${zone} · ${formatOffset(offsetSeconds(ms, zone))}${suffix}`;
+  if (labelCache.size >= LABEL_CACHE_LIMIT) {
+    const oldest = labelCache.keys().next().value;
+    if (oldest !== undefined) labelCache.delete(oldest);
+  }
+  labelCache.set(key, label);
+  return label;
 }
 
 /** "UTC+08:00" style; seconds are rounded away for display. */
@@ -225,3 +243,59 @@ export function formatOffset(offset: number): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `UTC${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 }
+
+/**
+ * Constructing the two Intl formatters per zone is what makes the first picker
+ * render cost ~65 ms, and the caches above are module-level. ZoneWarmup pulls
+ * this module into the initial bundle, so the sweep starts with the app (a
+ * direct visit loads it immediately too) and fills the label cache for the
+ * current minute. Slices halve when one overruns 24 ms; a timer backstop runs
+ * the next slice when idle callbacks starve behind a chunk queue, and the
+ * sweep waits out hidden tabs.
+ */
+const WARM_SLICE = 20;
+const WARM_WAIT = 150;
+let warmScheduled = false;
+
+function scheduleZoneWarmup(): void {
+  if (warmScheduled || typeof window === "undefined") return;
+  warmScheduled = true;
+  const zones = supportedZones();
+  const anchor = Math.floor(Date.now() / 60_000) * 60_000;
+  let index = 0;
+  let slice = WARM_SLICE;
+
+  const queue = (task: () => void) => {
+    let timer = 0;
+    let idle = 0;
+    const run = () => {
+      if (timer) window.clearTimeout(timer);
+      if (idle) window.cancelIdleCallback?.(idle);
+      task();
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      idle = window.requestIdleCallback(run, { timeout: WARM_WAIT });
+    }
+    timer = window.setTimeout(run, WARM_WAIT);
+  };
+
+  const step = () => {
+    if (document.visibilityState === "hidden") {
+      window.setTimeout(step, 1000);
+      return;
+    }
+    const started = performance.now();
+    const end = Math.min(index + slice, zones.length);
+    for (; index < end; index += 1) {
+      wallFormatter(zones[index]);
+      nameFormatter(zones[index]);
+      zoneOptionLabel(anchor, zones[index]);
+    }
+    if (performance.now() - started > 24) slice = Math.max(4, slice >> 1);
+    if (index < zones.length) queue(step);
+  };
+
+  queue(step);
+}
+
+scheduleZoneWarmup();
