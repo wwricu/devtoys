@@ -197,6 +197,13 @@ export const flowEditorClass = `${editorBase} flex-none min-h-24 resize rounded 
 const MIN_SHARE = 0.15;
 const KEY_STEP = 0.05;
 
+/**
+ * Pane sizes last for the visit only: a reload or app restart opens every tool
+ * with even panes. One ratio per pane count and axis still keeps the layout
+ * from reshuffling when moving between tools.
+ */
+const sessionShares = new Map<string, number[]>();
+
 type PaneEdge = "start" | "end";
 type SplitOrientation = "row" | "column";
 
@@ -272,8 +279,8 @@ function RestorePane({
 /**
  * Panes across draggable gutters. The group keeps the size the page gave it; a
  * drag only moves one boundary, trading space between its two neighbours. One
- * site-wide ratio per pane count and axis, so a user sets it once and every
- * tool with that many panes follows.
+ * session-wide ratio per pane count and axis, so moving between tools keeps
+ * the proportions while a reload starts every tool even again.
  */
 export function Split({
   children,
@@ -293,12 +300,15 @@ export function Split({
       : [child],
   );
   const count = panes.length;
-  const [stored, setStored] = useStoredState<number[]>(
-    orientation === "column"
-      ? `split.shares.column.${count}`
-      : `split.shares.${count}`,
-    [],
+  const shareKey =
+    orientation === "column" ? `split.column.${count}` : `split.row.${count}`;
+  const [stored, setStoredState] = useState<number[]>(
+    () => sessionShares.get(shareKey) ?? [],
   );
+  const setStored = (next: number[]) => {
+    sessionShares.set(shareKey, next);
+    setStoredState(next);
+  };
   const box = useRef<HTMLDivElement>(null);
   const values =
     stored.length === count ? stored : panes.map(() => 1 / count);
