@@ -40,14 +40,8 @@ button {
   html.sidebar-hidden [data-sidebar] {
     display: none;
   }
-  /* The toggle rides on the sidebar's edge, so both states put it at the
-     same height and it only moves horizontally with the panel. */
-  [data-sidebar-toggle] {
-    left: calc(15rem - 4px);
-  }
-  html.sidebar-hidden [data-sidebar-toggle] {
-    left: 0;
-  }
+  /* The rail itself never moves; only the chevron flips, and it must flip
+     before hydration as well. */
   html.sidebar-hidden [data-sidebar-toggle] svg {
     transform: rotate(180deg);
   }

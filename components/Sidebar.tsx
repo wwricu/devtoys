@@ -304,6 +304,26 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+      <button
+        type="button"
+        data-sidebar-toggle
+        onClick={() => setSidebarHidden(!hidden)}
+        title={hidden ? t.showSidebar : t.hideSidebar}
+        aria-label={hidden ? t.showSidebar : t.hideSidebar}
+        aria-expanded={!hidden}
+        className="hidden w-1.5 shrink-0 items-center justify-center border-r border-neutral-200 bg-neutral-100 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 md:flex"
+      >
+        <svg viewBox="0 0 16 16" className="size-2.5 shrink-0" aria-hidden="true">
+          <path
+            d="M10 3.5 6 8l4 4.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
       <aside
         data-sidebar
         className={`${hidden ? "hidden" : "hidden md:flex"} w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
@@ -350,26 +370,6 @@ export default function Sidebar() {
         </div>
         {navBody}
       </aside>
-      <button
-        type="button"
-        data-sidebar-toggle
-        onClick={() => setSidebarHidden(!hidden)}
-        title={hidden ? t.showSidebar : t.hideSidebar}
-        aria-label={hidden ? t.showSidebar : t.hideSidebar}
-        aria-expanded={!hidden}
-        className="fixed top-1/2 z-20 hidden h-14 w-4 -translate-y-1/2 items-center justify-center rounded-r border border-l-0 border-neutral-200 bg-white text-neutral-400 shadow-sm transition-colors hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-300 md:flex"
-      >
-        <svg viewBox="0 0 16 16" className="size-3" aria-hidden="true">
-          <path
-            d="M10 3.5 6 8l4 4.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
     </>
   );
 }
