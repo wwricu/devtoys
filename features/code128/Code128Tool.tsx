@@ -165,7 +165,6 @@ export default function Code128Tool() {
         </Panel>
         <Panel
           title={L.symbol}
-          className="md:w-[46%]"
           actions={
             <>
               <CopyButton getText={() => markup} />

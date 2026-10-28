@@ -114,7 +114,7 @@ export default function LoremTool() {
           />
         </Panel>
         {html === "yes" && (
-          <Panel title={L.preview} className="md:w-[38%]">
+          <Panel title={L.preview}>
             <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3 text-sm leading-relaxed text-neutral-800 dark:text-neutral-100">
               {output
                 .split(/\n\n+/)
