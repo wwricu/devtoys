@@ -1,9 +1,12 @@
 import type { Indent } from "@/components/kit";
+import { unescapeString } from "@/features/escape/format";
 
 export interface XmlOptions {
   indent: Indent;
   /** Keep comments in the output */
   preserveComments: boolean;
+  /** Unescape the input and use the result as the XML source */
+  unescape: boolean;
 }
 
 export interface XmlError {
@@ -336,14 +339,43 @@ function serializeRoots(roots: XmlNode[], opts: XmlOptions): string {
   return blocks.join("\n");
 }
 
-export function processXml(text: string, options: XmlOptions): XmlResult {
-  if (text.trim() === "") return { output: "", error: null };
+/** parseXml tolerates stray root text, so the guard needs a real element. */
+function hasXmlElement(text: string): boolean {
   try {
-    const roots = parseXml(text);
+    return parseXml(text).some((node) => node.type === "element");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Turn an escaped representation into XML source. Text that already holds
+ * markup is kept as-is; a quoted JSON-style string is unwrapped; anything else
+ * gets one level of escape sequences resolved.
+ */
+export function unescapeXmlInput(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length >= 2 && trimmed[0] === '"' && trimmed.at(-1) === '"') {
+    try {
+      const inner = JSON.parse(trimmed);
+      if (typeof inner === "string" && hasXmlElement(inner)) return inner;
+    } catch {
+      // Not a complete quoted string; unescape it as raw text below.
+    }
+  }
+  if (hasXmlElement(trimmed)) return text;
+  return unescapeString(trimmed).output;
+}
+
+export function processXml(text: string, options: XmlOptions): XmlResult {
+  const source = options.unescape ? unescapeXmlInput(text) : text;
+  if (source.trim() === "") return { output: "", error: null };
+  try {
+    const roots = parseXml(source);
     return { output: serializeRoots(roots, options), error: null };
   } catch (err) {
     if (err instanceof SyntaxError_) {
-      const { line, column } = lineColumnAt(text, err.offset);
+      const { line, column } = lineColumnAt(source, err.offset);
       return { output: "", error: { message: err.message, line, column } };
     }
     throw err;

@@ -27,11 +27,15 @@ export default function XmlFormatter() {
     "xml-format.comments",
     true,
   );
+  const [unescape, setUnescape] = useStoredState<boolean>(
+    "xml-format.unescape",
+    false,
+  );
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const result = useMemo(
-    () => processXml(input, { indent, preserveComments }),
-    [input, indent, preserveComments],
+    () => processXml(input, { indent, preserveComments, unescape }),
+    [input, indent, preserveComments, unescape],
   );
 
   const download = useCallback(() => {
@@ -82,6 +86,18 @@ export default function XmlFormatter() {
           />
           {L.fmtKeepComments}
         </label>
+        <label
+          title={L.fmtUnescapeHint}
+          className="ml-2 flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400"
+        >
+          <input
+            type="checkbox"
+            checked={unescape}
+            onChange={(e) => setUnescape(e.target.checked)}
+            className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+          />
+          {L.fmtUnescape}
+        </label>
       </div>
 
       <Split>
@@ -109,7 +125,7 @@ export default function XmlFormatter() {
             ref={inputRef}
             className={editorClass}
             spellCheck={false}
-            placeholder={L.fmtPasteHint}
+            placeholder={unescape ? L.fmtPasteEscapedHint : L.fmtPasteHint}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
