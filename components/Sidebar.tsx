@@ -311,9 +311,11 @@ export default function Sidebar() {
         title={hidden ? t.showSidebar : t.hideSidebar}
         aria-label={hidden ? t.showSidebar : t.hideSidebar}
         aria-expanded={!hidden}
-        className="hidden w-1.5 shrink-0 items-center justify-center border-r border-neutral-200 bg-neutral-100 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 md:flex"
+        className="relative z-10 hidden w-4 shrink-0 items-center justify-center border-r border-neutral-200 bg-neutral-100 text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300 md:flex"
       >
-        <svg viewBox="0 0 16 16" className="size-2.5 shrink-0" aria-hidden="true">
+        {/* Invisible hit area over the sidebar's left padding. */}
+        <span aria-hidden="true" className="absolute inset-y-0 right-[-9px] w-[9px]" />
+        <svg viewBox="0 0 16 16" className="size-3 shrink-0" aria-hidden="true">
           <path
             d="M10 3.5 6 8l4 4.5"
             fill="none"
@@ -326,7 +328,7 @@ export default function Sidebar() {
       </button>
       <aside
         data-sidebar
-        className={`${hidden ? "hidden" : "hidden md:flex"} w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
+        className={`${hidden ? "hidden" : "hidden md:flex"} w-[14.375rem] shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
       >
         <div className="flex items-center gap-1.5 px-3 py-2">
           <Link
