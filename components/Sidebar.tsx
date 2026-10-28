@@ -328,7 +328,7 @@ export default function Sidebar() {
       </button>
       <aside
         data-sidebar
-        className={`${hidden ? "hidden" : "hidden md:flex"} w-[14.375rem] shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
+        className={`${hidden ? "hidden" : "hidden md:flex"} w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
       >
         <div className="flex items-center gap-1.5 px-3 py-2">
           <Link
