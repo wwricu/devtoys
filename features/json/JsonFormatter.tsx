@@ -108,6 +108,14 @@ export default function JsonFormatter() {
           />
           {L.unescape}
         </label>
+        <ToolButton
+          onClick={() => {
+            if (result.output) setInput(result.output);
+          }}
+          title={t.outputToInputHint}
+        >
+          {t.outputToInput}
+        </ToolButton>
       </div>
 
       <Split>
