@@ -308,25 +308,7 @@ export default function Sidebar() {
         data-sidebar
         className={`${hidden ? "hidden" : "hidden md:flex"} w-60 shrink-0 flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900`}
       >
-        <div className="flex items-center gap-1.5 px-2 py-2">
-          <button
-            type="button"
-            onClick={() => setSidebarHidden(true)}
-            title={t.hideSidebar}
-            aria-label={t.hideSidebar}
-            className="rounded p-1 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-          >
-            <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
-              <path
-                d="M8.5 3.5 4.5 8l4 4.5M13 3.5 9 8l4 4.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+        <div className="flex items-center gap-1.5 px-3 py-2">
           <Link
             href="/"
             className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800 hover:text-neutral-950 dark:text-neutral-200 dark:hover:text-white"
@@ -370,15 +352,16 @@ export default function Sidebar() {
       </aside>
       <button
         type="button"
-        data-sidebar-restore
-        onClick={() => setSidebarHidden(false)}
-        title={t.showSidebar}
-        aria-label={t.showSidebar}
-        className={`${hidden ? "hidden md:flex" : "hidden"} fixed top-1/2 left-0 z-20 h-14 w-4 -translate-y-1/2 items-center justify-center rounded-r border border-l-0 border-neutral-200 bg-white text-neutral-400 shadow-sm transition-colors hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-300`}
+        data-sidebar-toggle
+        onClick={() => setSidebarHidden(!hidden)}
+        title={hidden ? t.showSidebar : t.hideSidebar}
+        aria-label={hidden ? t.showSidebar : t.hideSidebar}
+        aria-expanded={!hidden}
+        className="fixed top-1/2 z-20 hidden h-14 w-4 -translate-y-1/2 items-center justify-center rounded-r border border-l-0 border-neutral-200 bg-white text-neutral-400 shadow-sm transition-colors hover:text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-neutral-300 md:flex"
       >
         <svg viewBox="0 0 16 16" className="size-3" aria-hidden="true">
           <path
-            d="M6 3.5 10 8l-4 4.5"
+            d="M10 3.5 6 8l4 4.5"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.4"

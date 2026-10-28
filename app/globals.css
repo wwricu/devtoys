@@ -40,7 +40,15 @@ button {
   html.sidebar-hidden [data-sidebar] {
     display: none;
   }
-  html.sidebar-hidden [data-sidebar-restore] {
-    display: flex;
+  /* The toggle rides on the sidebar's edge, so both states put it at the
+     same height and it only moves horizontally with the panel. */
+  [data-sidebar-toggle] {
+    left: calc(15rem - 4px);
+  }
+  html.sidebar-hidden [data-sidebar-toggle] {
+    left: 0;
+  }
+  html.sidebar-hidden [data-sidebar-toggle] svg {
+    transform: rotate(180deg);
   }
 }
