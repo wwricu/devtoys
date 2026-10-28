@@ -145,7 +145,7 @@ const zhTools: Record<string, { name: string; description: string }> = {
   },
   "date-convert": {
     name: "日期时间转换",
-    description: "在 Unix 时间戳与可读日期之间转换",
+    description: "在 ISO 8601、RFC 2822、SQL 与 Unix 时间戳等格式之间转换",
   },
   "number-base": {
     name: "进制转换",
@@ -315,6 +315,14 @@ const zhTools: Record<string, { name: string; description: string }> = {
   "base64-file": {
     name: "Base64 转文件",
     description: "把 Base64 解码成可下载文件，并识别它的真实类型",
+  },
+  "list-compare": {
+    name: "列表比较",
+    description: "找出两个列表的共同项，或只存在于其中一个的项",
+  },
+  "json-path": {
+    name: "JSONPath 测试",
+    description: "用 JSONPath 表达式查询 JSON，逐条查看匹配结果",
   },
 };
 

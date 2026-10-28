@@ -90,8 +90,21 @@ export const tools: ToolDefinition[] = [
   {
     id: "date-convert",
     name: "Date / Time Converter",
-    description: "Convert between Unix timestamps and human-readable dates",
-    keywords: ["date", "time", "unix", "timestamp", "epoch", "iso", "convert"],
+    description:
+      "Convert Unix timestamps and dates across ISO 8601, RFC 2822, SQL and more",
+    keywords: [
+      "date",
+      "time",
+      "unix",
+      "timestamp",
+      "epoch",
+      "iso",
+      "rfc2822",
+      "http",
+      "sql",
+      "ticks",
+      "convert",
+    ],
     category: "Converters",
     badge: "@",
     component: "@/features/date/DateConverter",
@@ -753,6 +766,42 @@ export const tools: ToolDefinition[] = [
     category: "Encoders / Decoders",
     badge: "bf",
     component: "@/features/b64file/Base64FileTool",
+  },
+  {
+    id: "list-compare",
+    name: "List Comparer",
+    description:
+      "Find what two lists share, or what only one of them contains",
+    keywords: [
+      "list",
+      "compare",
+      "intersection",
+      "union",
+      "difference",
+      "overlap",
+      "lines",
+    ],
+    category: "Text",
+    badge: "∩",
+    component: "@/features/listcompare/ListCompareTool",
+  },
+  {
+    id: "json-path",
+    name: "JSONPath Tester",
+    description:
+      "Query JSON with a JSONPath expression and inspect every match",
+    keywords: [
+      "jsonpath",
+      "json",
+      "query",
+      "filter",
+      "select",
+      "jpath",
+      "expression",
+    ],
+    category: "Utilities",
+    badge: "$.",
+    component: "@/features/jsonpath/JsonPathTool",
   },
 ];
 

@@ -5,8 +5,8 @@ import { Segmented, ToolButton, useStoredState } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import {
   formatDate,
-  parseDateString,
-  timestampToMs,
+  parseInput,
+  type InputKind,
   type RelativeUnit,
   type RelativeParts,
   type TimeUnit,
@@ -33,7 +33,7 @@ function Field({ label, value }: { label: string; value: string }) {
       <button
         type="button"
         onClick={copy}
-        title={t.copyHint}
+        title={copied ? t.copied : value}
         className="min-w-0 flex-1 truncate rounded px-1 text-right font-mono text-xs text-neutral-800 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
       >
         {copied ? t.copied : value || "—"}
@@ -65,10 +65,10 @@ const inputClass =
   "w-full rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
 export default function DateConverter() {
+  const { t } = useLang();
   const L = useText(strings);
   const [unit, setUnit] = useStoredState<TimeUnit>("date.unit", "auto");
-  const [tsInput, setTsInput] = useState("");
-  const [dateInput, setDateInput] = useState("");
+  const [input, setInput] = useState("");
   const [now, setNow] = useState(() => Date.now());
 
   const unitOptions: { value: TimeUnit; label: string }[] = [
@@ -111,110 +111,140 @@ export default function DateConverter() {
     return () => clearInterval(id);
   }, []);
 
-  const tsResult = useMemo(() => timestampToMs(tsInput, unit), [tsInput, unit]);
-  const tsFields =
-    tsResult.ms !== null && !tsResult.error ? formatDate(tsResult.ms) : null;
+  const parsed = useMemo(() => parseInput(input, unit), [input, unit]);
+  const fields = useMemo(
+    () =>
+      parsed.ms !== null && !parsed.error
+        ? formatDate(parsed.ms, parsed.ns, now)
+        : null,
+    [parsed, now],
+  );
 
-  const parsedMs = useMemo(() => parseDateString(dateInput), [dateInput]);
-  const dateFields =
-    dateInput.trim() !== "" && parsedMs !== null ? formatDate(parsedMs) : null;
-  const dateInvalid = dateInput.trim() !== "" && parsedMs === null;
+  const kindLabel: Record<InputKind, string | null> = {
+    timestamp: L.kindTimestamp,
+    iso: L.kindIso,
+    rfc2822: L.kindRfc2822,
+    local: L.kindLocal,
+    other: L.kindOther,
+    empty: null,
+  };
 
-  const useNowTs = () => setTsInput(String(Date.now()));
-  const useNowDate = () => setDateInput(new Date().toISOString());
+  const detectedUnit =
+    parsed.unit && parsed.unit !== "auto"
+      ? {
+          s: L.seconds,
+          ms: L.millis,
+          us: L.micros,
+          ns: L.nanos,
+        }[parsed.unit]
+      : null;
+
+  const detected =
+    !parsed.error && kindLabel[parsed.kind]
+      ? detectedUnit
+        ? `${kindLabel[parsed.kind]} · ${detectedUnit}`
+        : kindLabel[parsed.kind]
+      : null;
+
+  const useNow = () => {
+    const ms = Date.now();
+    setInput(
+      unit === "s"
+        ? String(Math.floor(ms / 1000))
+        : unit === "us"
+          ? String(BigInt(ms) * 1000n)
+          : unit === "ns"
+            ? String(BigInt(ms) * 1000000n)
+            : String(ms),
+    );
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
-      <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-        <span>{L.current}</span>
-        <span className="font-mono text-neutral-700 dark:text-neutral-200">
-          {new Date(now).toISOString()}
-        </span>
-        <span className="font-mono">· {Math.floor(now / 1000)}s</span>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className={`${inputClass} min-w-40 flex-1`}
+            placeholder={L.placeholder}
+            spellCheck={false}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <ToolButton onClick={useNow} title={L.nowHint}>
+            {L.now}
+          </ToolButton>
+          {input !== "" && (
+            <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {(parsed.kind === "timestamp" || parsed.kind === "empty") && (
+            <>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                {L.unit}
+              </span>
+              <Segmented
+                ariaLabel={L.unitAria}
+                value={unit}
+                options={unitOptions}
+                onChange={setUnit}
+              />
+            </>
+          )}
+          {detected && (
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {L.detected}:{" "}
+              <span className="text-neutral-700 dark:text-neutral-200">
+                {detected}
+              </span>
+            </span>
+          )}
+        </div>
+        {parsed.error && (
+          <p className="text-xs text-red-600 dark:text-red-400">
+            {parsed.error === "range" ? L.outOfRange : L.unrecognized}
+          </p>
+        )}
+        {!fields && !parsed.error && (
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+            {L.emptyHint}
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card title={L.tsToCard}>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className={inputClass}
-              placeholder={L.tsHint}
-              value={tsInput}
-              onChange={(e) => setTsInput(e.target.value)}
-            />
-            <ToolButton onClick={useNowTs} title={L.nowHint}>
-              {L.now}
-            </ToolButton>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-neutral-500">{L.unit}</span>
-            <Segmented
-              ariaLabel={L.unitAria}
-              value={unit}
-              options={unitOptions}
-              onChange={setUnit}
-            />
-          </div>
-          {tsResult.error && (
-            <p className="text-xs text-red-600 dark:text-red-400">
-              {tsResult.error}
-            </p>
-          )}
-          {tsFields && (
+      {fields && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <Card title={L.dateFormats}>
             <div className="flex flex-col">
-              <Field label="ISO 8601 (UTC)" value={tsFields.isoUtc} />
-              <Field label="UTC" value={tsFields.utc} />
-              <Field label={L.local} value={tsFields.local} />
-              <Field label={L.weekday} value={dayNames[tsFields.weekday]} />
-              <Field
-                label={L.relative}
-                value={relativeText(tsFields.relative)}
-              />
-              <Field
-                label={L.detectedUnit}
-                value={String(tsResult.detectedUnit)}
-              />
+              <Field label={L.isoUtc} value={fields.isoUtc} />
+              <Field label={L.isoLocal} value={fields.isoLocal} />
+              <Field label={L.rfc2822} value={fields.rfc2822} />
+              <Field label={L.httpDate} value={fields.httpDate} />
+              <Field label={L.sql} value={fields.sql} />
+              <Field label={L.localeString} value={fields.local} />
+            </div>
+          </Card>
+
+          <Card title={L.timestamps}>
+            <div className="flex flex-col">
+              <Field label={L.unixSeconds} value={fields.unixSeconds} />
+              <Field label={L.unixMillis} value={fields.unixMillis} />
+              <Field label={L.unixMicros} value={fields.unixMicros} />
+              <Field label={L.unixNanos} value={fields.unixNanos} />
+              <Field label={L.dotnetTicks} value={fields.dotnetTicks} />
+              <Field label={L.weekday} value={dayNames[fields.weekday]} />
               <Field
                 label={L.timezone}
-                value={`${tsFields.timezone} (${tsFields.offset})`}
+                value={`${fields.timezone} (${fields.offset})`}
               />
-            </div>
-          )}
-        </Card>
-
-        <Card title={L.dateToCard}>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className={inputClass}
-              placeholder={L.dateHint}
-              value={dateInput}
-              onChange={(e) => setDateInput(e.target.value)}
-            />
-            <ToolButton onClick={useNowDate} title={L.nowHint}>
-              {L.now}
-            </ToolButton>
-          </div>
-          {dateInvalid && (
-            <p className="text-xs text-red-600 dark:text-red-400">
-              {L.unrecognizedDate}
-            </p>
-          )}
-          {dateFields && (
-            <div className="flex flex-col">
-              <Field label="ISO 8601 (UTC)" value={dateFields.isoUtc} />
-              <Field label={L.unixSeconds} value={dateFields.unixSeconds} />
-              <Field label={L.unixMillis} value={dateFields.unixMillis} />
-              <Field label={L.unixMicros} value={dateFields.unixMicros} />
-              <Field label={L.unixNanos} value={dateFields.unixNanos} />
-              <Field label={L.local} value={dateFields.local} />
               <Field
                 label={L.relative}
-                value={relativeText(dateFields.relative)}
+                value={relativeText(fields.relative)}
               />
             </div>
-          )}
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

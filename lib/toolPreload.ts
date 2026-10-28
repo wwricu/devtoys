@@ -59,4 +59,6 @@ export const toolLoaders: Record<string, () => Promise<{ default: ComponentType 
   "lorem": () => import("@/features/lorem/LoremTool"),
   "json-java": () => import("@/features/java/JsonJavaTool"),
   "base64-file": () => import("@/features/b64file/Base64FileTool"),
+  "list-compare": () => import("@/features/listcompare/ListCompareTool"),
+  "json-path": () => import("@/features/jsonpath/JsonPathTool"),
 };
