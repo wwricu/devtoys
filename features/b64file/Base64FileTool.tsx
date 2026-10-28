@@ -8,9 +8,10 @@ import {
   Split,
   StatusLine,
   ToolButton,
+  useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
-import { decodeToBytes } from "./detect";
+import { decodeInput } from "./detect";
 import { strings } from "./locale";
 
 const formatSize = (bytes: number): string => {
@@ -23,15 +24,16 @@ export default function Base64FileTool() {
   const { t } = useLang();
   const L = useText(strings);
   const [input, setInput] = useState("");
-  const [name, setName] = useState("file");
+  const [autoFind, setAutoFind] = useStoredState("b64file.autoFind", true);
   // A pasted payload can be megabytes, so decoding waits for a quiet moment.
   const settled = useDeferredValue(input);
 
   const decoded = useMemo(
-    () => (settled.trim() === "" ? null : decodeToBytes(settled)),
-    [settled],
+    () => (settled.trim() === "" ? null : decodeInput(settled, autoFind)),
+    [settled, autoFind],
   );
   const file = decoded && "file" in decoded ? decoded.file : null;
+  const blocks = decoded && "file" in decoded ? decoded.blocks : 0;
   const error = decoded && "error" in decoded ? decoded.error : null;
 
   const url = useMemo(() => {
@@ -44,10 +46,7 @@ export default function Base64FileTool() {
     return () => URL.revokeObjectURL(url);
   }, [url]);
 
-  const fileName = file
-    ? `${name.trim() === "" ? "file" : name.trim()}.${file.kind.ext}`
-    : "";
-  const mimeMismatch = file !== null && file.declared !== "";
+  const fileName = file ? `file.${file.kind.ext}` : "";
 
   const body = () => {
     if (!file)
@@ -94,30 +93,29 @@ export default function Base64FileTool() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          aria-label={L.fileName}
-          className="w-44 rounded border border-neutral-300 bg-white px-2 py-1 text-xs outline-none focus:border-emerald-500 dark:border-neutral-700 dark:bg-neutral-800"
-          placeholder={L.fileName}
-          spellCheck={false}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        {mimeMismatch && file && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            {fill(L.declaredNote, {
-              mime: file.declared,
-              label: file.kind.label,
-            })}
-          </p>
-        )}
-      </div>
+      {blocks > 1 && (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          {fill(L.multiNote, { count: blocks })}
+        </p>
+      )}
 
       <Split>
         <Panel
           title={L.source}
           actions={
             <>
+              <label
+                title={L.autoFindHint}
+                className="flex cursor-pointer items-center gap-1 whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-300"
+              >
+                <input
+                  type="checkbox"
+                  checked={autoFind}
+                  onChange={(e) => setAutoFind(e.target.checked)}
+                  className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+                />
+                {L.autoFind}
+              </label>
               <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
               <CopyButton getText={() => input} />
             </>
@@ -134,7 +132,8 @@ export default function Base64FileTool() {
         <Panel
           title={L.result}
           actions={
-            file ? (
+            // The embedded PDF viewer carries its own download control.
+            file && file.preview !== "pdf" ? (
               <a
                 href={url}
                 download={fileName}

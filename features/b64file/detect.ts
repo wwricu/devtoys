@@ -1,7 +1,6 @@
 /**
  * Base64 to bytes, and bytes to a file type. The type comes from the leading
- * bytes (magic numbers) because a data URI prefix is often wrong or missing;
- * the declared prefix is still reported when it disagrees.
+ * bytes (magic numbers); nothing in the pasted text is trusted to name it.
  */
 
 export interface FileKind {
@@ -16,8 +15,6 @@ export type Preview = "image" | "audio" | "video" | "pdf" | "text" | "none";
 export interface DecodedFile {
   bytes: Uint8Array<ArrayBuffer>;
   kind: FileKind;
-  /** mime asserted by a data URI prefix, when it differs from the sniffed one */
-  declared: string;
   text: string | null;
   preview: Preview;
   truncated: boolean;
@@ -182,33 +179,6 @@ const textKind = (text: string): FileKind => {
   return { mime: "text/plain", ext: "txt", label: "Plain text" };
 };
 
-/** Extensions worth knowing for a mime that only a data URI declared. */
-const EXT_BY_MIME: Record<string, string> = {
-  "text/plain": "txt", "text/html": "html", "text/css": "css", "text/csv": "csv",
-  "text/xml": "xml", "text/javascript": "js", "text/markdown": "md",
-  "text/yaml": "yaml", "text/vcard": "vcf",
-  "application/json": "json", "application/xml": "xml", "application/pdf": "pdf",
-  "application/zip": "zip", "application/gzip": "gz", "application/wasm": "wasm",
-  "application/x-tar": "tar", "application/java-vm": "class",
-  "application/javascript": "js", "application/x-yaml": "yaml",
-  "image/svg+xml": "svg", "image/png": "png", "image/jpeg": "jpg",
-  "image/gif": "gif", "image/webp": "webp", "image/avif": "avif",
-  "audio/mpeg": "mp3", "audio/ogg": "ogg", "audio/flac": "flac",
-  "audio/wav": "wav", "audio/mp4": "m4a",
-  "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov",
-  "font/woff": "woff", "font/woff2": "woff2", "font/ttf": "ttf", "font/otf": "otf",
-};
-
-function declaredKind(mime: string): FileKind {
-  const clean = (mime.split(";")[0] ?? "").trim().toLowerCase();
-  const sub = clean.split("/")[1]?.split("+")[0]?.replace(/[^a-z0-9.]/g, "") ?? "";
-  return {
-    mime: clean,
-    ext: EXT_BY_MIME[clean] ?? (sub === "" ? "bin" : sub),
-    label: `Declared as ${clean}`,
-  };
-}
-
 function previewFor(kind: FileKind, text: string | null): Preview {
   if (kind.mime.startsWith("image/")) return "image";
   if (kind.mime.startsWith("audio/")) return "audio";
@@ -224,61 +194,94 @@ function previewFor(kind: FileKind, text: string | null): Preview {
 
 export type DecodeFailure = { error: string };
 export type DecodeSuccess = { file: DecodedFile };
+export type DecodeOutcome = (DecodeSuccess & { blocks: number }) | DecodeFailure;
 
 /**
- * Accepts raw Base64 (line wrapping and URL-safe alphabets included) or a
- * `data:` URI. The bytes decide the type unless only a prefix declares one.
+ * Accepts raw Base64, including line wrapping and the URL-safe alphabet.
  */
 export function decodeToBytes(input: string): DecodeSuccess | DecodeFailure {
   const raw = input.trim();
   if (raw === "") return { error: "Nothing to decode" };
 
-  let declared = "";
-  let body = raw;
-  let isText = false;
-  if (raw.startsWith("data:")) {
-    const comma = raw.indexOf(",");
-    if (comma < 0) return { error: "The data URI has no comma" };
-    const header = raw.slice(5, comma);
-    body = raw.slice(comma + 1);
-    declared = header.split(";")[0].trim();
-    isText = !/;base64/i.test(header);
-  }
-
-  let bytes: Uint8Array<ArrayBuffer>;
-  if (isText) {
-    const text = decodeURIComponent(body.replace(/\s+/g, ""));
-    bytes = Uint8Array.from(new TextEncoder().encode(text));
-  } else {
-    let clean = body.replace(/\s+/g, "");
-    if (/[-_]/.test(clean) && !/[+/]/.test(clean))
-      clean = clean.replace(/-/g, "+").replace(/_/g, "/");
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean))
-      return { error: "Not valid Base64 text" };
-    const pad = clean.length % 4;
-    if (pad === 1) return { error: "Not valid Base64 text" };
-    if (pad > 0) clean += "=".repeat(4 - pad);
-    if (clean.length / 4 * 3 > MAX_BYTES)
-      return { error: `Larger than the ${Math.round(MAX_BYTES / 1048576)} MB browser limit` };
-    const binary = atob(clean);
-    bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  }
+  let clean = raw.replace(/\s+/g, "");
+  if (/[-_]/.test(clean) && !/[+/]/.test(clean))
+    clean = clean.replace(/-/g, "+").replace(/_/g, "/");
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean))
+    return { error: "Not valid Base64 text" };
+  const pad = clean.length % 4;
+  if (pad === 1) return { error: "Not valid Base64 text" };
+  if (pad > 0) clean += "=".repeat(4 - pad);
+  if (clean.length / 4 * 3 > MAX_BYTES)
+    return { error: `Larger than the ${Math.round(MAX_BYTES / 1048576)} MB browser limit` };
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
   let kind = sniff(bytes);
   const head = asText(bytes.subarray(0, PREVIEW_BYTES));
-  if (kind.mime === "application/octet-stream") {
-    if (head !== null) kind = textKind(head);
-    else if (declared) kind = declaredKind(declared);
-  }
+  if (kind.mime === "application/octet-stream" && head !== null)
+    kind = textKind(head);
   return {
     file: {
       bytes,
       kind,
-      declared: declared !== "" && declared !== kind.mime ? declared : "",
       text: head,
       preview: previewFor(kind, head),
       truncated: head !== null && bytes.length > PREVIEW_BYTES,
     },
   };
+}
+
+/**
+ * Base64-looking runs, with runs separated only by whitespace joined back
+ * together so line wrapping does not split one blob. Padding can only end a
+ * blob, so a run ending in `=` after whitespace starts the next block even when
+ * the two are only newline-separated.
+ */
+function base64Groups(input: string): string[] {
+  const run = /(?<![A-Za-z0-9+/_-])[A-Za-z0-9+/_-]{16,}={0,2}(?![A-Za-z0-9+/_-])/g;
+  const out: string[] = [];
+  let current = "";
+  let previousEnd = -1;
+  for (const match of input.matchAll(run)) {
+    const index = match.index;
+    const gapOnly = previousEnd >= 0 && /^\s*$/.test(input.slice(previousEnd, index));
+    if (gapOnly && !current.endsWith("=")) {
+      current += match[0];
+    } else {
+      if (current !== "") out.push(current);
+      current = match[0];
+    }
+    previousEnd = index + match[0].length;
+  }
+  if (current !== "") out.push(current);
+  return out;
+}
+
+/**
+ * Decodes what was pasted. With `find` enabled, a paste that is not one blob
+ * is scanned for bare Base64 runs; the first is decoded and `blocks` reports
+ * how many valid runs were found.
+ */
+export function decodeInput(input: string, find: boolean): DecodeOutcome {
+  const raw = input.trim();
+  if (raw === "") return { error: "Nothing to decode" };
+  const whole = decodeToBytes(raw);
+  if (!find) return "file" in whole ? { file: whole.file, blocks: 1 } : whole;
+
+  const groups = base64Groups(raw);
+  if ("file" in whole && groups.length <= 1)
+    return { file: whole.file, blocks: 1 };
+
+  const files: DecodedFile[] = [];
+  for (const group of groups) {
+    const decoded = decodeToBytes(group);
+    if (!("file" in decoded)) continue;
+    // A bare run must at least look like a file or text, so long ids and
+    // hashes do not masquerade as Base64.
+    if (decoded.file.kind.mime === "application/octet-stream") continue;
+    files.push(decoded.file);
+  }
+  if (files.length > 0) return { file: files[0], blocks: files.length };
+  return "file" in whole ? { file: whole.file, blocks: 1 } : whole;
 }
