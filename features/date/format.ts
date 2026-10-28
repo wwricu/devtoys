@@ -1,3 +1,13 @@
+import {
+  dstInfo,
+  formatOffset,
+  offsetSeconds,
+  resolveWall,
+  wallParts,
+  zoneAbbreviation,
+  type WallStatus,
+} from "./zone";
+
 export type TimeUnit = "auto" | "s" | "ms" | "us" | "ns";
 
 export type InputKind =
@@ -17,6 +27,8 @@ export interface ParseResult {
   kind: InputKind;
   /** Resolved unit for numeric input only. */
   unit: TimeUnit | null;
+  /** How a wall-clock input landed on the timeline. */
+  status: WallStatus | null;
   error: "range" | "unrecognized" | null;
 }
 
@@ -43,20 +55,36 @@ function decimalToNs(raw: string, unit: Exclude<TimeUnit, "auto">): bigint {
   return negative ? -total : total;
 }
 
-function rangeError(kind: InputKind, unit: TimeUnit | null): ParseResult {
-  return { ms: null, ns: null, kind, unit, error: "range" };
+function emptyResult(): ParseResult {
+  return {
+    ms: null,
+    ns: null,
+    kind: "empty",
+    unit: null,
+    status: null,
+    error: null,
+  };
+}
+
+function fail(
+  kind: InputKind,
+  error: "range" | "unrecognized",
+  unit: TimeUnit | null = null,
+): ParseResult {
+  return { ms: null, ns: null, kind, unit, status: null, error };
 }
 
 /** Wrap a parsed epoch value, rejecting dates the Date object cannot hold. */
-function toResult(ms: number, kind: InputKind): ParseResult {
+function toResult(ms: number, kind: InputKind, status: WallStatus): ParseResult {
   if (!Number.isFinite(ms) || Math.abs(ms) > MAX_DATE_MS) {
-    return rangeError(kind, null);
+    return fail(kind, "range");
   }
   return {
-    ms: Math.trunc(ms),
+    ms,
     ns: BigInt(Math.trunc(ms)) * 1_000_000n,
     kind,
     unit: null,
+    status,
     error: null,
   };
 }
@@ -87,28 +115,6 @@ function makeUtc(
   return date.getTime();
 }
 
-function makeLocal(
-  year: number,
-  month1: number,
-  day: number,
-  hour: number,
-  minute: number,
-  second: number,
-  milli: number,
-): number {
-  const date = new Date(
-    2000,
-    month1 - 1,
-    day,
-    hour,
-    minute,
-    second,
-    milli,
-  );
-  date.setFullYear(year);
-  return date.getTime();
-}
-
 /** Offset in minutes east of UTC, or null when the zone text is invalid. */
 function parseOffset(tz: string): number | null {
   if (/^(z|gmt|utc|ut)$/i.test(tz)) return 0;
@@ -130,19 +136,31 @@ interface DateParts {
   milli: number;
 }
 
-/** Validate calendar fields; null means at least one is out of range. */
-function buildEpoch(parts: DateParts, offsetMinutes: number | null): number | null {
+/**
+ * Validate calendar fields; null means at least one is out of range. Text
+ * without an explicit offset is read on the selected zone's wall clock.
+ */
+function buildEpoch(
+  parts: DateParts,
+  offsetMinutes: number | null,
+  zone: string,
+): { ms: number; status: WallStatus } | null {
   const { year, month, day, hour, minute, second, milli } = parts;
   if (year < 0 || month < 1 || month > 12) return null;
   if (day < 1 || day > daysInMonth(year, month)) return null;
   if (hour > 23 || minute > 59 || second > 59) return null;
   if (offsetMinutes === null) {
-    return makeLocal(year, month, day, hour, minute, second, milli);
+    return resolveWall(
+      { year, month, day, hour, minute, second, millisecond: milli },
+      zone,
+    );
   }
-  return (
-    makeUtc(year, month, day, hour, minute, second, milli) -
-    offsetMinutes * 60_000
-  );
+  return {
+    ms:
+      makeUtc(year, month, day, hour, minute, second, milli) -
+      offsetMinutes * 60_000,
+    status: "exact",
+  };
 }
 
 const DATE_RE =
@@ -170,15 +188,18 @@ const RFC_RE = new RegExp(
   "i",
 );
 
-type Match = { ms: number; kind: InputKind } | "invalid" | null;
+type Match =
+  | { ms: number; kind: InputKind; status: WallStatus }
+  | "invalid"
+  | null;
 
-function matchIso(text: string): Match {
+function matchIso(text: string, zone: string): Match {
   const m = DATE_RE.exec(text);
   if (!m) return null;
   const [, year, month, day, hour = "0", minute = "0", second = "0", frac = "", tz] = m;
   const offset = tz ? parseOffset(tz) : null;
   if (tz && offset === null) return "invalid";
-  const ms = buildEpoch(
+  const built = buildEpoch(
     {
       year: Number(year),
       month: Number(month),
@@ -189,9 +210,14 @@ function matchIso(text: string): Match {
       milli: frac ? Number(frac.padEnd(3, "0").slice(0, 3)) : 0,
     },
     offset,
+    zone,
   );
-  if (ms === null) return "invalid";
-  return { ms, kind: text.includes("/") ? "local" : "iso" };
+  if (built === null) return "invalid";
+  return {
+    ms: built.ms,
+    kind: text.includes("/") ? "local" : "iso",
+    status: built.status,
+  };
 }
 
 function matchRfc2822(text: string): Match {
@@ -207,7 +233,7 @@ function matchRfc2822(text: string): Match {
       : shortYear < 50
         ? 2000 + shortYear
         : 1900 + shortYear;
-  const ms = buildEpoch(
+  const built = buildEpoch(
     {
       year,
       month: MONTH_INDEX[monthName.toLowerCase()],
@@ -218,67 +244,63 @@ function matchRfc2822(text: string): Match {
       milli: 0,
     },
     offset,
+    "UTC",
   );
-  if (ms === null) return "invalid";
-  return { ms, kind: "rfc2822" };
+  if (built === null) return "invalid";
+  return { ms: built.ms, kind: "rfc2822", status: "exact" };
 }
 
 /**
- * Recognize the supported input formats, in order: numeric timestamp, ISO 8601
- * (also `YYYY/MM/DD`, `T` or space), RFC 2822 / HTTP date, then the browser's
- * own parser as a last resort.
+ * Parse a numeric Unix timestamp. "auto" picks seconds/millis/micros/nanos by
+ * magnitude, so 10-digit values stay seconds and 19-digit ones stay nanos.
  */
-export function parseInput(raw: string, unit: TimeUnit): ParseResult {
+export function parseTimestamp(raw: string, unit: TimeUnit): ParseResult {
   const text = raw.trim();
-  if (text === "") {
-    return { ms: null, ns: null, kind: "empty", unit: null, error: null };
-  }
+  if (text === "") return emptyResult();
+  if (!NUMERIC_RE.test(text)) return fail("timestamp", "unrecognized");
+  const value = Number(text);
+  if (!Number.isFinite(value)) return fail("timestamp", "range");
+  const abs = Math.abs(value);
+  const resolved =
+    unit !== "auto"
+      ? unit
+      : abs < 1e11
+        ? "s"
+        : abs < 1e14
+          ? "ms"
+          : abs < 1e17
+            ? "us"
+            : "ns";
+  const ns = decimalToNs(text, resolved);
+  const ms = Number(ns / 1_000_000n);
+  if (Math.abs(ms) > MAX_DATE_MS) return fail("timestamp", "range", resolved);
+  return { ms, ns, kind: "timestamp", unit: resolved, status: "exact", error: null };
+}
 
-  if (NUMERIC_RE.test(text)) {
-    const value = Number(text);
-    if (!Number.isFinite(value)) return rangeError("timestamp", null);
-    const abs = Math.abs(value);
-    const resolved =
-      unit !== "auto"
-        ? unit
-        : abs < 1e11
-          ? "s"
-          : abs < 1e14
-            ? "ms"
-            : abs < 1e17
-              ? "us"
-              : "ns";
-    const ns = decimalToNs(text, resolved);
-    const ms = Number(ns / 1_000_000n);
-    if (Math.abs(ms) > MAX_DATE_MS) return rangeError("timestamp", resolved);
-    return { ms, ns, kind: "timestamp", unit: resolved, error: null };
-  }
+/**
+ * Parse ISO 8601 (also `YYYY/MM/DD`, `T` or space), then RFC 2822 / HTTP date.
+ * Zone-less text is read on the given zone's clock; no browser Date.parse
+ * fallback, which would silently guess the machine's zone.
+ */
+export function parseDateText(raw: string, zone: string): ParseResult {
+  const text = raw.trim();
+  if (text === "") return emptyResult();
 
-  const iso = matchIso(text);
-  if (iso === "invalid") {
-    return { ms: null, ns: null, kind: "iso", unit: null, error: "unrecognized" };
-  }
-  if (iso) return toResult(iso.ms, iso.kind);
+  const iso = matchIso(text, zone);
+  if (iso === "invalid") return fail("iso", "unrecognized");
+  if (iso) return toResult(iso.ms, iso.kind, iso.status);
 
   const rfc = matchRfc2822(text);
-  if (rfc === "invalid") {
-    return {
-      ms: null,
-      ns: null,
-      kind: "rfc2822",
-      unit: null,
-      error: "unrecognized",
-    };
-  }
-  if (rfc) return toResult(rfc.ms, rfc.kind);
+  if (rfc === "invalid") return fail("rfc2822", "unrecognized");
+  if (rfc) return toResult(rfc.ms, rfc.kind, rfc.status);
 
-  const fallback = Date.parse(text);
-  if (!Number.isNaN(fallback)) return toResult(fallback, "other");
-
-  return { ms: null, ns: null, kind: "other", unit: null, error: "unrecognized" };
+  return fail("other", "unrecognized");
 }
 
 const pad = (n: number, width = 2) => String(n).padStart(width, "0");
+
+const padYear = (year: number) =>
+  year < 0 ? `-${pad(-year, 4)}` : pad(year, 4);
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_SHORT = [
@@ -299,7 +321,7 @@ const MONTH_SHORT = [
 /** Day of week as a numeric index; the component maps it through the locale. */
 export interface DateFields {
   isoUtc: string;
-  isoLocal: string;
+  isoZoned: string;
   rfc2822: string;
   httpDate: string;
   sql: string;
@@ -307,6 +329,8 @@ export interface DateFields {
   weekday: number;
   timezone: string;
   offset: string;
+  abbreviation: string;
+  dst: boolean;
   unixSeconds: string;
   unixMillis: string;
   unixMicros: string;
@@ -332,11 +356,33 @@ export interface RelativeParts {
   past: boolean;
 }
 
-function offsetString(date: Date): string {
-  const off = -date.getTimezoneOffset();
-  const sign = off >= 0 ? "+" : "-";
-  const abs = Math.abs(off);
-  return `UTC${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+function weekdayOf(year: number, month: number, day: number): number {
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day);
+  return date.getUTCDay();
+}
+
+const localeFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function localeString(ms: number, zone: string): string {
+  let formatter = localeFormatters.get(zone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(undefined, {
+      timeZone: zone,
+      dateStyle: "medium",
+      timeStyle: "medium",
+    });
+    localeFormatters.set(zone, formatter);
+  }
+  return formatter.format(new Date(ms));
+}
+
+/** RFC 2822 only allows ±HHMM, so seconds are rounded away. */
+function rfcOffset(offset: number): string {
+  const minutes = Math.round(offset / 60);
+  const sign = minutes < 0 ? "-" : "+";
+  const abs = Math.abs(minutes);
+  return `${sign}${pad(Math.floor(abs / 60))}${pad(abs % 60)}`;
 }
 
 export function relativeTime(ms: number, now = Date.now()): RelativeParts {
@@ -370,33 +416,38 @@ export function relativeTime(ms: number, now = Date.now()): RelativeParts {
   return { count: Math.floor(count), unit: chosen, past };
 }
 
+/**
+ * Render an instant in the selected zone. Absolute outputs (UTC, HTTP, Unix,
+ * ticks) ignore the zone; wall-clock outputs follow it.
+ */
 export function formatDate(
   ms: number,
   ns: bigint | null,
+  zone: string,
   now = Date.now(),
 ): DateFields {
   const stamp = ns ?? BigInt(Math.trunc(ms)) * 1_000_000n;
-  const d = new Date(Math.trunc(ms));
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
-  const ymd = `${String(d.getFullYear()).padStart(4, "0")}-${pad(
-    d.getMonth() + 1,
-  )}-${pad(d.getDate())}`;
-  const hms = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  const offset = offsetString(d);
+  const wall = wallParts(ms, zone);
+  const offset = offsetSeconds(ms, zone);
+  const offsetLabel = formatOffset(offset);
+  const ymd = `${padYear(wall.year)}-${pad(wall.month)}-${pad(wall.day)}`;
+  const hms = `${pad(wall.hour)}:${pad(wall.minute)}:${pad(wall.second)}`;
+  const weekday = weekdayOf(wall.year, wall.month, wall.day);
+  const dst = dstInfo(ms, zone);
   return {
-    isoUtc: d.toISOString(),
-    isoLocal: `${ymd}T${hms}.${pad(d.getMilliseconds(), 3)}${offset.slice(3)}`,
-    rfc2822: `${WEEKDAY_SHORT[d.getDay()]}, ${pad(d.getDate())} ${
-      MONTH_SHORT[d.getMonth()]
-    } ${String(d.getFullYear()).padStart(4, "0")} ${hms} ${offset
-      .slice(3)
-      .replace(":", "")}`,
-    httpDate: d.toUTCString(),
+    isoUtc: new Date(Math.trunc(ms)).toISOString(),
+    isoZoned: `${ymd}T${hms}.${pad(wall.millisecond, 3)}${offsetLabel.slice(3)}`,
+    rfc2822: `${WEEKDAY_SHORT[weekday]}, ${pad(wall.day)} ${
+      MONTH_SHORT[wall.month - 1]
+    } ${padYear(wall.year)} ${hms} ${rfcOffset(offset)}`,
+    httpDate: new Date(Math.trunc(ms)).toUTCString(),
     sql: `${ymd} ${hms}`,
-    local: d.toLocaleString(),
-    weekday: d.getDay(),
-    timezone,
-    offset,
+    local: localeString(ms, zone),
+    weekday,
+    timezone: zone,
+    offset: offsetLabel,
+    abbreviation: zoneAbbreviation(ms, zone),
+    dst: dst.active,
     unixSeconds: (stamp / 1_000_000_000n).toString(),
     unixMillis: (stamp / 1_000_000n).toString(),
     unixMicros: (stamp / 1_000n).toString(),
