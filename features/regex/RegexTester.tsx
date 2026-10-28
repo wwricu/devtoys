@@ -45,6 +45,25 @@ export default function RegexTester() {
     setFlags(next);
   };
 
+  const cheatSheet: [string, string][] = [
+    ["[abc]", L.cheatClass],
+    ["[^abc]", L.cheatNotClass],
+    [".", L.cheatDot],
+    ["\\d \\w \\s", L.cheatSets],
+    ["^ $", L.cheatAnchors],
+    ["\\b \\B", L.cheatBoundary],
+    ["* + ?", L.cheatQuantifiers],
+    ["{n} {n,m}", L.cheatRange],
+    ["(...)", L.cheatGroup],
+    ["(?:...)", L.cheatNonCapturing],
+    ["(?<name>...)", L.cheatNamed],
+    ["a|b", L.cheatAlternation],
+    ["\\1", L.cheatBackref],
+    ["(?=...) (?!...)", L.cheatAhead],
+    ["(?<=...) (?<!...)", L.cheatBehind],
+    ["\\.", L.cheatEscape],
+  ];
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-2">
@@ -199,6 +218,24 @@ export default function RegexTester() {
           </div>
         </Panel>
       </Split>
+
+      <details className="shrink-0 text-xs">
+        <summary className="cursor-pointer select-none text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+          {L.cheatSheet}
+        </summary>
+        <div className="mt-1 grid max-h-40 grid-cols-1 gap-x-4 gap-y-1 overflow-y-auto sm:grid-cols-2">
+          {cheatSheet.map(([syntax, meaning]) => (
+            <div key={syntax} className="flex gap-2">
+              <code className="shrink-0 font-mono text-neutral-700 dark:text-neutral-300">
+                {syntax}
+              </code>
+              <span className="text-neutral-500 dark:text-neutral-400">
+                {meaning}
+              </span>
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }
