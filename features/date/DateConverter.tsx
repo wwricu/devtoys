@@ -474,7 +474,7 @@ export default function DateConverter() {
               <input
                 type="date"
                 aria-label={L.dateLabel}
-                className={`${inputClass} w-36`}
+                className={`${inputClass} w-44`}
                 value={dateValue}
                 onChange={(e) => pickDate(e.target.value)}
               />
@@ -482,7 +482,7 @@ export default function DateConverter() {
                 type="time"
                 step={1}
                 aria-label={L.timeLabel}
-                className={`${inputClass} w-32`}
+                className={`${inputClass} w-40`}
                 value={timeValue}
                 onChange={(e) => pickTime(e.target.value)}
               />
