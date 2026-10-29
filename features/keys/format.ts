@@ -4,7 +4,6 @@
  */
 
 export type KeyAlgorithm = "RSA" | "EC";
-export type KeyFormat = "pem" | "jwk";
 
 export interface KeyPairRead {
   publicPem: string;

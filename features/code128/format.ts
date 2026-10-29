@@ -337,16 +337,6 @@ function widthsOf(symbols: Code128Symbol[]): number[] {
   return widths;
 }
 
-/** Total length in modules, quiet zones included */
-export function moduleCount(
-  result: Code128Result,
-  quietZone = result.quietZone,
-): number {
-  return (
-    result.widths.reduce((total, width) => total + width, 0) + quietZone * 2
-  );
-}
-
 export interface SvgOptions {
   /** Module width in pixels */
   width: number;

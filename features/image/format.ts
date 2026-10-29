@@ -13,13 +13,6 @@ export interface Encoded {
   height: number;
 }
 
-export function detectFormat(mime: string): ImageFormat | null {
-  if (mime === "image/jpeg") return "jpeg";
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return null;
-}
-
 export async function decode(file: File | Blob): Promise<ImageBitmap> {
   return createImageBitmap(file);
 }
@@ -66,21 +59,6 @@ export function readAsDataUrl(file: File | Blob): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error("Could not read the file"));
     reader.readAsDataURL(file);
   });
-}
-
-export function parseDataUrl(text: string): { mime: string; bytes: Uint8Array } | null {
-  const raw = text.trim();
-  if (raw === "") return null;
-  const match = /^data:([^;,]*)[;,]/i.exec(raw);
-  const body = raw.slice((match?.index ?? 0) + (match?.[0].length ?? 0));
-  const mime = (match?.[1] || "application/octet-stream").trim();
-  const base64 = raw.includes(";base64")
-    ? body
-    : decodeURIComponent(body);
-  const bin = atob(base64.replace(/\s+/g, ""));
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return { mime, bytes };
 }
 
 export function sizeOf(bytes: number): string {

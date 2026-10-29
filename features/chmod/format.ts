@@ -79,68 +79,6 @@ export function fromOctal(text: string): ChmodResult | null {
   );
 }
 
-/** Handles "rwxr-xr-x", octal text, and chmod expressions like "u=rw,g=r,o-x". */
-export function fromSymbolic(text: string): ChmodResult | null {
-  const raw = text.trim().toLowerCase();
-  if (raw === "") return null;
-  if (/^[0-7]{3,4}$/.test(raw)) return fromOctal(raw);
-
-  const ls = /^([rwxsStT-]{9})$/.exec(text.trim());
-  if (ls) {
-    const chars = ls[1];
-    const value = (t: string) =>
-      (t[0] === "r" ? 4 : 0) +
-      (t[1] === "w" ? 2 : 0) +
-      (/[xtsS]/.test(t[2]) ? 1 : 0);
-    return build(
-      value(chars.slice(0, 3)),
-      value(chars.slice(3, 6)),
-      value(chars.slice(6, 9)),
-      chars[2] === "s" || chars[2] === "S",
-      chars[5] === "s" || chars[5] === "S",
-      chars[8] === "t" || chars[8] === "T",
-    );
-  }
-
-  let owner = 6;
-  let group = 4;
-  let other = 4;
-  let setuid = false;
-  let setgid = false;
-  let sticky = false;
-
-  for (const token of raw.split(/[\s,;]+/)) {
-    const match = /^([augo]*)([=+-])([rwxXst]*)$/.exec(token);
-    if (!match) return null;
-    const [, whoRaw, op, permsRaw] = match;
-    const who = whoRaw === "" || whoRaw.includes("a") ? "ugo" : whoRaw;
-    let mask = 0;
-    for (const c of permsRaw)
-      mask |= c === "r" ? 4 : c === "w" ? 2 : c === "x" || c === "X" ? 1 : 0;
-    const setS = permsRaw.includes("s");
-    const setT = permsRaw.includes("t");
-
-    const targets: [number, number][] = [];
-    if (who.includes("u")) targets.push([owner, 4]);
-    if (who.includes("g")) targets.push([group, 2]);
-    if (who.includes("o")) targets.push([other, 1]);
-
-    for (const [current, flag] of targets) {
-      let next = current;
-      if (op === "=") next = mask;
-      else if (op === "+") next = current | mask;
-      else next = current & ~mask;
-      if (flag === 4) owner = next;
-      else if (flag === 2) group = next;
-      else other = next;
-      if (setS && flag === 4) setuid = op !== "-";
-      if (setS && flag === 2) setgid = op !== "-";
-      if (setT && flag === 1) sticky = op !== "-";
-    }
-  }
-  return build(owner, group, other, setuid, setgid, sticky);
-}
-
 /** Preset description ids keyed by the UI dictionary. */
 export type ChmodPresetId =
   | "executable"

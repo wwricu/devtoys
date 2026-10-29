@@ -13,13 +13,6 @@ export interface SlugOptions {
   preserveUnicode: boolean;
 }
 
-export const defaultSlugOptions: SlugOptions = {
-  separator: "-",
-  lower: true,
-  maxLength: 0,
-  preserveUnicode: false,
-};
-
 function stripAccents(text: string): string {
   return text.normalize("NFD").replace(COMBINING_MARKS, "");
 }

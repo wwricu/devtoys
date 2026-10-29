@@ -424,11 +424,6 @@ export function useLang(): Value {
   return useContext(LangContext);
 }
 
-/** Get current language (safe to call in client components) */
-export function getLang(): Lang {
-  return readLang();
-}
-
 /** Switch language programmatically */
 export function switchLang(lang: Lang) {
   writeLang(lang);

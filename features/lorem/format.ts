@@ -29,13 +29,6 @@ export interface LoremOptions {
   traditional: boolean;
 }
 
-export const defaultLoremOptions: LoremOptions = {
-  unit: "paragraphs",
-  count: 3,
-  html: false,
-  traditional: true,
-};
-
 function pick(min: number, max: number): number {
   const buffer = new Uint32Array(1);
   crypto.getRandomValues(buffer);

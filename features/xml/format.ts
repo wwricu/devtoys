@@ -309,13 +309,8 @@ function serializeInline(node: XmlNode, ctx: SerCtx): string {
     case "doctype":
       return node.value;
     case "element":
-      return serializeElement(node, ctx.minify ? 0 : depthOf(ctx), ctx);
+      return serializeElement(node, 0, ctx);
   }
-}
-
-// child elements inside mixed content also use the current depth (inline never breaks lines in pretty mode, so depth is meaningless)
-function depthOf(_ctx: SerCtx) {
-  return 0;
 }
 
 function serializeRoots(roots: XmlNode[], opts: XmlOptions): string {

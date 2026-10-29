@@ -1,8 +1,3 @@
-export interface YamlToTextResult {
-  output: string;
-  error: string | null;
-}
-
 /* ------------------------------------------------------------------ *
  * JSON value -> YAML (block style, configurable indent)
  * ------------------------------------------------------------------ */

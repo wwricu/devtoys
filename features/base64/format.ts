@@ -28,13 +28,3 @@ export function decodeToText(b64: string): string {
   const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
   return new TextDecoder("utf-8").decode(bytes);
 }
-
-export function encodeHexToBase64(hex: string): string {
-  const clean = hex.replace(/[^0-9a-fA-F]/g, "");
-  const bytes = Uint8Array.from(
-    clean.match(/.{2}/g)?.map((h) => parseInt(h, 16)) ?? []
-  );
-  let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin);
-}
