@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { getCategories, getCategory, type ToolDefinition } from "./tools";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { getCategories, type ToolDefinition } from "./tools";
 
 const STORAGE_KEY = "tool:favorites";
 
@@ -47,6 +47,14 @@ export function getSnapshot(): Set<string> {
   return _cached;
 }
 
+const noFavourites: Set<string> = new Set();
+
+/** SSR and hydration must render the same tree, so both start empty; the
+ *  client set arrives right after hydration. */
+function getServerSnapshot(): Set<string> {
+  return noFavourites;
+}
+
 /** Toggle a tool ID in / out of the favourites list. */
 export function toggleFavourite(id: string) {
   const s = getSnapshot();
@@ -56,29 +64,21 @@ export function toggleFavourite(id: string) {
   notify();
 }
 
-export function isFavourite(id: string): boolean {
-  return getSnapshot().has(id);
-}
-
 /** React hook that returns the current set and a toggle callback. */
 export function useFavourites() {
-  const [favs, setFavs] = useState<Set<string>>(getSnapshot);
-
-  useEffect(() => {
-    return subscribe(setFavs);
-  }, []);
+  const favs = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const toggle = useCallback((id: string) => {
     toggleFavourite(id);
   }, []);
 
-  return { favs, toggle, has: (id: string) => favs.has(id) };
+  const has = useCallback((id: string) => favs.has(id), [favs]);
+  return useMemo(() => ({ favs, toggle, has }), [favs, toggle, has]);
 }
 
-/** Build a synthetic "Favourites" category from the registry. Returns undefined
- *  when nothing is starred so the sidebar can hide it entirely. */
-export function getFavouritesCategory() {
-  const ids = getSnapshot();
+/** Build a synthetic "Favourites" category from the registry. Returns null
+ *  when nothing is starred so callers can show an empty state. */
+export function getFavouritesCategory(ids: Set<string>) {
   if (ids.size === 0) return null;
 
   const allTools = getCategories().flatMap((c) => c.tools);

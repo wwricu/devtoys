@@ -1,13 +1,15 @@
 "use client";
 
-import { getFavouritesCategory } from "@/lib/favorites";
+import { useMemo } from "react";
+import { getFavouritesCategory, useFavourites } from "@/lib/favorites";
 import ToolGrid from "@/components/ToolGrid";
 import ToolCard from "@/components/ToolCard";
 import { useLang } from "@/lib/i18n";
 
 export default function FavouritesContent() {
   const { t } = useLang();
-  const cat = getFavouritesCategory();
+  const { favs } = useFavourites();
+  const cat = useMemo(() => getFavouritesCategory(favs), [favs]);
 
   if (!cat || cat.tools.length === 0) {
     return (
