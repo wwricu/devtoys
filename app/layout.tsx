@@ -78,6 +78,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <head>
+        {/* Not via manifest.ts: metadata tags are re-created on every client navigation. */}
+        <link rel="manifest" href="/manifest.webmanifest" />
         {/* Applied before paint so a dark theme never flashes white. */}
         <script
           suppressHydrationWarning
