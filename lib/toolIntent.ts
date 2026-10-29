@@ -68,31 +68,51 @@ export function useToolWarmup() {
       }));
 
     let timer: number | undefined;
-    /** Requests the walk has queued but the network has not finished. */
-    const pending = () => {
-      let open = 0;
-      for (const entry of performance.getEntriesByType("resource") as PerformanceResourceTiming[]) {
-        if (entry.responseEnd > 0) continue;
-        const url = entry.name;
-        if (url.includes("_rsc=") || url.includes("/_next/static/")) open++;
-      }
-      return open;
+    let waiting: string | null = null;
+    let waitTimer: number | undefined;
+    const origin = window.location.origin;
+    const advance = () => {
+      if (waitTimer) window.clearTimeout(waitTimer);
+      waitTimer = undefined;
+      waiting = null;
+      timer = window.setTimeout(run, 80);
     };
+    // A navigation waits for its own prefetch, so the sweep must never be more
+    // than one request ahead of the network: a queue of them turns a click into
+    // seconds. Resource timing says exactly when the last one came back.
+    let observer: PerformanceObserver | undefined;
+    try {
+      observer = new PerformanceObserver((list) => {
+        if (!waiting) return;
+        for (const entry of list.getEntries()) {
+          if (entry.name.split("?")[0] === origin + waiting) {
+            advance();
+            return;
+          }
+        }
+      });
+      observer.observe({ type: "resource" });
+    } catch {
+      /* no Resource Timing: fall back to the fixed beat below */
+    }
     const run = () => {
+      if (waiting) return;
       const entry = queue.shift();
       if (!entry) return;
-      // A click is the work the user is actually waiting for, and every warmed
-      // route now drags its own chunk along. Issuing on a fixed beat outruns a
-      // modest connection and leaves a backlog the click then queues behind, so
-      // the walk only takes a step when the pipe is nearly empty.
+      // A click is the work the user is actually waiting for; step aside.
       const held = holdUntil - Date.now();
-      if (held > 0 || pending() > 2) {
+      if (held > 0) {
         queue.unshift(entry);
-        timer = window.setTimeout(run, held > 0 ? Math.min(held, 500) : 300);
+        timer = window.setTimeout(run, Math.min(held, 500));
         return;
       }
       router.prefetch(entry.href);
-      timer = window.setTimeout(run, 80);
+      if (observer) {
+        waiting = entry.href;
+        waitTimer = window.setTimeout(advance, 4000);
+      } else {
+        timer = window.setTimeout(run, 80);
+      }
     };
     const start = () => {
       if (warmupStarted) return;
@@ -128,6 +148,8 @@ export function useToolWarmup() {
     else window.addEventListener("load", onLoad, { once: true });
     return () => {
       if (timer) window.clearTimeout(timer);
+      if (waitTimer) window.clearTimeout(waitTimer);
+      observer?.disconnect();
       if (idle) {
         if (idleKind === "idle") window.cancelIdleCallback?.(idle);
         else window.clearTimeout(idle);
