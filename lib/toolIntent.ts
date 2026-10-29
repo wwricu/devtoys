@@ -17,9 +17,9 @@ export function useToolIntent() {
 let warmupStarted = false;
 
 /**
- * After the page settles, walk every tool in small steps and warm both its
- * route data and its chunk. Revisits are already instant; this gives first
- * visits the same caches without the eager-viewport-prefetch storm.
+ * After the page settles, walk every tool in small steps and warm its route
+ * data. Revisits are already instant; this gives first visits the same cache
+ * without the eager-viewport-prefetch storm.
  * Favourites come first in sidebar order, then recently opened tools, then
  * the registry order shown in the sidebar, so the tools most likely to be
  * opened next are covered within the first couple of requests. Skipped on
@@ -56,15 +56,22 @@ export function useToolWarmup() {
       }));
 
     let timer: number | undefined;
-    let stopped = false;
-    const stop = () => {
-      stopped = true;
-      if (timer) window.clearTimeout(timer);
+    let lastInput = 0;
+    const noteInput = () => {
+      lastInput = Date.now();
     };
     const run = () => {
-      if (stopped) return;
       const entry = queue.shift();
       if (!entry) return;
+      // While the user is interacting the walk competes with the work they are
+      // waiting for, so it waits for a quiet moment rather than giving up: the
+      // routes further down the list still need warming on a normal visit.
+      const quietFor = lastInput + 800 - Date.now();
+      if (quietFor > 0) {
+        queue.unshift(entry);
+        timer = window.setTimeout(run, quietFor + 80);
+        return;
+      }
       router.prefetch(entry.href);
       timer = window.setTimeout(run, 80);
     };
@@ -74,11 +81,9 @@ export function useToolWarmup() {
       run();
     };
 
-    // Warm-up is a background nicety; the moment the user does anything it is
-    // competing with the work they are waiting for, so it yields for good.
     const opts = { capture: true, passive: true } as const;
     const events = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
-    for (const name of events) window.addEventListener(name, stop, opts);
+    for (const name of events) window.addEventListener(name, noteInput, opts);
 
     let idle: number | undefined;
     let idleKind: "idle" | "timer" = "idle";
@@ -100,14 +105,14 @@ export function useToolWarmup() {
     if (document.readyState === "complete") onLoad();
     else window.addEventListener("load", onLoad, { once: true });
     return () => {
-      stopped = true;
       if (timer) window.clearTimeout(timer);
       if (idle) {
         if (idleKind === "idle") window.cancelIdleCallback?.(idle);
         else window.clearTimeout(idle);
       }
       window.removeEventListener("load", onLoad);
-      for (const name of events) window.removeEventListener(name, stop, opts);
+      for (const name of events)
+        window.removeEventListener(name, noteInput, opts);
     };
   }, [router]);
 }
