@@ -68,16 +68,27 @@ export function useToolWarmup() {
       }));
 
     let timer: number | undefined;
+    /** Requests the walk has queued but the network has not finished. */
+    const pending = () => {
+      let open = 0;
+      for (const entry of performance.getEntriesByType("resource") as PerformanceResourceTiming[]) {
+        if (entry.responseEnd > 0) continue;
+        const url = entry.name;
+        if (url.includes("_rsc=") || url.includes("/_next/static/")) open++;
+      }
+      return open;
+    };
     const run = () => {
       const entry = queue.shift();
       if (!entry) return;
       // A click is the work the user is actually waiting for, and every warmed
-      // route now drags its own chunk along, so the walk can occupy the pipe for
-      // tens of seconds. Step out of its way, then carry on.
+      // route now drags its own chunk along. Issuing on a fixed beat outruns a
+      // modest connection and leaves a backlog the click then queues behind, so
+      // the walk only takes a step when the pipe is nearly empty.
       const held = holdUntil - Date.now();
-      if (held > 0) {
+      if (held > 0 || pending() > 2) {
         queue.unshift(entry);
-        timer = window.setTimeout(run, Math.min(held, 500));
+        timer = window.setTimeout(run, held > 0 ? Math.min(held, 500) : 300);
         return;
       }
       router.prefetch(entry.href);
