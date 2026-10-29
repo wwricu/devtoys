@@ -4,22 +4,34 @@ import { categorySlug, tools } from "./tools";
 import { recentToolIds } from "./recentTools";
 import { getSnapshot as favoriteIds } from "./favorites";
 
+let warmupStarted = false;
+let holdUntil = 0;
+
 /** Hover/focus prefetch for tool links: route data and its chunks now, nothing
  *  eager. The default viewport prefetch would queue every visible link's
  *  segment (39 links, ~130 KB on the home page alone). */
 export function useToolIntent() {
   const router = useRouter();
   return (href: string) => {
+    // The link under the pointer is the one worth fetching first.
+    hold(1200);
     router.prefetch(href);
   };
 }
 
-let warmupStarted = false;
+/** Pause the background walk: a click or a hover means the user has decided
+ *  where they are going, and that request should not queue behind the sweep. */
+function hold(ms: number) {
+  holdUntil = Math.max(holdUntil, Date.now() + ms);
+}
 
 /**
  * After the page settles, walk every tool in small steps and warm its route
- * data. Revisits are already instant; this gives first visits the same cache
- * without the eager-viewport-prefetch storm.
+ * data and chunk. Revisits are already instant; this gives first visits the
+ * same cache without the eager-viewport-prefetch storm. Because each stop now
+ * drags a chunk along, the sweep can occupy the connection for tens of seconds
+ * on a slow link, so it steps aside whenever the user presses or hovers
+ * something.
  * Favourites come first in sidebar order, then recently opened tools, then
  * the registry order shown in the sidebar, so the tools most likely to be
  * opened next are covered within the first couple of requests. Skipped on
@@ -59,6 +71,15 @@ export function useToolWarmup() {
     const run = () => {
       const entry = queue.shift();
       if (!entry) return;
+      // A click is the work the user is actually waiting for, and every warmed
+      // route now drags its own chunk along, so the walk can occupy the pipe for
+      // tens of seconds. Step out of its way, then carry on.
+      const held = holdUntil - Date.now();
+      if (held > 0) {
+        queue.unshift(entry);
+        timer = window.setTimeout(run, Math.min(held, 500));
+        return;
+      }
       router.prefetch(entry.href);
       timer = window.setTimeout(run, 80);
     };
@@ -67,6 +88,13 @@ export function useToolWarmup() {
       warmupStarted = true;
       run();
     };
+
+    // Pressing anything is the earliest signal that a request the user is
+    // waiting for is about to start; 3 s covers its data and chunk.
+    const onPress = () => hold(3000);
+    const opts = { capture: true, passive: true } as const;
+    const events = ["pointerdown", "touchstart"] as const;
+    for (const name of events) window.addEventListener(name, onPress, opts);
 
     let idle: number | undefined;
     let idleKind: "idle" | "timer" = "idle";
@@ -94,6 +122,7 @@ export function useToolWarmup() {
         else window.clearTimeout(idle);
       }
       window.removeEventListener("load", onLoad);
+      for (const name of events) window.removeEventListener(name, onPress, opts);
     };
   }, [router]);
 }
