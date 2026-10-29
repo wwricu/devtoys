@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import XmlJsonConverter from "@/features/xml/XmlJsonConverter";
 
 export default function XmlJsonConverterEntry() {
   return (
     <ToolShell id="xml-json">
-      <ToolMount id="xml-json" />
+      <XmlJsonConverter />
     </ToolShell>
   );
 }

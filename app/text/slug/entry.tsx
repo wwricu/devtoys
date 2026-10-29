@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import SlugTool from "@/features/slug/SlugTool";
 
 export default function SlugToolEntry() {
   return (
     <ToolShell id="slug">
-      <ToolMount id="slug" />
+      <SlugTool />
     </ToolShell>
   );
 }

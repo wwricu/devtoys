@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import YamlConverter from "@/features/yaml/YamlConverter";
 
 export default function YamlConverterEntry() {
   return (
     <ToolShell id="json-yaml">
-      <ToolMount id="json-yaml" />
+      <YamlConverter />
     </ToolShell>
   );
 }

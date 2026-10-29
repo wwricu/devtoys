@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import UserAgentTool from "@/features/useragent/UserAgentTool";
 
 export default function UserAgentToolEntry() {
   return (
     <ToolShell id="user-agent">
-      <ToolMount id="user-agent" />
+      <UserAgentTool />
     </ToolShell>
   );
 }

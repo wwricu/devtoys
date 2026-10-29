@@ -1,18 +1,16 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { categorySlug, tools } from "./tools";
-import { preloadTool } from "./toolModule";
 import { recentToolIds } from "./recentTools";
 import { getSnapshot as favoriteIds } from "./favorites";
 
-/** Hover/focus prefetch for tool links: route data now, chunk now, nothing
+/** Hover/focus prefetch for tool links: route data and its chunks now, nothing
  *  eager. The default viewport prefetch would queue every visible link's
  *  segment (39 links, ~130 KB on the home page alone). */
 export function useToolIntent() {
   const router = useRouter();
-  return (href: string, id?: string) => {
+  return (href: string) => {
     router.prefetch(href);
-    if (id) preloadTool(id);
   };
 }
 
@@ -58,11 +56,16 @@ export function useToolWarmup() {
       }));
 
     let timer: number | undefined;
+    let stopped = false;
+    const stop = () => {
+      stopped = true;
+      if (timer) window.clearTimeout(timer);
+    };
     const run = () => {
+      if (stopped) return;
       const entry = queue.shift();
       if (!entry) return;
       router.prefetch(entry.href);
-      preloadTool(entry.id);
       timer = window.setTimeout(run, 80);
     };
     const start = () => {
@@ -71,12 +74,40 @@ export function useToolWarmup() {
       run();
     };
 
-    const idle = window.requestIdleCallback
-      ? window.requestIdleCallback(start, { timeout: 2000 })
-      : window.setTimeout(start, 1000);
+    // Warm-up is a background nicety; the moment the user does anything it is
+    // competing with the work they are waiting for, so it yields for good.
+    const opts = { capture: true, passive: true } as const;
+    const events = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+    for (const name of events) window.addEventListener(name, stop, opts);
+
+    let idle: number | undefined;
+    let idleKind: "idle" | "timer" = "idle";
+    const schedule = () => {
+      if (window.requestIdleCallback) {
+        idleKind = "idle";
+        idle = window.requestIdleCallback(start, { timeout: 3000 });
+      } else {
+        idleKind = "timer";
+        idle = window.setTimeout(start, 2000);
+      }
+    };
+    const onLoad = () => {
+      idleKind = "timer";
+      idle = window.setTimeout(schedule, 1500);
+    };
+    // The page's own chunks are still arriving right after `load`; walking the
+    // queue then would just take bandwidth from the tool the user opened.
+    if (document.readyState === "complete") onLoad();
+    else window.addEventListener("load", onLoad, { once: true });
     return () => {
+      stopped = true;
       if (timer) window.clearTimeout(timer);
-      window.cancelIdleCallback?.(idle);
+      if (idle) {
+        if (idleKind === "idle") window.cancelIdleCallback?.(idle);
+        else window.clearTimeout(idle);
+      }
+      window.removeEventListener("load", onLoad);
+      for (const name of events) window.removeEventListener(name, stop, opts);
     };
   }, [router]);
 }

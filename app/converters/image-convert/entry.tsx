@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import ImageConverter from "@/features/image/ImageConverter";
 
 export default function ImageConverterEntry() {
   return (
     <ToolShell id="image-convert">
-      <ToolMount id="image-convert" />
+      <ImageConverter />
     </ToolShell>
   );
 }

@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import JwtDecoder from "@/features/jwt/JwtDecoder";
 
 export default function JwtDecoderEntry() {
   return (
     <ToolShell id="jwt-decode">
-      <ToolMount id="jwt-decode" />
+      <JwtDecoder />
     </ToolShell>
   );
 }

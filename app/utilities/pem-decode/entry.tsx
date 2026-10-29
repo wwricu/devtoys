@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import PemDecoder from "@/features/pem/PemDecoder";
 
 export default function PemDecoderEntry() {
   return (
     <ToolShell id="pem-decode">
-      <ToolMount id="pem-decode" />
+      <PemDecoder />
     </ToolShell>
   );
 }

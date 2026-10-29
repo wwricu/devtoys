@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import LoremTool from "@/features/lorem/LoremTool";
 
 export default function LoremToolEntry() {
   return (
     <ToolShell id="lorem">
-      <ToolMount id="lorem" />
+      <ToolMount><LoremTool /></ToolMount>
     </ToolShell>
   );
 }

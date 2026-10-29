@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import DateConverter from "@/features/date/DateConverter";
 
 export default function DateConverterEntry() {
   return (
     <ToolShell id="date-convert">
-      <ToolMount id="date-convert" />
+      <ToolMount><DateConverter /></ToolMount>
     </ToolShell>
   );
 }

@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import UrlParser from "@/features/urlparser/UrlParser";
 
 export default function UrlParserEntry() {
   return (
     <ToolShell id="url-parse">
-      <ToolMount id="url-parse" />
+      <UrlParser />
     </ToolShell>
   );
 }

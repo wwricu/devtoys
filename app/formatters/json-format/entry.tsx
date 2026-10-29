@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import JsonFormatter from "@/features/json/JsonFormatter";
 
 export default function JsonFormatterEntry() {
   return (
     <ToolShell id="json-format">
-      <ToolMount id="json-format" />
+      <JsonFormatter />
     </ToolShell>
   );
 }

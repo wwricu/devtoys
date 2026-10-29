@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import SqlFormatter from "@/features/sql/SqlFormatter";
 
 export default function SqlFormatterEntry() {
   return (
     <ToolShell id="sql-format">
-      <ToolMount id="sql-format" />
+      <SqlFormatter />
     </ToolShell>
   );
 }

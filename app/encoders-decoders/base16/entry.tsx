@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import Base16Tool from "@/features/b16/Base16Tool";
 
 export default function Base16ToolEntry() {
   return (
     <ToolShell id="base16">
-      <ToolMount id="base16" />
+      <Base16Tool />
     </ToolShell>
   );
 }

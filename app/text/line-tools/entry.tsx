@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import LineTools from "@/features/lines/LineTools";
 
 export default function LineToolsEntry() {
   return (
     <ToolShell id="line-tools">
-      <ToolMount id="line-tools" />
+      <LineTools />
     </ToolShell>
   );
 }

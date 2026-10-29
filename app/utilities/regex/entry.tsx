@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import RegexTester from "@/features/regex/RegexTester";
 
 export default function RegexTesterEntry() {
   return (
     <ToolShell id="regex">
-      <ToolMount id="regex" />
+      <RegexTester />
     </ToolShell>
   );
 }

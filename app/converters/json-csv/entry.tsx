@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import CsvConverter from "@/features/csv/CsvConverter";
 
 export default function CsvConverterEntry() {
   return (
     <ToolShell id="json-csv">
-      <ToolMount id="json-csv" />
+      <CsvConverter />
     </ToolShell>
   );
 }

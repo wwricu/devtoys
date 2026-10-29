@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import DiffTool from "@/features/diff/DiffTool";
 
 export default function DiffToolEntry() {
   return (
     <ToolShell id="text-diff">
-      <ToolMount id="text-diff" />
+      <DiffTool />
     </ToolShell>
   );
 }

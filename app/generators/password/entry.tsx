@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import PasswordGenerator from "@/features/password/PasswordGenerator";
 
 export default function PasswordGeneratorEntry() {
   return (
     <ToolShell id="password">
-      <ToolMount id="password" />
+      <ToolMount><PasswordGenerator /></ToolMount>
     </ToolShell>
   );
 }

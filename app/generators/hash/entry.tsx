@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import HashTool from "@/features/hash/HashTool";
 
 export default function HashToolEntry() {
   return (
     <ToolShell id="hash">
-      <ToolMount id="hash" />
+      <HashTool />
     </ToolShell>
   );
 }

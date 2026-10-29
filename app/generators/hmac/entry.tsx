@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import HmacTool from "@/features/hmac/HmacTool";
 
 export default function HmacToolEntry() {
   return (
     <ToolShell id="hmac">
-      <ToolMount id="hmac" />
+      <HmacTool />
     </ToolShell>
   );
 }

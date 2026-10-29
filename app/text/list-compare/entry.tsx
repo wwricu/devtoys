@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import ListCompareTool from "@/features/listcompare/ListCompareTool";
 
 export default function ListCompareToolEntry() {
   return (
     <ToolShell id="list-compare">
-      <ToolMount id="list-compare" />
+      <ListCompareTool />
     </ToolShell>
   );
 }

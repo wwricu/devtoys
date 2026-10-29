@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import RandomNumbers from "@/features/random/RandomNumbers";
 
 export default function RandomNumbersEntry() {
   return (
     <ToolShell id="random-number">
-      <ToolMount id="random-number" />
+      <ToolMount><RandomNumbers /></ToolMount>
     </ToolShell>
   );
 }

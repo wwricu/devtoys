@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import Base32Tool from "@/features/b32/Base32Tool";
 
 export default function Base32ToolEntry() {
   return (
     <ToolShell id="base32">
-      <ToolMount id="base32" />
+      <Base32Tool />
     </ToolShell>
   );
 }

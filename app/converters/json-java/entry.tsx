@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import JsonJavaTool from "@/features/java/JsonJavaTool";
 
 export default function JsonJavaToolEntry() {
   return (
     <ToolShell id="json-java">
-      <ToolMount id="json-java" />
+      <JsonJavaTool />
     </ToolShell>
   );
 }

@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import CaseConverter from "@/features/case/CaseConverter";
 
 export default function CaseConverterEntry() {
   return (
     <ToolShell id="case-convert">
-      <ToolMount id="case-convert" />
+      <CaseConverter />
     </ToolShell>
   );
 }

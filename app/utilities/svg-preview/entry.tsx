@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import SvgPreviewTool from "@/features/svg/SvgPreviewTool";
 
 export default function SvgPreviewToolEntry() {
   return (
     <ToolShell id="svg-preview">
-      <ToolMount id="svg-preview" />
+      <ToolMount><SvgPreviewTool /></ToolMount>
     </ToolShell>
   );
 }

@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import CronParser from "@/features/cron/CronParser";
 
 export default function CronParserEntry() {
   return (
     <ToolShell id="cron">
-      <ToolMount id="cron" />
+      <ToolMount><CronParser /></ToolMount>
     </ToolShell>
   );
 }

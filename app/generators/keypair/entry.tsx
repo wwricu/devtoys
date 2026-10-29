@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import KeyPairTool from "@/features/keys/KeyPairTool";
 
 export default function KeyPairToolEntry() {
   return (
     <ToolShell id="keypair">
-      <ToolMount id="keypair" />
+      <KeyPairTool />
     </ToolShell>
   );
 }

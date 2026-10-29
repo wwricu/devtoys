@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import ChmodCalculator from "@/features/chmod/ChmodCalculator";
 
 export default function ChmodCalculatorEntry() {
   return (
     <ToolShell id="chmod">
-      <ToolMount id="chmod" />
+      <ChmodCalculator />
     </ToolShell>
   );
 }

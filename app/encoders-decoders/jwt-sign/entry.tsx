@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import JwtSigner from "@/features/jwt/JwtSigner";
 
 export default function JwtSignerEntry() {
   return (
     <ToolShell id="jwt-sign">
-      <ToolMount id="jwt-sign" />
+      <JwtSigner />
     </ToolShell>
   );
 }

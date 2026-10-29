@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import CidrTool from "@/features/cidr/CidrTool";
 
 export default function CidrToolEntry() {
   return (
     <ToolShell id="cidr">
-      <ToolMount id="cidr" />
+      <CidrTool />
     </ToolShell>
   );
 }

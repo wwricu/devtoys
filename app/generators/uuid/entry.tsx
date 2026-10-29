@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import UuidGenerator from "@/features/uuid/UuidGenerator";
 
 export default function UuidGeneratorEntry() {
   return (
     <ToolShell id="uuid">
-      <ToolMount id="uuid" />
+      <ToolMount><UuidGenerator /></ToolMount>
     </ToolShell>
   );
 }

@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import QrTool from "@/features/qr/QrTool";
 
 export default function QrToolEntry() {
   return (
     <ToolShell id="qr-code">
-      <ToolMount id="qr-code" />
+      <QrTool />
     </ToolShell>
   );
 }

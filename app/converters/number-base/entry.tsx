@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import NumberBase from "@/features/ibase/NumberBase";
 
 export default function NumberBaseEntry() {
   return (
     <ToolShell id="number-base">
-      <ToolMount id="number-base" />
+      <NumberBase />
     </ToolShell>
   );
 }

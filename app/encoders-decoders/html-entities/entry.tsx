@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import HtmlEntities from "@/features/html/HtmlEntities";
 
 export default function HtmlEntitiesEntry() {
   return (
     <ToolShell id="html-entities">
-      <ToolMount id="html-entities" />
+      <HtmlEntities />
     </ToolShell>
   );
 }

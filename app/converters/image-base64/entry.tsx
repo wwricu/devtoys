@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import ImageBase64 from "@/features/imgb64/ImageBase64";
 
 export default function ImageBase64Entry() {
   return (
     <ToolShell id="image-base64">
-      <ToolMount id="image-base64" />
+      <ImageBase64 />
     </ToolShell>
   );
 }

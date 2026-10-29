@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import Base64FileTool from "@/features/b64file/Base64FileTool";
 
 export default function Base64FileToolEntry() {
   return (
     <ToolShell id="base64-file">
-      <ToolMount id="base64-file" />
+      <Base64FileTool />
     </ToolShell>
   );
 }

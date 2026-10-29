@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import SemverTool from "@/features/semver/SemverTool";
 
 export default function SemverToolEntry() {
   return (
     <ToolShell id="semver">
-      <ToolMount id="semver" />
+      <SemverTool />
     </ToolShell>
   );
 }

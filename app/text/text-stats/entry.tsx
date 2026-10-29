@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import TextStatsTool from "@/features/stats/TextStatsTool";
 
 export default function TextStatsToolEntry() {
   return (
     <ToolShell id="text-stats">
-      <ToolMount id="text-stats" />
+      <TextStatsTool />
     </ToolShell>
   );
 }

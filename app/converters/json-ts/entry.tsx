@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import TsTypesTool from "@/features/ts-types/TsTypesTool";
 
 export default function TsTypesToolEntry() {
   return (
     <ToolShell id="json-ts">
-      <ToolMount id="json-ts" />
+      <TsTypesTool />
     </ToolShell>
   );
 }

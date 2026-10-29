@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import TomlConverter from "@/features/toml/TomlConverter";
 
 export default function TomlConverterEntry() {
   return (
     <ToolShell id="toml">
-      <ToolMount id="toml" />
+      <TomlConverter />
     </ToolShell>
   );
 }

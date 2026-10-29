@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import JsonPathTool from "@/features/jsonpath/JsonPathTool";
 
 export default function JsonPathToolEntry() {
   return (
     <ToolShell id="json-path">
-      <ToolMount id="json-path" />
+      <JsonPathTool />
     </ToolShell>
   );
 }

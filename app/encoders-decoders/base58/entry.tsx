@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import Base58Tool from "@/features/b58/Base58Tool";
 
 export default function Base58ToolEntry() {
   return (
     <ToolShell id="base58">
-      <ToolMount id="base58" />
+      <Base58Tool />
     </ToolShell>
   );
 }

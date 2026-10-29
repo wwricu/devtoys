@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import TextEscape from "@/features/escape/TextEscape";
 
 export default function TextEscapeEntry() {
   return (
     <ToolShell id="text-escape">
-      <ToolMount id="text-escape" />
+      <TextEscape />
     </ToolShell>
   );
 }

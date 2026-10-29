@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import ColorConverter from "@/features/color/ColorConverter";
 
 export default function ColorConverterEntry() {
   return (
     <ToolShell id="color">
-      <ToolMount id="color" />
+      <ColorConverter />
     </ToolShell>
   );
 }

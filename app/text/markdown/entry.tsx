@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import MarkdownTool from "@/features/markdown/MarkdownTool";
 
 export default function MarkdownToolEntry() {
   return (
     <ToolShell id="markdown">
-      <ToolMount id="markdown" />
+      <MarkdownTool />
     </ToolShell>
   );
 }

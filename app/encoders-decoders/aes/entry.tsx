@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import AesTool from "@/features/aes/AesTool";
 
 export default function AesToolEntry() {
   return (
     <ToolShell id="aes">
-      <ToolMount id="aes" />
+      <AesTool />
     </ToolShell>
   );
 }

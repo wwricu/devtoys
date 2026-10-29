@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import IdnTool from "@/features/idn/IdnTool";
 
 export default function IdnToolEntry() {
   return (
     <ToolShell id="idn">
-      <ToolMount id="idn" />
+      <IdnTool />
     </ToolShell>
   );
 }

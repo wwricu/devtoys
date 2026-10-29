@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import ByteConverter from "@/features/bytes/ByteConverter";
 
 export default function ByteConverterEntry() {
   return (
     <ToolShell id="bytes">
-      <ToolMount id="bytes" />
+      <ByteConverter />
     </ToolShell>
   );
 }

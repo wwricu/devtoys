@@ -217,8 +217,8 @@ export default function Sidebar() {
                         <Link
                           href={href}
                           prefetch={false}
-                          onPointerEnter={() => intent(href, tool.id)}
-                          onFocus={() => intent(href, tool.id)}
+                          onPointerEnter={() => intent(href)}
+                          onFocus={() => intent(href)}
                           className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
                             active
                               ? "bg-neutral-200 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"

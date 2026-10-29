@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { toolMetadata } from "@/lib/toolMeta";
 import Base64FileToolEntry from "./entry";
 
-/** The shell is prerendered; the tool body is a client-only chunk. */
+/** The route chunk carries its own tool, so nothing loads after hydration. */
 export const instant = false;
 
 export function generateMetadata(): Metadata {

@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import UrlEncoder from "@/features/url/UrlEncoder";
 
 export default function UrlEncoderEntry() {
   return (
     <ToolShell id="url-encode">
-      <ToolMount id="url-encode" />
+      <UrlEncoder />
     </ToolShell>
   );
 }

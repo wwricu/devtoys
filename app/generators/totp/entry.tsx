@@ -4,12 +4,13 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import { ToolMount } from "@/components/ToolMount";
+import TotpTool from "@/features/totp/TotpTool";
 
 export default function TotpToolEntry() {
   return (
     <ToolShell id="totp">
-      <ToolMount id="totp" />
+      <ToolMount><TotpTool /></ToolMount>
     </ToolShell>
   );
 }

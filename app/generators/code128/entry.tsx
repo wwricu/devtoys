@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import Code128Tool from "@/features/code128/Code128Tool";
 
 export default function Code128ToolEntry() {
   return (
     <ToolShell id="code128">
-      <ToolMount id="code128" />
+      <Code128Tool />
     </ToolShell>
   );
 }

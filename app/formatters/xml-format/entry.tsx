@@ -4,12 +4,12 @@
 "use client";
 
 import ToolShell from "@/components/ToolShell";
-import { ToolMount } from "@/lib/toolModule";
+import XmlFormatter from "@/features/xml/XmlFormatter";
 
 export default function XmlFormatterEntry() {
   return (
     <ToolShell id="xml-format">
-      <ToolMount id="xml-format" />
+      <XmlFormatter />
     </ToolShell>
   );
 }
