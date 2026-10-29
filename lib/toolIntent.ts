@@ -56,22 +56,9 @@ export function useToolWarmup() {
       }));
 
     let timer: number | undefined;
-    let lastInput = 0;
-    const noteInput = () => {
-      lastInput = Date.now();
-    };
     const run = () => {
       const entry = queue.shift();
       if (!entry) return;
-      // While the user is interacting the walk competes with the work they are
-      // waiting for, so it waits for a quiet moment rather than giving up: the
-      // routes further down the list still need warming on a normal visit.
-      const quietFor = lastInput + 800 - Date.now();
-      if (quietFor > 0) {
-        queue.unshift(entry);
-        timer = window.setTimeout(run, quietFor + 80);
-        return;
-      }
       router.prefetch(entry.href);
       timer = window.setTimeout(run, 80);
     };
@@ -80,10 +67,6 @@ export function useToolWarmup() {
       warmupStarted = true;
       run();
     };
-
-    const opts = { capture: true, passive: true } as const;
-    const events = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
-    for (const name of events) window.addEventListener(name, noteInput, opts);
 
     let idle: number | undefined;
     let idleKind: "idle" | "timer" = "idle";
@@ -111,8 +94,6 @@ export function useToolWarmup() {
         else window.clearTimeout(idle);
       }
       window.removeEventListener("load", onLoad);
-      for (const name of events)
-        window.removeEventListener(name, noteInput, opts);
     };
   }, [router]);
 }
