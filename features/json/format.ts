@@ -136,6 +136,21 @@ export function processJson(text: string, options: JsonOptions): JsonResult {
   return { output, error: null };
 }
 
+/**
+ * The first syntax error, without sorting or re-serialising the document. The
+ * editor's gutter marker needs this on every pause in typing; `processJson`
+ * does far more work than that.
+ */
+export function firstJsonError(text: string): JsonError | null {
+  if (text.trim() === "") return null;
+  try {
+    JSON.parse(text);
+    return null;
+  } catch (err) {
+    return parseErrorFromException(text, err);
+  }
+}
+
 const WS = /[ \t\n\r\f\v]/;
 const LITERAL_RE = /^(true|false|null)(?![A-Za-z0-9_-])/;
 const NUMBER_RE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/;
