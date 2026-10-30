@@ -139,7 +139,8 @@ export function processJson(text: string, options: JsonOptions): JsonResult {
 /**
  * The first syntax error, without sorting or re-serialising the document. The
  * editor's gutter marker needs this on every pause in typing; `processJson`
- * does far more work than that.
+ * does far more work than that. Same source as the status line, so the marker
+ * and the message always point at the same place.
  */
 export function firstJsonError(text: string): JsonError | null {
   if (text.trim() === "") return null;
@@ -147,7 +148,7 @@ export function firstJsonError(text: string): JsonError | null {
     JSON.parse(text);
     return null;
   } catch (err) {
-    return parseErrorFromException(text, err);
+    return validateAll(text)[0] ?? parseErrorFromException(text, err);
   }
 }
 
