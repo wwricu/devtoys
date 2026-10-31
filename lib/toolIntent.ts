@@ -4,7 +4,6 @@ import { categorySlug, tools } from "./tools";
 import { recentToolIds } from "./recentTools";
 import { getSnapshot as favoriteIds } from "./favorites";
 
-let warmupStarted = false;
 let holdUntil = 0;
 
 /** Hover/focus prefetch for tool links: route data and its chunks now, nothing
@@ -25,6 +24,12 @@ function hold(ms: number) {
   holdUntil = Math.max(holdUntil, Date.now() + ms);
 }
 
+/** A warmed route stays usable for `staleTimes.static` (3600 s) and the router
+ *  then drops it, so a pass repeats at half that interval. Re-prefetching a
+ *  route that is still fresh issues no request at all, which makes the repeat
+ *  free until something has actually lapsed. */
+const REPASS_MS = 30 * 60 * 1000;
+
 /**
  * After the page settles, walk every tool in small steps and warm its route
  * data and chunk. Revisits are already instant; this gives first visits the
@@ -35,7 +40,9 @@ function hold(ms: number) {
  * Favourites come first in sidebar order, then recently opened tools, then
  * the registry order shown in the sidebar, so the tools most likely to be
  * opened next are covered within the first couple of requests. Skipped on
- * metered or 2G connections, and only once per full page load.
+ * metered or 2G connections.
+ * The pass repeats: the router expires what was warmed, and without a second
+ * pass a long-lived tab is left cold for the rest of its life.
  */
 export function useToolWarmup() {
   const router = useRouter();
@@ -48,28 +55,31 @@ export function useToolWarmup() {
       return;
     }
 
-    const favorites = [...favoriteIds()];
-    const favoriteRank = new Map(favorites.map((id, index) => [id, index]));
-    const priority = [
-      ...favorites,
-      ...recentToolIds().filter((id) => !favoriteRank.has(id)),
-    ];
-    const rank = new Map(priority.map((id, index) => [id, index]));
-    const queue = tools
-      .map((tool, index) => ({ tool, index }))
-      .sort(
-        (a, b) =>
-          (rank.get(a.tool.id) ?? priority.length) -
-            (rank.get(b.tool.id) ?? priority.length) || a.index - b.index,
-      )
-      .map(({ tool }) => ({
-        id: tool.id,
-        href: `/${categorySlug(tool.category)}/${tool.id}`,
-      }));
+    // Rebuilt for every pass, so the priority order follows the tools the
+    // browser has actually been using since the last one.
+    const buildQueue = () => {
+      const favorites = [...favoriteIds()];
+      const favoriteRank = new Map(favorites.map((id, index) => [id, index]));
+      const priority = [
+        ...favorites,
+        ...recentToolIds().filter((id) => !favoriteRank.has(id)),
+      ];
+      const rank = new Map(priority.map((id, index) => [id, index]));
+      return tools
+        .map((tool, index) => ({ tool, index }))
+        .sort(
+          (a, b) =>
+            (rank.get(a.tool.id) ?? priority.length) -
+              (rank.get(b.tool.id) ?? priority.length) || a.index - b.index,
+        )
+        .map(({ tool }) => `/${categorySlug(tool.category)}/${tool.id}`);
+    };
 
+    let queue = buildQueue();
     let timer: number | undefined;
     let waiting: string | null = null;
     let waitTimer: number | undefined;
+    let repassQueued = false;
     const origin = window.location.origin;
     const advance = () => {
       if (waitTimer) window.clearTimeout(waitTimer);
@@ -97,27 +107,40 @@ export function useToolWarmup() {
     }
     const run = () => {
       if (waiting) return;
-      const entry = queue.shift();
-      if (!entry) return;
+      const href = queue.shift();
+      if (!href) {
+        timer = window.setTimeout(repass, REPASS_MS);
+        return;
+      }
       // A click is the work the user is actually waiting for; step aside.
       const held = holdUntil - Date.now();
       if (held > 0) {
-        queue.unshift(entry);
+        queue.unshift(href);
         timer = window.setTimeout(run, Math.min(held, 500));
         return;
       }
-      router.prefetch(entry.href);
+      router.prefetch(href);
       if (observer) {
-        waiting = entry.href;
+        waiting = href;
         waitTimer = window.setTimeout(advance, 4000);
       } else {
         timer = window.setTimeout(run, 80);
       }
     };
-    const start = () => {
-      if (warmupStarted) return;
-      warmupStarted = true;
+    const repass = () => {
+      if (timer) window.clearTimeout(timer);
+      // A hidden tab has nobody to serve, and its timers are throttled to a
+      // crawl anyway: wait until it is looked at again.
+      if (document.visibilityState !== "visible") {
+        repassQueued = true;
+        return;
+      }
+      repassQueued = false;
+      queue = buildQueue();
       run();
+    };
+    const onVisibility = () => {
+      if (repassQueued && document.visibilityState === "visible") repass();
     };
 
     // Pressing anything is the earliest signal that a request the user is
@@ -126,16 +149,17 @@ export function useToolWarmup() {
     const opts = { capture: true, passive: true } as const;
     const events = ["pointerdown", "touchstart"] as const;
     for (const name of events) window.addEventListener(name, onPress, opts);
+    document.addEventListener("visibilitychange", onVisibility);
 
     let idle: number | undefined;
     let idleKind: "idle" | "timer" = "idle";
     const schedule = () => {
       if (window.requestIdleCallback) {
         idleKind = "idle";
-        idle = window.requestIdleCallback(start, { timeout: 3000 });
+        idle = window.requestIdleCallback(run, { timeout: 3000 });
       } else {
         idleKind = "timer";
-        idle = window.setTimeout(start, 2000);
+        idle = window.setTimeout(run, 2000);
       }
     };
     const onLoad = () => {
@@ -155,6 +179,7 @@ export function useToolWarmup() {
         else window.clearTimeout(idle);
       }
       window.removeEventListener("load", onLoad);
+      document.removeEventListener("visibilitychange", onVisibility);
       for (const name of events) window.removeEventListener(name, onPress, opts);
     };
   }, [router]);
