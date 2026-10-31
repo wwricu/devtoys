@@ -1,7 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import CodeField, { type CodeFieldHandle } from "@/components/CodeField";
 import {
   CopyButton,
   editorClass,
@@ -21,12 +21,8 @@ import {
   unescapeJsonInput,
   type SortKeys,
 } from "./format";
+import { jsonExtensions } from "./editor";
 import { strings } from "./locale";
-
-// Its own chunk, and never part of the prerendered body: see components/CodeEditor.
-const CodeEditor = dynamic(() => import("@/components/CodeEditor"), {
-  ssr: false,
-});
 
 export default function JsonFormatter() {
   const { t } = useLang();
@@ -38,27 +34,8 @@ export default function JsonFormatter() {
     "json-format.sort",
     "none",
   );
-  const [unescape, setUnescape] = useStoredState(
-    "json-format.unescape",
-    false,
-  );
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const editing = useRef(false);
-  const [rich, setRich] = useState(false);
-
-  // The editor is an extra chunk. Fetch it in the background and take over the
-  // input only once the user is not typing in the textarea anymore.
-  useEffect(() => {
-    let cancelled = false;
-    import("@/components/CodeEditor")
-      .then(() => {
-        if (!cancelled && !editing.current) setRich(true);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [unescape, setUnescape] = useStoredState("json-format.unescape", false);
+  const field = useRef<CodeFieldHandle>(null);
 
   const validate = useCallback(
     (text: string) => firstJsonError(unescape ? unescapeJsonInput(text) : text),
@@ -161,11 +138,7 @@ export default function JsonFormatter() {
               <ToolButton
                 onClick={() => {
                   setInput("");
-                  // Whichever field is showing owns the caret after clearing.
-                  (
-                    inputRef.current ??
-                    document.querySelector<HTMLElement>(".cm-content")
-                  )?.focus();
+                  field.current?.focus();
                 }}
                 title={L.clearHint}
               >
@@ -175,30 +148,14 @@ export default function JsonFormatter() {
             </>
           }
         >
-          {rich ? (
-            <CodeEditor
-              value={input}
-              onChange={setInput}
-              validate={validate}
-              placeholder={unescape ? L.unescapePlaceholder : L.pasteHint}
-            />
-          ) : (
-            <textarea
-              ref={inputRef}
-              className={editorClass}
-              spellCheck={false}
-              placeholder={unescape ? L.unescapePlaceholder : L.pasteHint}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onFocus={() => {
-                editing.current = true;
-              }}
-              onBlur={() => {
-                editing.current = false;
-                setRich(true);
-              }}
-            />
-          )}
+          <CodeField
+            ref={field}
+            value={input}
+            onChange={setInput}
+            extensions={jsonExtensions}
+            validate={validate}
+            placeholder={unescape ? L.unescapePlaceholder : L.pasteHint}
+          />
         </Panel>
 
         <Panel

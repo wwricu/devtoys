@@ -1,14 +1,11 @@
 "use client";
 
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { json } from "@codemirror/lang-json";
 import {
-  bracketMatching,
   foldGutter,
   foldKeymap,
-  HighlightStyle,
   indentOnInput,
-  syntaxHighlighting,
+  bracketMatching,
 } from "@codemirror/language";
 import { lintGutter, linter, type Diagnostic } from "@codemirror/lint";
 import { EditorState, type Extension } from "@codemirror/state";
@@ -19,29 +16,33 @@ import {
   lineNumbers,
   placeholder as editorPlaceholder,
 } from "@codemirror/view";
-import { tags as t } from "@lezer/highlight";
-import { useEffect, useRef } from "react";
+import { useEffect, useImperativeHandle, useRef, type Ref } from "react";
 
-/** Colours are CSS variables, so light/dark stays a class flip on <html> and
- *  the editor is never reconfigured. */
-const jsonHighlight = HighlightStyle.define([
-  { tag: t.propertyName, color: "var(--cm-key)" },
-  { tag: t.string, color: "var(--cm-string)" },
-  { tag: [t.number, t.bool, t.null], color: "var(--cm-value)" },
-  { tag: [t.brace, t.bracket, t.punctuation], color: "var(--cm-punct)" },
-  { tag: t.comment, color: "var(--cm-comment)", fontStyle: "italic" },
-]);
+export interface SyntaxError {
+  message: string;
+  line: number;
+  column: number;
+}
 
 export interface CodeEditorProps {
   value: string;
   onChange: (next: string) => void;
-  /** The first syntax error, or null. Runs on a pause in typing, not a beat. */
-  validate: (text: string) => { message: string; line: number; column: number } | null;
+  /** Grammar and colours, supplied by the tool so one language is not paid for
+   *  by every other editor. */
+  extensions: Extension[];
+  /** The first syntax error, or null. Runs on a pause in typing, not a beat.
+   *  Without it the field gets no marker and no underline. */
+  validate?: (text: string) => SyntaxError | null;
   placeholder: string;
+  ref?: Ref<CodeEditorHandle>;
+}
+
+export interface CodeEditorHandle {
+  focus(): void;
 }
 
 /**
- * A JSON input with line numbers, folding, colouring and a marker on the
+ * A code input with line numbers, folding, colouring and a marker on the
  * offending line. Ships as its own chunk: the tool keeps its plain textarea
  * until this module has loaded, so the route's first paint never waits for it.
  * Several tools can import it and the bundler still emits one copy.
@@ -49,8 +50,10 @@ export interface CodeEditorProps {
 export default function CodeEditor({
   value,
   onChange,
+  extensions,
   validate,
   placeholder,
+  ref,
 }: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -61,24 +64,27 @@ export default function CodeEditor({
     latest.current = { onChange, validate, placeholder };
   });
 
+  useImperativeHandle(ref, () => ({ focus: () => view.current?.focus() }), []);
+
   useEffect(() => {
-    const extensions: Extension[] = [
+    const setup: Extension[] = [
       lineNumbers(),
       foldGutter(),
       history(),
       bracketMatching(),
       indentOnInput(),
       highlightActiveLine(),
-      syntaxHighlighting(jsonHighlight),
-      json(),
+      ...extensions,
       EditorView.lineWrapping,
       editorPlaceholder(latest.current.placeholder),
       keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap]),
       lintGutter(),
       linter(
         (editor) => {
+          const check = latest.current.validate;
+          if (!check) return [];
           const { state } = editor;
-          const error = latest.current.validate(state.doc.toString());
+          const error = check(state.doc.toString());
           if (!error) return [];
           const row = state.doc.line(
             Math.min(Math.max(error.line, 1), state.doc.lines),
@@ -102,7 +108,7 @@ export default function CodeEditor({
     ];
 
     const created = new EditorView({
-      state: EditorState.create({ extensions }),
+      state: EditorState.create({ extensions: setup }),
       parent: host.current ?? undefined,
     });
     view.current = created;
@@ -110,6 +116,8 @@ export default function CodeEditor({
       created.destroy();
       view.current = null;
     };
+    // Built once; extensions is a module constant from the tool, on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // The editor owns the caret, so a value that changed elsewhere (Clear, Open
