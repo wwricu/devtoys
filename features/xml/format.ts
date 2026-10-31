@@ -369,12 +369,31 @@ export function processXml(text: string, options: XmlOptions): XmlResult {
     const roots = parseXml(source);
     return { output: serializeRoots(roots, options), error: null };
   } catch (err) {
-    if (err instanceof SyntaxError_) {
-      const { line, column } = lineColumnAt(source, err.offset);
-      return { output: "", error: { message: err.message, line, column } };
-    }
-    throw err;
+    return { output: "", error: xmlSyntaxError(source, err) };
   }
+}
+
+/**
+ * The first syntax error, without serialising the document. The editor's
+ * gutter marker runs this on a pause in typing, so it has to name the same
+ * spot the status line does.
+ */
+export function firstXmlError(text: string): XmlError | null {
+  if (text.trim() === "") return null;
+  try {
+    parseXml(text);
+    return null;
+  } catch (err) {
+    return xmlSyntaxError(text, err);
+  }
+}
+
+function xmlSyntaxError(source: string, err: unknown): XmlError {
+  if (err instanceof SyntaxError_) {
+    const { line, column } = lineColumnAt(source, err.offset);
+    return { message: err.message, line, column };
+  }
+  throw err;
 }
 
 function lineColumnAt(text: string, position: number) {

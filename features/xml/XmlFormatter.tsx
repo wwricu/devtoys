@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import CodeField, { type CodeFieldHandle } from "@/components/CodeField";
 import {
   CopyButton,
   editorClass,
@@ -14,7 +15,8 @@ import {
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
-import { processXml } from "./format";
+import { xmlExtensions } from "./editor";
+import { firstXmlError, processXml, unescapeXmlInput } from "./format";
 import { strings } from "./locale";
 
 export default function XmlFormatter() {
@@ -31,7 +33,12 @@ export default function XmlFormatter() {
     "xml-format.unescape",
     false,
   );
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const field = useRef<CodeFieldHandle>(null);
+
+  const validate = useCallback(
+    (text: string) => firstXmlError(unescape ? unescapeXmlInput(text) : text),
+    [unescape],
+  );
 
   const result = useMemo(
     () => processXml(input, { indent, preserveComments, unescape }),
@@ -111,7 +118,7 @@ export default function XmlFormatter() {
               <ToolButton
                 onClick={() => {
                   setInput("");
-                  inputRef.current?.focus();
+                  field.current?.focus();
                 }}
                 title={L.fmtClearHint}
               >
@@ -121,13 +128,13 @@ export default function XmlFormatter() {
             </>
           }
         >
-          <textarea
-            ref={inputRef}
-            className={editorClass}
-            spellCheck={false}
-            placeholder={unescape ? L.fmtPasteEscapedHint : L.fmtPasteHint}
+          <CodeField
+            ref={field}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            extensions={xmlExtensions}
+            validate={validate}
+            placeholder={unescape ? L.fmtPasteEscapedHint : L.fmtPasteHint}
           />
         </Panel>
 

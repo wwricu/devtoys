@@ -8,6 +8,7 @@ import {
 } from "@/components/kit";
 import { SimpleTransform } from "@/components/transform";
 import { useText } from "@/lib/i18n";
+import { sqlExtensions } from "./editor";
 import { formatSql, type KeywordCase } from "./format";
 import { strings } from "./locale";
 
@@ -67,6 +68,7 @@ export default function SqlFormatter() {
         };
       }}
       inputPlaceholder="select a, b from t where a > 1 order by b desc"
+      extensions={sqlExtensions}
     />
   );
 }

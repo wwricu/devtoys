@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "./CodeField";
 import {
   CopyButton,
   Panel,
@@ -9,6 +10,8 @@ import {
   ToolButton,
   editorClass,
 } from "./kit";
+import type { SyntaxError as EditorSyntaxError } from "./CodeEditor";
+import type { Extension } from "@codemirror/state";
 import { fill, useLang } from "@/lib/i18n";
 
 export interface TransformResult {
@@ -27,11 +30,16 @@ export function SimpleTransform({
   run,
   inputPlaceholder,
   outputPlaceholder,
+  extensions,
+  validate,
 }: {
   controls?: React.ReactNode;
   run: (input: string) => TransformResult;
   inputPlaceholder?: string;
   outputPlaceholder?: string;
+  /** Grammar for the input box; omit it and the box stays a plain textarea. */
+  extensions?: Extension[];
+  validate?: (text: string) => EditorSyntaxError | null;
 }) {
   const { t } = useLang();
   const [input, setInput] = useState("");
@@ -58,12 +66,12 @@ export function SimpleTransform({
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={inputPlaceholder ?? t.input}
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            extensions={extensions}
+            validate={validate}
+            placeholder={inputPlaceholder ?? t.input}
           />
         </Panel>
         <Panel title={t.output} actions={<CopyButton getText={() => output} />}>

@@ -22,8 +22,9 @@ const CodeEditor = dynamic(() => import("@/components/CodeEditor"), {
 export interface CodeFieldProps {
   value: string;
   onChange: (next: string) => void;
-  /** Grammar and colours from the tool; see components/CodeEditor. */
-  extensions: Extension[];
+  /** Grammar and colours from the tool; see components/CodeEditor. Omit it and
+   *  the field stays a plain textarea, which never asks for the editor chunk. */
+  extensions?: Extension[];
   validate?: (text: string) => EditorSyntaxError | null;
   placeholder: string;
   ref?: Ref<CodeFieldHandle>;
@@ -53,6 +54,7 @@ export default function CodeField({
   const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
+    if (!extensions) return;
     let cancelled = false;
     import("@/components/CodeEditor")
       .then(() => {
@@ -62,7 +64,7 @@ export default function CodeField({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [extensions]);
 
   useImperativeHandle(
     ref,
@@ -70,7 +72,7 @@ export default function CodeField({
     [showEditor],
   );
 
-  return showEditor ? (
+  return showEditor && extensions ? (
     <CodeEditor
       ref={rich}
       value={value}

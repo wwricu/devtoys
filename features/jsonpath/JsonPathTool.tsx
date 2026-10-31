@@ -1,13 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  CopyButton,
-  Panel,
-  Split,
-  ToolButton,
-  editorClass,
-} from "@/components/kit";
+import CodeField from "@/components/CodeField";
+import { CopyButton, Panel, Split, ToolButton } from "@/components/kit";
+import { jsonExtensions } from "@/features/json/editor";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { evaluateJsonPath, type JsonValue } from "./format";
 import { strings } from "./locale";
@@ -98,12 +94,11 @@ export default function JsonPathTool() {
               {L.invalidJson} {parsed.error}
             </p>
           )}
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={L.jsonHint}
+          <CodeField
             value={json}
-            onChange={(e) => setJson(e.target.value)}
+            onChange={setJson}
+            extensions={jsonExtensions}
+            placeholder={L.jsonHint}
           />
         </Panel>
 
