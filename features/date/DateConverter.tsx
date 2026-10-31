@@ -21,12 +21,10 @@ import {
 } from "./format";
 import {
   isValidZone,
-  resolveWall,
   supportedZones,
   systemZone,
   wallParts,
   zoneOptionLabel,
-  type WallParts,
   type WallStatus,
 } from "./zone";
 import { strings } from "./locale";
@@ -135,8 +133,13 @@ export default function DateConverter() {
   const [instant, setInstant] = useState<Instant | null>(null);
   const [tsDraft, setTsDraft] = useState<string | null>(null);
   const [isoDraft, setIsoDraft] = useState<string | null>(null);
+  const [wallDraft, setWallDraft] = useState<{
+    date?: string;
+    time?: string;
+  }>({});
   const [tsError, setTsError] = useState<ParseError>(null);
   const [isoError, setIsoError] = useState<ParseError>(null);
+  const [wallError, setWallError] = useState<ParseError>(null);
   const [notice, setNotice] = useState<WallStatus | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
@@ -274,13 +277,17 @@ export default function DateConverter() {
   const timeValue = wall
     ? `${pad(wall.hour)}:${pad(wall.minute)}:${pad(wall.second)}`
     : "";
+  const dateShown = wallDraft.date ?? dateValue;
+  const timeShown = wallDraft.time ?? timeValue;
 
   const clearAll = () => {
     setInstant(null);
     setTsDraft(null);
     setIsoDraft(null);
+    setWallDraft({});
     setTsError(null);
     setIsoError(null);
+    setWallError(null);
     setNotice(null);
   };
 
@@ -289,8 +296,10 @@ export default function DateConverter() {
     setInstant({ ms, ns: BigInt(ms) * 1_000_000n, unit: "ms" });
     setTsDraft(null);
     setIsoDraft(null);
+    setWallDraft({});
     setTsError(null);
     setIsoError(null);
+    setWallError(null);
     setNotice(null);
   };
 
@@ -336,39 +345,47 @@ export default function DateConverter() {
     setNotice(result.status === "exact" ? null : result.status);
   };
 
-  const applyWall = (patch: Partial<WallParts>) => {
-    const base: WallParts = wall ?? {
-      ...wallParts(now, zoneId),
-      hour: 0,
-      minute: 0,
-      second: 0,
-      millisecond: 0,
-    };
-    const result = resolveWall({ ...base, ...patch }, zoneId);
+  const editWall = (which: "date" | "time", value: string) => {
+    setWallDraft((d) => ({ ...d, [which]: value }));
+    setWallError(null);
+  };
+
+  /**
+   * The two boxes describe one wall clock, so a commit resolves the pair
+   * through the same parser as the ISO field and keeps the sub-second part the
+   * instant already had, which the boxes do not show.
+   */
+  const commitWall = (which: "date" | "time") => {
+    const text = (which === "date" ? dateShown : timeShown).trim();
+    if (text === "") {
+      setWallDraft((d) => ({ ...d, [which]: undefined }));
+      return;
+    }
+    const date = which === "date" ? text : dateValue;
+    const time = which === "time" ? text : timeValue;
+    const milli = wall?.millisecond ?? 0;
+    // `9:5` means 09:05; the parser wants each field widened.
+    const [h = "0", minute = "0", second = "0"] = time.split(":");
+    const result = parseDateText(
+      `${date} ${pad(Number(h))}:${pad(Number(minute))}:${pad(Number(second))}${
+        milli && !time.includes(".") ? `.${pad(milli, 3)}` : ""
+      }`,
+      zoneId,
+    );
+    if (result.ms === null) {
+      setWallError(result.error ?? "unrecognized");
+      return;
+    }
     setInstant({
       ms: result.ms,
-      ns: BigInt(result.ms) * 1_000_000n,
+      ns: result.ns ?? BigInt(result.ms) * 1_000_000n,
       unit: "ms",
     });
+    setWallDraft({});
+    setWallError(null);
     setTsError(null);
     setIsoError(null);
     setNotice(result.status === "exact" ? null : result.status);
-  };
-
-  const pickDate = (value: string) => {
-    const [year, month, day] = value.split("-").map(Number);
-    if (value === "" || !Number.isFinite(year) || !month || !day) return;
-    applyWall({ year, month, day });
-  };
-
-  const pickTime = (value: string) => {
-    const [hour, minute, second = "0"] = value.split(":");
-    if (value === "" || hour === undefined || minute === undefined) return;
-    applyWall({
-      hour: Number(hour),
-      minute: Number(minute),
-      second: Number(second),
-    });
   };
 
   const hasInput = instant !== null || tsDraft !== null || isoDraft !== null;
@@ -472,22 +489,36 @@ export default function DateConverter() {
             <span className={labelClass}>{L.wallTime}</span>
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <input
-                type="date"
                 aria-label={L.dateLabel}
-                className={`${inputClass} w-44`}
-                value={dateValue}
-                onChange={(e) => pickDate(e.target.value)}
+                className={`${inputClass} w-24`}
+                placeholder={L.ymdPlaceholder}
+                spellCheck={false}
+                value={dateShown}
+                onChange={(e) => editWall("date", e.target.value)}
+                onBlur={() => commitWall("date")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitWall("date");
+                }}
               />
               <input
-                type="time"
-                step={1}
                 aria-label={L.timeLabel}
-                className={`${inputClass} w-40`}
-                value={timeValue}
-                onChange={(e) => pickTime(e.target.value)}
+                className={`${inputClass} w-20`}
+                placeholder={L.hmsPlaceholder}
+                spellCheck={false}
+                value={timeShown}
+                onChange={(e) => editWall("time", e.target.value)}
+                onBlur={() => commitWall("time")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitWall("time");
+                }}
               />
             </div>
           </div>
+          {wallError && (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {wallError === "range" ? L.outOfRange : L.unrecognized}
+            </p>
+          )}
 
           {notice && (
             <p className="text-xs text-amber-600 dark:text-amber-400">

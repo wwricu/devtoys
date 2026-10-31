@@ -7,6 +7,8 @@ export const strings = {
     dateLabel: "Date",
     timeLabel: "Time",
     datePlaceholder: "2026-10-15T08:30:00Z · Thu, 15 Oct 2026 08:30:00 GMT",
+    ymdPlaceholder: "YYYY-MM-DD",
+    hmsPlaceholder: "HH:MM:SS",
     emptyHint:
       "e.g. 1700000000 · 2026-10-15T08:30:00Z · Thu, 15 Oct 2026 08:30:00 GMT",
     now: "Now",
@@ -83,6 +85,8 @@ export const strings = {
     dateLabel: "日期",
     timeLabel: "时间",
     datePlaceholder: "2026-10-15T08:30:00Z · Thu, 15 Oct 2026 08:30:00 GMT",
+    ymdPlaceholder: "YYYY-MM-DD",
+    hmsPlaceholder: "HH:MM:SS",
     emptyHint:
       "如 1700000000 · 2026-10-15T08:30:00Z · Thu, 15 Oct 2026 08:30:00 GMT",
     now: "此刻",
