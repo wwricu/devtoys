@@ -21,10 +21,12 @@ import {
 } from "./format";
 import {
   isValidZone,
+  resolveWall,
   supportedZones,
   systemZone,
   wallParts,
   zoneOptionLabel,
+  type WallParts,
   type WallStatus,
 } from "./zone";
 import { strings } from "./locale";
@@ -46,6 +48,44 @@ const pad = (n: number, width = 2) => String(n).padStart(width, "0");
 
 const formatYear = (year: number) =>
   year < 0 ? `-${pad(-year, 4)}` : pad(year, 4);
+
+type StepUnit = "day" | "month" | "year" | "second" | "minute" | "hour";
+
+/**
+ * Calendar shift for the wall clock: Jan 31 plus a month is Feb 28 rather than
+ * Mar 3, and the time fields wrap inside the day the way the native ones did.
+ */
+function shiftWall(parts: WallParts, unit: StepUnit, dir: 1 | -1): WallParts {
+  if (unit === "second" || unit === "minute" || unit === "hour") {
+    const each = unit === "hour" ? 3600 : unit === "minute" ? 60 : 1;
+    const total =
+      (parts.hour * 3600 + parts.minute * 60 + parts.second + dir * each + 86_400) %
+      86_400;
+    return {
+      ...parts,
+      hour: Math.floor(total / 3600),
+      minute: Math.floor(total / 60) % 60,
+      second: total % 60,
+    };
+  }
+  const date = new Date(0);
+  date.setUTCFullYear(parts.year, parts.month - 1, parts.day);
+  if (unit === "day") {
+    date.setUTCDate(parts.day + dir);
+  } else {
+    const lastDay = new Date(0);
+    date.setUTCDate(1);
+    date.setUTCMonth(parts.month - 1 + (unit === "month" ? dir : dir * 12));
+    lastDay.setUTCFullYear(date.getUTCFullYear(), date.getUTCMonth() + 1, 0);
+    date.setUTCDate(Math.min(parts.day, lastDay.getUTCDate()));
+  }
+  return {
+    ...parts,
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+  };
+}
 
 function stampText(instant: Instant, unit: TimeUnit): string {
   const resolved = unit === "auto" ? instant.unit : unit;
@@ -110,7 +150,7 @@ function Card({
 }
 
 const inputClass =
-  "rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-base text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
+  "rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
 const labelClass =
   "w-24 shrink-0 text-xs text-neutral-500 dark:text-neutral-400";
@@ -355,37 +395,83 @@ export default function DateConverter() {
    * through the same parser as the ISO field and keeps the sub-second part the
    * instant already had, which the boxes do not show.
    */
+  const wallText = (date: string, time: string) => {
+    const milli = wall?.millisecond ?? 0;
+    // `9:5` means 09:05; the parser wants each field widened.
+    const [h = "0", minute = "0", second = "0"] = time.split(":");
+    return `${date} ${pad(Number(h))}:${pad(Number(minute))}:${pad(Number(second))}${
+      milli && !time.includes(".") ? `.${pad(milli, 3)}` : ""
+    }`;
+  };
+
+  /** Both ways in: one instant, and every other field's draft and error cleared. */
+  const applyInstant = (
+    ms: number,
+    ns: bigint | null,
+    status: WallStatus | null,
+  ) => {
+    setInstant({ ms, ns: ns ?? BigInt(ms) * 1_000_000n, unit: "ms" });
+    setWallDraft({});
+    setWallError(null);
+    setTsError(null);
+    setIsoError(null);
+    setNotice(status === "exact" ? null : status);
+  };
+
   const commitWall = (which: "date" | "time") => {
     const text = (which === "date" ? dateShown : timeShown).trim();
     if (text === "") {
       setWallDraft((d) => ({ ...d, [which]: undefined }));
       return;
     }
-    const date = which === "date" ? text : dateValue;
-    const time = which === "time" ? text : timeValue;
-    const milli = wall?.millisecond ?? 0;
-    // `9:5` means 09:05; the parser wants each field widened.
-    const [h = "0", minute = "0", second = "0"] = time.split(":");
     const result = parseDateText(
-      `${date} ${pad(Number(h))}:${pad(Number(minute))}:${pad(Number(second))}${
-        milli && !time.includes(".") ? `.${pad(milli, 3)}` : ""
-      }`,
+      wallText(
+        which === "date" ? text : dateValue,
+        which === "time" ? text : timeValue,
+      ),
       zoneId,
     );
     if (result.ms === null) {
       setWallError(result.error ?? "unrecognized");
       return;
     }
-    setInstant({
-      ms: result.ms,
-      ns: result.ns ?? BigInt(result.ms) * 1_000_000n,
-      unit: "ms",
-    });
-    setWallDraft({});
-    setWallError(null);
-    setTsError(null);
-    setIsoError(null);
-    setNotice(result.status === "exact" ? null : result.status);
+    applyInstant(result.ms, result.ns, result.status);
+  };
+
+  /**
+   * Arrow keys step one field of the shown clock, so a half-typed draft is not
+   * lost. The shifted parts go back through resolveWall, which is what makes a
+   * step into a DST gap or an ambiguous hour land where typing it would.
+   */
+  const stepWall = (which: "date" | "time", unit: StepUnit, dir: 1 | -1) => {
+    const result = parseDateText(
+      wallText(dateShown.trim() || dateValue, timeShown.trim() || timeValue),
+      zoneId,
+    );
+    if (result.ms === null) {
+      setWallError(result.error ?? "unrecognized");
+      return;
+    }
+    const parts = wallParts(result.ms, zoneId);
+    const moved = resolveWall(shiftWall(parts, unit, dir), zoneId);
+    applyInstant(moved.ms, null, moved.status);
+  };
+
+  const stepKeys = (
+    which: "date" | "time",
+    units: [StepUnit, StepUnit, StepUnit],
+  ) => (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      commitWall(which);
+      return;
+    }
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+    event.preventDefault();
+    stepWall(
+      which,
+      event.altKey ? units[2] : event.shiftKey ? units[1] : units[0],
+      event.key === "ArrowUp" ? 1 : -1,
+    );
   };
 
   const hasInput = instant !== null || tsDraft !== null || isoDraft !== null;
@@ -490,27 +576,25 @@ export default function DateConverter() {
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <input
                 aria-label={L.dateLabel}
-                className={`${inputClass} min-w-32 flex-[1.3]`}
+                className={`${inputClass} min-w-24 flex-[1.3]`}
                 placeholder={L.ymdPlaceholder}
                 spellCheck={false}
+                title={L.dateStepHint}
                 value={dateShown}
                 onChange={(e) => editWall("date", e.target.value)}
                 onBlur={() => commitWall("date")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitWall("date");
-                }}
+                onKeyDown={stepKeys("date", ["day", "month", "year"])}
               />
               <input
                 aria-label={L.timeLabel}
-                className={`${inputClass} min-w-28 flex-1`}
+                className={`${inputClass} min-w-20 flex-1`}
                 placeholder={L.hmsPlaceholder}
                 spellCheck={false}
+                title={L.timeStepHint}
                 value={timeShown}
                 onChange={(e) => editWall("time", e.target.value)}
                 onBlur={() => commitWall("time")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitWall("time");
-                }}
+                onKeyDown={stepKeys("time", ["second", "minute", "hour"])}
               />
             </div>
           </div>
