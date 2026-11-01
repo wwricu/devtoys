@@ -11,6 +11,8 @@ export const strings = {
     hmsPlaceholder: "HH:MM:SS",
     dateStepHint: "↑ ↓ day · Shift month · Alt year",
     timeStepHint: "↑ ↓ second · Shift minute · Alt hour",
+    pickDate: "Pick a date",
+    pickTime: "Pick a time",
     emptyHint:
       "e.g. 1700000000 · 2026-10-15T08:30:00Z · Thu, 15 Oct 2026 08:30:00 GMT",
     now: "Now",
@@ -91,6 +93,8 @@ export const strings = {
     hmsPlaceholder: "HH:MM:SS",
     dateStepHint: "↑ ↓ 日 · Shift 月 · Alt 年",
     timeStepHint: "↑ ↓ 秒 · Shift 分 · Alt 时",
+    pickDate: "选择日期",
+    pickTime: "选择时间",
     emptyHint:
       "如 1700000000 · 2026-10-15T08:30:00Z · Thu, 15 Oct 2026 08:30:00 GMT",
     now: "此刻",

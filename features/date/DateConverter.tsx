@@ -152,6 +152,65 @@ function Card({
 const inputClass =
   "rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
+const iconClass =
+  "shrink-0 rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300";
+
+const calendarPath =
+  "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+const clockPath = "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z";
+
+// The invisible native field is only what showPicker() opens; the visible box
+// keeps the year-month-day order the native one would not render.
+function PickerButton({
+  label,
+  path,
+  type,
+  value,
+  onPick,
+}: {
+  label: string;
+  path: string;
+  type: "date" | "time";
+  value: string;
+  onPick: (value: string) => void;
+}) {
+  const field = useRef<HTMLInputElement>(null);
+  return (
+    <span className="relative inline-flex shrink-0 items-center">
+      <input
+        ref={field}
+        type={type}
+        step={type === "time" ? 1 : undefined}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-0"
+        value={value}
+        onChange={(e) => onPick(e.target.value)}
+      />
+      <button
+        type="button"
+        title={label}
+        aria-label={label}
+        className={iconClass}
+        onClick={() => field.current?.showPicker()}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d={path} />
+        </svg>
+      </button>
+    </span>
+  );
+}
+
 const labelClass =
   "w-24 shrink-0 text-xs text-neutral-500 dark:text-neutral-400";
 
@@ -418,8 +477,8 @@ export default function DateConverter() {
     setNotice(status === "exact" ? null : status);
   };
 
-  const commitWall = (which: "date" | "time") => {
-    const text = (which === "date" ? dateShown : timeShown).trim();
+  const commitWall = (which: "date" | "time", picked?: string) => {
+    const text = (picked ?? (which === "date" ? dateShown : timeShown)).trim();
     if (text === "") {
       setWallDraft((d) => ({ ...d, [which]: undefined }));
       return;
@@ -574,28 +633,47 @@ export default function DateConverter() {
           <div className="flex flex-wrap items-center gap-2">
             <span className={labelClass}>{L.wallTime}</span>
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <input
-                aria-label={L.dateLabel}
-                className={`${inputClass} min-w-24 flex-[1.3]`}
-                placeholder={L.ymdPlaceholder}
-                spellCheck={false}
-                title={L.dateStepHint}
-                value={dateShown}
-                onChange={(e) => editWall("date", e.target.value)}
-                onBlur={() => commitWall("date")}
-                onKeyDown={stepKeys("date", ["day", "month", "year"])}
-              />
-              <input
-                aria-label={L.timeLabel}
-                className={`${inputClass} min-w-20 flex-1`}
-                placeholder={L.hmsPlaceholder}
-                spellCheck={false}
-                title={L.timeStepHint}
-                value={timeShown}
-                onChange={(e) => editWall("time", e.target.value)}
-                onBlur={() => commitWall("time")}
-                onKeyDown={stepKeys("time", ["second", "minute", "hour"])}
-              />
+              {/* Icon hugs its own box, so the pair also wraps together. */}
+              <div className="flex min-w-32 flex-[1.3] items-center gap-1">
+                <input
+                  aria-label={L.dateLabel}
+                  className={`${inputClass} min-w-0 flex-1`}
+                  placeholder={L.ymdPlaceholder}
+                  spellCheck={false}
+                  title={L.dateStepHint}
+                  value={dateShown}
+                  onChange={(e) => editWall("date", e.target.value)}
+                  onBlur={() => commitWall("date")}
+                  onKeyDown={stepKeys("date", ["day", "month", "year"])}
+                />
+                <PickerButton
+                  label={L.pickDate}
+                  path={calendarPath}
+                  type="date"
+                  value={dateValue}
+                  onPick={(v) => commitWall("date", v)}
+                />
+              </div>
+              <div className="flex min-w-28 flex-1 items-center gap-1">
+                <input
+                  aria-label={L.timeLabel}
+                  className={`${inputClass} min-w-0 flex-1`}
+                  placeholder={L.hmsPlaceholder}
+                  spellCheck={false}
+                  title={L.timeStepHint}
+                  value={timeShown}
+                  onChange={(e) => editWall("time", e.target.value)}
+                  onBlur={() => commitWall("time")}
+                  onKeyDown={stepKeys("time", ["second", "minute", "hour"])}
+                />
+                <PickerButton
+                  label={L.pickTime}
+                  path={clockPath}
+                  type="time"
+                  value={timeValue}
+                  onPick={(v) => commitWall("time", v)}
+                />
+              </div>
             </div>
           </div>
           {wallError && (
