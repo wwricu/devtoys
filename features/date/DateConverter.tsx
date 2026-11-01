@@ -490,7 +490,7 @@ export default function DateConverter() {
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <input
                 aria-label={L.dateLabel}
-                className={`${inputClass} w-24`}
+                className={`${inputClass} min-w-24 flex-[1.3]`}
                 placeholder={L.ymdPlaceholder}
                 spellCheck={false}
                 value={dateShown}
@@ -502,7 +502,7 @@ export default function DateConverter() {
               />
               <input
                 aria-label={L.timeLabel}
-                className={`${inputClass} w-20`}
+                className={`${inputClass} min-w-20 flex-1`}
                 placeholder={L.hmsPlaceholder}
                 spellCheck={false}
                 value={timeShown}
