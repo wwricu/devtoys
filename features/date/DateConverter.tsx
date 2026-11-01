@@ -110,7 +110,7 @@ function Card({
 }
 
 const inputClass =
-  "rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-xs text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
+  "rounded border border-neutral-300 bg-white px-2 py-1 font-mono text-base text-neutral-800 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
 const labelClass =
   "w-24 shrink-0 text-xs text-neutral-500 dark:text-neutral-400";
@@ -490,7 +490,7 @@ export default function DateConverter() {
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <input
                 aria-label={L.dateLabel}
-                className={`${inputClass} min-w-24 flex-[1.3]`}
+                className={`${inputClass} min-w-32 flex-[1.3]`}
                 placeholder={L.ymdPlaceholder}
                 spellCheck={false}
                 value={dateShown}
@@ -502,7 +502,7 @@ export default function DateConverter() {
               />
               <input
                 aria-label={L.timeLabel}
-                className={`${inputClass} min-w-20 flex-1`}
+                className={`${inputClass} min-w-28 flex-1`}
                 placeholder={L.hmsPlaceholder}
                 spellCheck={false}
                 value={timeShown}
