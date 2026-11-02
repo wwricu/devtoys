@@ -7,6 +7,9 @@ export const strings = {
     unescape: "Unescape then format",
     unescapeHint: "Unescape the input, then format it as JSON",
     unescapePlaceholder: "Paste escaped JSON…",
+    repair: "Repair then format",
+    repairHint:
+      "Fix broken quotes, commas and brackets before formatting. It changes the input, and it closes a document that was cut off.",
     openFile: "Open file",
     openFileHint: "Load from a local file",
     clearHint: "Clear input",
@@ -16,6 +19,7 @@ export const strings = {
     formatted: "Formatted result",
     valid: "Valid JSON, no errors",
     stats: "Input {lines} lines / {chars} chars · Output {out} chars",
+    repairedMark: "repaired",
   },
   zh: {
     indent: "缩进",
@@ -25,6 +29,9 @@ export const strings = {
     unescape: "反转义后格式化",
     unescapeHint: "先反转义输入，再作为 JSON 格式化",
     unescapePlaceholder: "粘贴转义过的 JSON…",
+    repair: "修复后格式化",
+    repairHint:
+      "先修好坏掉的引号、逗号、括号，再格式化。它会改动输入，也会给被截断的文档补上结尾。",
     openFile: "打开文件",
     openFileHint: "从本地文件载入",
     clearHint: "清空输入",
@@ -34,5 +41,6 @@ export const strings = {
     formatted: "格式化结果",
     valid: "JSON 合法，没有错误",
     stats: "输入 {lines} 行 / {chars} 字符 · 输出 {out} 字符",
+    repairedMark: "已修复",
   },
 };

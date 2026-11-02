@@ -1,4 +1,5 @@
 import type { Indent } from "@/components/kit";
+import { jsonrepair } from "jsonrepair";
 
 export type SortKeys = "none" | "asc" | "desc";
 
@@ -7,6 +8,8 @@ export interface JsonOptions {
   sortKeys: SortKeys;
   /** Unescape the input and use the result as the JSON source. */
   unescape: boolean;
+  /** Repair the input before parsing it. */
+  repair: boolean;
 }
 
 export interface JsonError {
@@ -20,6 +23,8 @@ export interface JsonResult {
   error: JsonError | null;
   /** All syntax errors (only present on failure) */
   errors?: JsonError[];
+  /** The output came from repaired text, not from the input as pasted. */
+  repaired?: boolean;
 }
 
 function lineColumnAt(text: string, position: number) {
@@ -113,9 +118,28 @@ export function unescapeJsonInput(text: string): string {
   );
 }
 
+/** Repaired text, or null when the damage is beyond repair. The caller keeps
+ *  the original text in that case, so the reported error still points at what
+ *  was actually pasted. */
+function repairSource(text: string): string | null {
+  try {
+    return jsonrepair(text);
+  } catch {
+    return null;
+  }
+}
+
 export function processJson(text: string, options: JsonOptions): JsonResult {
-  const source = options.unescape ? unescapeJsonInput(text) : text;
+  let source = options.unescape ? unescapeJsonInput(text) : text;
   if (source.trim() === "") return { output: "", error: null };
+  let repaired = false;
+  if (options.repair) {
+    const fixed = repairSource(source);
+    if (fixed !== null && fixed !== source) {
+      source = fixed;
+      repaired = true;
+    }
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(source);
@@ -133,14 +157,16 @@ export function processJson(text: string, options: JsonOptions): JsonResult {
         ? undefined
         : Number(options.indent);
   const output = JSON.stringify(sorted, null, indentChar) ?? "null";
-  return { output, error: null };
+  return { output, error: null, repaired };
 }
 
 /**
  * The first syntax error, without sorting or re-serialising the document. The
  * editor's gutter marker needs this on every pause in typing; `processJson`
  * does far more work than that. Same source as the status line, so the marker
- * and the message always point at the same place.
+ * and the message always point at the same place. It runs on the text as
+ * pasted, so a repaired document keeps its underline: that mark is where the
+ * damage was.
  */
 export function firstJsonError(text: string): JsonError | null {
   if (text.trim() === "") return null;

@@ -34,6 +34,7 @@ export default function JsonFormatter() {
     "none",
   );
   const [unescape, setUnescape] = useStoredState("json-format.unescape", false);
+  const [repair, setRepair] = useStoredState("json-format.repair", false);
   const field = useRef<CodeFieldHandle>(null);
 
   const validate = useCallback(
@@ -48,8 +49,8 @@ export default function JsonFormatter() {
   ];
 
   const result = useMemo(
-    () => processJson(input, { indent, sortKeys, unescape }),
-    [input, indent, sortKeys, unescape],
+    () => processJson(input, { indent, sortKeys, unescape, repair }),
+    [input, indent, sortKeys, unescape, repair],
   );
 
   const download = useCallback(() => {
@@ -115,6 +116,18 @@ export default function JsonFormatter() {
             className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
           />
           {L.unescape}
+        </label>
+        <label
+          title={L.repairHint}
+          className="ml-2 flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400"
+        >
+          <input
+            type="checkbox"
+            checked={repair}
+            onChange={(e) => setRepair(e.target.checked)}
+            className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+          />
+          {L.repair}
         </label>
         <ToolButton
           onClick={() => {
@@ -194,7 +207,7 @@ export default function JsonFormatter() {
                 lines: inLines,
                 chars: input.length,
                 out: result.output.length,
-              })
+              }) + (result.repaired ? ` · ${L.repairedMark}` : "")
             : input
               ? L.valid
               : ""
