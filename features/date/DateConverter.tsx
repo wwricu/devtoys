@@ -94,8 +94,6 @@ function stampText(instant: Instant, unit: TimeUnit): string {
       return (instant.ns / 1_000_000_000n).toString();
     case "us":
       return (instant.ns / 1_000n).toString();
-    case "ns":
-      return instant.ns.toString();
     default:
       return String(instant.ms);
   }
@@ -221,7 +219,13 @@ const serverZones = ["UTC"];
 export default function DateConverter() {
   const { t } = useLang();
   const L = useText(strings);
-  const [unit, setUnit] = useStoredState<TimeUnit>("date.unit", "auto");
+  // Storage outlives the unit list, so a saved "ns" from an older build reads as
+  // auto instead of going unmatched by every comparison below.
+  const [storedUnit, setUnit] = useStoredState<TimeUnit | "ns">(
+    "date.unit",
+    "auto",
+  );
+  const unit: TimeUnit = storedUnit === "ns" ? "auto" : storedUnit;
   const [zone, setZone] = useStoredState<string>("date.zone", "");
   const system = useSyncExternalStore(noSubscription, systemZone, () => "UTC");
   const zoneOptions = useSyncExternalStore(
@@ -312,13 +316,11 @@ export default function DateConverter() {
     { value: "s", label: L.secondsShort },
     { value: "ms", label: L.millisShort },
     { value: "us", label: L.microsShort },
-    { value: "ns", label: L.nanosShort },
   ];
   const unitLabels: Record<Exclude<TimeUnit, "auto">, string> = {
     s: L.seconds,
     ms: L.millis,
     us: L.micros,
-    ns: L.nanos,
   };
 
   const dayNames = [
@@ -715,8 +717,6 @@ export default function DateConverter() {
               <Field label={L.unixSeconds} value={fields.unixSeconds} />
               <Field label={L.unixMillis} value={fields.unixMillis} />
               <Field label={L.unixMicros} value={fields.unixMicros} />
-              <Field label={L.unixNanos} value={fields.unixNanos} />
-              <Field label={L.dotnetTicks} value={fields.dotnetTicks} />
               <Field label={L.weekday} value={dayNames[fields.weekday]} />
               <Field label={L.timezone} value={fields.timezone} />
               <Field label={L.utcOffset} value={fields.offset} />

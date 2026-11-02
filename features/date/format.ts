@@ -8,7 +8,7 @@ import {
   type WallStatus,
 } from "./zone";
 
-export type TimeUnit = "auto" | "s" | "ms" | "us" | "ns";
+export type TimeUnit = "auto" | "s" | "ms" | "us";
 
 export type InputKind =
   | "timestamp"
@@ -21,7 +21,7 @@ export type InputKind =
 export interface ParseResult {
   /** Whole milliseconds since the epoch; null when the input is empty/invalid. */
   ms: number | null;
-  /** Exact nanoseconds for numeric input, so micro/nano outputs keep precision. */
+  /** Exact sub-millisecond precision for numeric input, so micros echo back unchanged. */
   ns: bigint | null;
   /** Which format the text was recognized as. */
   kind: InputKind;
@@ -40,14 +40,7 @@ const NUMERIC_RE = /^[+-]?\d+(?:\.\d+)?$/;
 function decimalToNs(raw: string, unit: Exclude<TimeUnit, "auto">): bigint {
   const negative = raw.startsWith("-");
   const [whole, fraction = ""] = raw.replace(/^[+-]/, "").split(".");
-  const factor =
-    unit === "s"
-      ? 1_000_000_000n
-      : unit === "ms"
-        ? 1_000_000n
-        : unit === "us"
-          ? 1_000n
-          : 1n;
+  const factor = { s: 1_000_000_000n, ms: 1_000_000n, us: 1_000n }[unit];
   const scale = 10n ** BigInt(fraction.length);
   const total =
     BigInt(whole || "0") * factor +
@@ -251,8 +244,8 @@ function matchRfc2822(text: string): Match {
 }
 
 /**
- * Parse a numeric Unix timestamp. "auto" picks seconds/millis/micros/nanos by
- * magnitude, so 10-digit values stay seconds and 19-digit ones stay nanos.
+ * Parse a numeric Unix timestamp. "auto" picks seconds/millis/micros by
+ * magnitude, so 10-digit values stay seconds and 16-digit ones stay micros.
  */
 export function parseTimestamp(raw: string, unit: TimeUnit): ParseResult {
   const text = raw.trim();
@@ -261,6 +254,9 @@ export function parseTimestamp(raw: string, unit: TimeUnit): ParseResult {
   const value = Number(text);
   if (!Number.isFinite(value)) return fail("timestamp", "range");
   const abs = Math.abs(value);
+  // Nothing above a microsecond scale is offered, so a value that big has no
+  // unit to read it as.
+  if (unit === "auto" && abs >= 1e17) return fail("timestamp", "range");
   const resolved =
     unit !== "auto"
       ? unit
@@ -268,9 +264,7 @@ export function parseTimestamp(raw: string, unit: TimeUnit): ParseResult {
         ? "s"
         : abs < 1e14
           ? "ms"
-          : abs < 1e17
-            ? "us"
-            : "ns";
+          : "us";
   const ns = decimalToNs(text, resolved);
   const ms = Number(ns / 1_000_000n);
   if (Math.abs(ms) > MAX_DATE_MS) return fail("timestamp", "range", resolved);
@@ -334,8 +328,6 @@ export interface DateFields {
   unixSeconds: string;
   unixMillis: string;
   unixMicros: string;
-  unixNanos: string;
-  dotnetTicks: string;
   relative: RelativeParts;
 }
 
@@ -417,8 +409,8 @@ export function relativeTime(ms: number, now = Date.now()): RelativeParts {
 }
 
 /**
- * Render an instant in the selected zone. Absolute outputs (UTC, HTTP, Unix,
- * ticks) ignore the zone; wall-clock outputs follow it.
+ * Render an instant in the selected zone. Absolute outputs (UTC, HTTP, Unix)
+ * ignore the zone; wall-clock outputs follow it.
  */
 export function formatDate(
   ms: number,
@@ -453,11 +445,6 @@ export function formatDate(
     unixSeconds: (stamp / 1_000_000_000n).toString(),
     unixMillis: (stamp / 1_000_000n).toString(),
     unixMicros: (stamp / 1_000n).toString(),
-    unixNanos: stamp.toString(),
-    dotnetTicks: (
-      stamp / 100n +
-      BigInt("621355968000000000")
-    ).toString(),
     relative: relativeTime(Math.trunc(ms), now),
   };
 }
