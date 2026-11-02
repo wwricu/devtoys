@@ -149,9 +149,10 @@ export default function CodeEditor({
         ]
       : [];
     const setup: Extension[] = [
-      // The gutter belongs to the fields that carry a grammar; a plain text
-      // box keeps the quiet look it had as a textarea.
-      ...(grammar ? [lineNumbers(), foldGutter()] : []),
+      lineNumbers(),
+      // Folding needs ranges a grammar can name, so plain text fields only pay
+      // for the row numbers.
+      ...(grammar ? [foldGutter()] : []),
       ...(readOnly
         ? [EditorState.readOnly.of(true)]
         : [history(), indentOnInput(), ...checked]),
