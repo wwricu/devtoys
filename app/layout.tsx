@@ -6,7 +6,6 @@ import "./globals.css";
 import ServiceWorker from "@/components/ServiceWorker";
 import Sidebar from "@/components/Sidebar";
 import StandaloneTitle from "@/components/StandaloneTitle";
-import ZoneWarmup from "@/features/date/ZoneWarmup";
 import { LangProvider } from "@/lib/i18n";
 import { themeScript } from "@/lib/theme";
 
@@ -99,7 +98,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </LangProvider>
         <ServiceWorker />
         <StandaloneTitle />
-        <ZoneWarmup />
         <Analytics />
         <SpeedInsights />
       </body>
