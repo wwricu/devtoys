@@ -130,8 +130,6 @@ export interface Code128Symbol {
   value: number;
   codeset: CodeSet;
   role: "start" | "data" | "switch" | "checksum" | "stop";
-  /** The characters this symbol stands for */
-  source: string;
 }
 
 export interface Code128Result {
@@ -144,13 +142,6 @@ export interface Code128Result {
 }
 
 const isDigit = (char: string) => char >= "0" && char <= "9";
-
-function controlLabel(char: string): string {
-  const code = char.charCodeAt(0);
-  if (code < 32) return `^${String.fromCharCode(code === 0 ? 64 : code + 64)}`;
-  if (code === 127) return "^?";
-  return char;
-}
 
 function valueInCodeSet(char: string, codeset: CodeSet): number | null {
   const code = char.charCodeAt(0);
@@ -200,14 +191,13 @@ export function encodeCode128(text: string): Code128Result {
   let codeset: CodeSet;
   if (numericOnly && text.length % 2 === 0) {
     codeset = "C";
-    symbols.push({ value: START_C, codeset: "C", role: "start", source: "" });
+    symbols.push({ value: START_C, codeset: "C", role: "start" });
   } else {
     codeset = wantsCodeSet(text[0]);
     symbols.push({
       value: codeset === "A" ? START_A : START_B,
       codeset,
       role: "start",
-      source: "",
     });
   }
 
@@ -221,7 +211,6 @@ export function encodeCode128(text: string): Code128Result {
           value: codeset === "A" ? SWA : SWB,
           codeset,
           role: "switch",
-          source: controlLabel(text[at]),
         });
         continue;
       }
@@ -232,7 +221,6 @@ export function encodeCode128(text: string): Code128Result {
           value: codeset === "A" ? SWA : SWB,
           codeset,
           role: "switch",
-          source: controlLabel(text[at]),
         });
         continue;
       }
@@ -242,7 +230,6 @@ export function encodeCode128(text: string): Code128Result {
           value: Number(source),
           codeset: "C",
           role: "data",
-          source,
         });
       }
       at += pairs * 2;
@@ -258,7 +245,7 @@ export function encodeCode128(text: string): Code128Result {
       (!endsText || run % 2 === 0 || run > 4);
     if (worthC) {
       const pairs = Math.floor(run / 2);
-      symbols.push({ value: SWC, codeset: "C", role: "switch", source: "" });
+      symbols.push({ value: SWC, codeset: "C", role: "switch" });
       codeset = "C";
       for (let pair = 0; pair < pairs; pair++) {
         const source = text.slice(at + pair * 2, at + pair * 2 + 2);
@@ -266,7 +253,6 @@ export function encodeCode128(text: string): Code128Result {
           value: Number(source),
           codeset: "C",
           role: "data",
-          source,
         });
       }
       at += pairs * 2;
@@ -282,12 +268,11 @@ export function encodeCode128(text: string): Code128Result {
         return { ...empty, symbols: [], error: "Character cannot be encoded" };
       if (wantsCodeSet(text[at + 1] ?? " ") === codeset) {
         // SHIFT covers one symbol, so no switch back is needed.
-        symbols.push({ value: SHIFT, codeset, role: "switch", source: "" });
+        symbols.push({ value: SHIFT, codeset, role: "switch" });
         symbols.push({
           value: switched,
           codeset: other,
           role: "data",
-          source: controlLabel(char),
         });
         at++;
         continue;
@@ -296,19 +281,17 @@ export function encodeCode128(text: string): Code128Result {
         value: other === "A" ? SWA : SWB,
         codeset: other,
         role: "switch",
-        source: controlLabel(char),
       });
       codeset = other;
       symbols.push({
         value: switched,
         codeset: other,
         role: "data",
-        source: controlLabel(char),
       });
       at++;
       continue;
     }
-    symbols.push({ value, codeset, role: "data", source: controlLabel(char) });
+    symbols.push({ value, codeset, role: "data" });
     at++;
   }
 
@@ -317,8 +300,8 @@ export function encodeCode128(text: string): Code128Result {
     sum += symbol.value * (index + 1);
   });
   const checksum = sum % 104;
-  symbols.push({ value: checksum, codeset, role: "checksum", source: "" });
-  symbols.push({ value: STOP, codeset, role: "stop", source: "" });
+  symbols.push({ value: checksum, codeset, role: "checksum" });
+  symbols.push({ value: STOP, codeset, role: "stop" });
 
   return {
     symbols,
@@ -425,13 +408,4 @@ export function codesetSummary(result: Code128Result): CodesetSummary {
     checksum: result.checksum,
     switches,
   };
-}
-
-export function describe(result: Code128Result): string {
-  return result.symbols
-    .map(
-      (symbol) =>
-        `${symbol.role} ${symbol.value} ${symbol.codeset} "${symbol.source}"`,
-    )
-    .join("\n");
 }

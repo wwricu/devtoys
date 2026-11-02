@@ -186,7 +186,7 @@ const NUMBER_RE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/;
  * Standalone scanner/parser: collects every syntax error with line/column.
  * JSON.parse only reports the first error, so this fills in the rest on failure.
  */
-export function validateAll(text: string): JsonError[] {
+function validateAll(text: string): JsonError[] {
   const errors: JsonError[] = [];
   let pos = 0;
 

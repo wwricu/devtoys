@@ -20,15 +20,10 @@ const shell = {
     siteName: "Dev Toys",
     search: "Search tools",
     noMatchingTools: "No matching tools",
-    languageLabel: "Language",
-    switchTo: "Switch language",
-    repositoryLabel: "Dev Toys on GitHub",
     expandCategory: "Expand {name}",
     collapseCategory: "Collapse {name}",
     privacyFooter: "Every tool runs in your browser — nothing is uploaded.",
     categoriesIntro: "Pick a tool below.",
-    english: "EN",
-    chinese: "CN",
     copy: "Copy",
     copied: "Copied",
     copyHint: "Copy to clipboard",
@@ -40,7 +35,6 @@ const shell = {
     output: "Output",
     result: "Result",
     ready: "Ready",
-    loadingTool: "Loading tool…",
     outputToInput: "Input ← Output",
     outputToInputHint: "Move output back into the input",
     ioChars: "Input {input} · Output {output} chars",
@@ -63,15 +57,10 @@ const shell = {
     siteName: "Dev Toys",
     search: "搜索工具",
     noMatchingTools: "没有匹配的工具",
-    languageLabel: "语言",
-    switchTo: "切换语言",
-    repositoryLabel: "在 GitHub 查看源码",
     expandCategory: "展开 {name}",
     collapseCategory: "收起 {name}",
     privacyFooter: "所有工具都在你的浏览器里运行，不会上传任何数据。",
     categoriesIntro: "从下面挑选一个工具。",
-    english: "EN",
-    chinese: "CN",
     copy: "复制",
     copied: "已复制",
     copyHint: "复制到剪贴板",
@@ -83,7 +72,6 @@ const shell = {
     output: "输出",
     result: "结果",
     ready: "就绪",
-    loadingTool: "工具加载中…",
     outputToInput: "输出回填输入",
     outputToInputHint: "把输出内容放回输入框",
     ioChars: "输入 {input} · 输出 {output} 字符",
@@ -328,7 +316,6 @@ const zhTools: Record<string, { name: string; description: string }> = {
 
 type Value = {
   lang: Lang;
-  setLang: (lang: Lang) => void;
   t: ShellText;
   /** Text used by navigation: falls back to English when a key is missing */
   toolName: (tool: ToolDefinition) => string;
@@ -338,11 +325,10 @@ type Value = {
   toolSearchText: (tool: ToolDefinition) => string[];
 };
 
-function build(lang: Lang, setLang: (lang: Lang) => void): Value {
+function build(lang: Lang): Value {
   const zh = lang === "zh";
   return {
     lang,
-    setLang,
     t: shell[lang],
     toolName: (tool) => (zh ? zhTools[tool.id]?.name : undefined) ?? tool.name,
     toolDescription: (tool) =>
@@ -361,7 +347,7 @@ function build(lang: Lang, setLang: (lang: Lang) => void): Value {
   };
 }
 
-const contextDefault = build("en", () => {});
+const contextDefault = build("en");
 
 const LangContext = createContext<Value>(contextDefault);
 
@@ -407,7 +393,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
   }, [lang]);
 
-  const value = useMemo(() => build(lang, writeLang), [lang]);
+  const value = useMemo(() => build(lang), [lang]);
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }

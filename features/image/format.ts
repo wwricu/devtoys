@@ -52,15 +52,6 @@ export async function encode(
   return { blob, dataUrl, width, height };
 }
 
-export function readAsDataUrl(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error ?? new Error("Could not read the file"));
-    reader.readAsDataURL(file);
-  });
-}
-
 export function sizeOf(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;

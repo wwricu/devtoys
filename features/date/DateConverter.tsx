@@ -504,7 +504,7 @@ export default function DateConverter() {
    * lost. The shifted parts go back through resolveWall, which is what makes a
    * step into a DST gap or an ambiguous hour land where typing it would.
    */
-  const stepWall = (which: "date" | "time", unit: StepUnit, dir: 1 | -1) => {
+  const stepWall = (unit: StepUnit, dir: 1 | -1) => {
     const result = parseDateText(
       wallText(dateShown.trim() || dateValue, timeShown.trim() || timeValue),
       zoneId,
@@ -529,7 +529,6 @@ export default function DateConverter() {
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
     event.preventDefault();
     stepWall(
-      which,
       event.altKey ? units[2] : event.shiftKey ? units[1] : units[0],
       event.key === "ArrowUp" ? 1 : -1,
     );

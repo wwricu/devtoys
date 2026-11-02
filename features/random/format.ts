@@ -75,16 +75,3 @@ export function randomUnit(): number {
   crypto.getRandomValues(buffer);
   return ((buffer[0] >>> 11) * 2 ** 32 + (buffer[1] >>> 11)) / 2 ** 53;
 }
-
-export function shuffle<T>(items: T[]): T[] {
-  const out = [...items];
-  const buffer = new Uint32Array(out.length);
-  if (out.length > 0) {
-    crypto.getRandomValues(buffer);
-    for (let i = out.length - 1; i > 0; i--) {
-      const j = buffer[i] % (i + 1);
-      [out[i], out[j]] = [out[j], out[i]];
-    }
-  }
-  return out;
-}

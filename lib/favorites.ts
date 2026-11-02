@@ -56,7 +56,7 @@ function getServerSnapshot(): Set<string> {
 }
 
 /** Toggle a tool ID in / out of the favourites list. */
-export function toggleFavourite(id: string) {
+function toggleFavourite(id: string) {
   const s = getSnapshot();
   if (s.has(id)) s.delete(id);
   else s.add(id);

@@ -62,10 +62,6 @@ function md5Bytes(bytes: Uint8Array): string {
   return out;
 }
 
-export function md5(text: string): string {
-  return md5Bytes(new TextEncoder().encode(text));
-}
-
 const SHA_ALGOS = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"] as const;
 
 async function subtleHex(algo: string, bytes: Uint8Array): Promise<string> {

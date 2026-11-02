@@ -9,7 +9,6 @@ import {
   StatusLine,
   ToolButton,
 } from "./kit";
-import type { SyntaxError as EditorSyntaxError } from "./CodeEditor";
 import type { Extension } from "@codemirror/state";
 import { fill, useLang } from "@/lib/i18n";
 
@@ -30,7 +29,6 @@ export function SimpleTransform({
   inputPlaceholder,
   outputPlaceholder,
   extensions,
-  validate,
 }: {
   controls?: React.ReactNode;
   run: (input: string) => TransformResult;
@@ -38,7 +36,6 @@ export function SimpleTransform({
   outputPlaceholder?: string;
   /** Grammar for the input box; omit it and the box stays a plain textarea. */
   extensions?: Extension[];
-  validate?: (text: string) => EditorSyntaxError | null;
 }) {
   const { t } = useLang();
   const [input, setInput] = useState("");
@@ -69,7 +66,6 @@ export function SimpleTransform({
             value={input}
             onChange={setInput}
             extensions={extensions}
-            validate={validate}
             placeholder={inputPlaceholder ?? t.input}
           />
         </Panel>

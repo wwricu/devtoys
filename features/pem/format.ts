@@ -1,7 +1,5 @@
 import { derToBytes, nodeTime, parseDer, type DerNode } from "./der";
 
-export { parseDer, derToBytes, type DerNode } from "./der";
-
 export interface FieldRow {
   label: string;
   value: string;
