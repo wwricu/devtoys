@@ -7,7 +7,7 @@ import {
   indentOnInput,
   bracketMatching,
 } from "@codemirror/language";
-import { lintGutter, linter, type Diagnostic } from "@codemirror/lint";
+import { linter, type Diagnostic } from "@codemirror/lint";
 import {
   closeSearchPanel,
   highlightSelectionMatches,
@@ -39,7 +39,7 @@ export interface CodeEditorProps {
    *  by every other editor. */
   extensions: Extension[];
   /** The first syntax error, or null. Runs on a pause in typing, not a beat.
-   *  Without it the field gets no marker and no underline. */
+   *  Without it nothing underlines. */
   validate?: (text: string) => SyntaxError | null;
   placeholder: string;
   /** Output pane: nothing is typed here, but it stays selectable and findable. */
@@ -93,8 +93,8 @@ function unregister(view: EditorView) {
 }
 
 /**
- * A code input with line numbers, folding, colouring and a marker on the
- * offending line. Ships as its own chunk: the tool keeps its plain textarea
+ * A code input with line numbers, folding, colouring and an underline on the
+ * offending text. Ships as its own chunk: the tool keeps its plain textarea
  * until this module has loaded, so the route's first paint never waits for it.
  * Several tools can import it and the bundler still emits one copy.
  */
@@ -122,11 +122,11 @@ export default function CodeEditor({
 
   useEffect(() => {
     const grammar = extensions.length > 0;
-    // Only a field that can report a position gets the marker column; the plain
-    // text boxes would carry an empty 17 px strip for nothing.
+    // A syntax error underlines itself and the tool's status line names the
+    // position; no gutter column is reserved for it, since it would sit empty
+    // until something breaks.
     const checked: Extension[] = validate
       ? [
-          lintGutter(),
           linter(
             (editor) => {
               const { state } = editor;
