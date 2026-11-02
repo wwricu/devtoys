@@ -2,7 +2,9 @@
  * JSON to Java. Every value seen at the same JSON path merges into one node, so
  * a field is as wide as the sample needs: a number that leaves the 32-bit range
  * becomes Long, a path holding mixed kinds falls back to Object. Objects below
- * the root become nested classes so the whole model stays one file.
+ * the root become nested classes so the whole model stays one file, and every
+ * one of them is declared directly inside the root class: a sample nested four
+ * deep still gives four sibling classes, not one inside another.
  */
 
 export type JavaStyle = "pojo" | "lombok" | "record";
@@ -302,7 +304,23 @@ export function jsonToJava(
     return `${head} {\n${blocks.join("\n\n")}\n${pad}}`;
   }
 
-  const body = render(shapeOf(rootPath, rootName), 0);
+  const root = shapeOf(rootPath, rootName);
+  // A field names its type by simple name, which resolves anywhere inside the
+  // same top-level class, so the classes below the root move up to sit beside
+  // each other instead of staying where the JSON put them.
+  const siblings: Clazz[] = [];
+  const spread = (node: Clazz) => {
+    for (const child of node.nested) {
+      siblings.push(child);
+      spread(child);
+    }
+    // Its own children now sit beside it, so it stops carrying them.
+    node.nested = [];
+  };
+  spread(root);
+  root.nested = siblings;
+
+  const body = render(root, 0);
   const imports: string[] = [];
   if (body.includes("@JsonProperty"))
     imports.push("import com.fasterxml.jackson.annotation.JsonProperty;");
