@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { categorySlug, getCategories, getCategory } from "@/lib/tools";
 import CategoryContent from "@/components/CategoryContent";
 
+// One dynamic segment answers every unknown slug, and notFound() there is the
+// correct outcome — instant validation just cannot read a render that threw.
+export const instant = false;
+
 /** Every category page is prerendered from the registry. */
 export function generateStaticParams() {
   return getCategories().map((c) => ({ category: categorySlug(c.name) }));
