@@ -4,20 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  fieldBase,
   Panel,
   StatusLine,
   ToolButton,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
-import {
-  describePem,
-  fingerprint,
-  type DerNode,
-  type FieldRow,
-  type PemBlock,
-} from "./format";
+import { describePem, fingerprint, type FieldRow, type PemBlock } from "./format";
+import type { DerNode } from "./der";
 import { strings } from "./locale";
 
 type L = typeof strings.en;
@@ -315,7 +309,6 @@ export default function PemDecoder() {
           value={input}
           onChange={setInput}
           placeholder={L.pasteHint}
-          className={`${fieldBase} h-28 flex-none`}
         />
       </Panel>
 

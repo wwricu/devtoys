@@ -70,7 +70,7 @@ export default function SemverTool() {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-3">
         {field(L.versionA, left, setLeft)}
         {field(L.versionB, right, setRight)}
@@ -84,7 +84,7 @@ export default function SemverTool() {
         </ToolButton>
       </div>
 
-      <Split>
+      <Split className="flex-none">
         <Panel title={L.compare}>
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 p-3">
             <p className="font-mono text-3xl text-neutral-800 dark:text-neutral-100">

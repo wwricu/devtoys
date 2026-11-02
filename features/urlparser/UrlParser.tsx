@@ -40,6 +40,7 @@ export default function UrlParser() {
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
       <Panel
         title={L.url}
+        className="flex-none"
         actions={
           <>
             <ToolButton onClick={() => setInput(EXAMPLE)} title={L.exampleHint}>
