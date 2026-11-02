@@ -9,7 +9,7 @@ import {
   tools,
   type ToolDefinition,
 } from "@/lib/tools";
-import { useFavourites } from "@/lib/favorites";
+import { getFavouritesCategory, useFavourites } from "@/lib/favorites";
 import { useStoredState } from "@/components/kit";
 import { fill, useLang, switchLang, type Lang, repoUrl } from "@/lib/i18n";
 import { ThemeToggle } from "./ThemeToggle";
@@ -130,19 +130,7 @@ export default function Sidebar() {
           toolSearchText(tool).some((text) => text.toLowerCase().includes(q)),
         );
 
-    // Build Favourites category from reactive favs set
-    let favCat: { name: string; tools: ToolDefinition[] } | null = null;
-    if (favs.size > 0) {
-      const allTools = getCategories().flatMap((c) => c.tools);
-      const favTools: ToolDefinition[] = [];
-      for (const id of favs) {
-        const t = allTools.find((x) => x.id === id);
-        if (t) favTools.push(t);
-      }
-      if (favTools.length > 0) {
-        favCat = { name: "Favourites", tools: favTools };
-      }
-    }
+    const favCat = getFavouritesCategory(favs);
 
     const realCats = getCategories()
       .map((c) => ({
