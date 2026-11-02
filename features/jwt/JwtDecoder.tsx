@@ -45,10 +45,12 @@ export default function JwtDecoder() {
           ? L.notYetValid
           : L.active;
 
+  /* The boxes above hug their content so the editors below get the rest. */
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col gap-2">
       <Panel
         title={L.token}
+        className="flex-none"
         actions={
           <>
             <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
@@ -87,7 +89,7 @@ export default function JwtDecoder() {
       )}
 
       {claims && (
-        <Panel title={L.registeredClaims}>
+        <Panel title={L.registeredClaims} className="flex-none">
           <table className="w-full text-left text-xs">
             <tbody>
               {NUMERIC_CLAIMS.filter((k) => k in claims).map((k) => (

@@ -70,8 +70,9 @@ export default function JwtSigner() {
     }
   };
 
+  /* Only the editor row stretches; the boxes below hug their content. */
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
           value={alg}
@@ -114,6 +115,7 @@ export default function JwtSigner() {
 
       <Panel
         title={L.signedToken}
+        className="flex-none"
         actions={token ? <CopyButton getText={() => token} /> : undefined}
       >
         <CodeField
@@ -126,6 +128,7 @@ export default function JwtSigner() {
 
       <Panel
         title={L.verify}
+        className="flex-none"
         actions={<ToolButton onClick={verify}>{L.checkSignature}</ToolButton>}
       >
         <div className="flex flex-col gap-1 p-2">
