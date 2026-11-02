@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -155,12 +155,10 @@ export default function Code128Tool() {
 
       <Split>
         <Panel title={t.input} actions={<CopyButton getText={() => input} />}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder="ASCII 0-127"
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder="ASCII 0-127"
           />
         </Panel>
         <Panel

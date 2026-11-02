@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, Panel, ToolButton, editorClass } from "@/components/kit";
+import CodeField from "@/components/CodeField";
+import { CopyButton, Panel, ToolButton } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { computeStats, duration } from "./format";
 import { strings } from "./locale";
@@ -45,12 +46,10 @@ export default function TextStatsTool() {
           </>
         }
       >
-        <textarea
-          className={editorClass}
-          spellCheck={false}
-          placeholder={L.pasteHint}
+        <CodeField
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={setText}
+          placeholder={L.pasteHint}
         />
       </Panel>
 

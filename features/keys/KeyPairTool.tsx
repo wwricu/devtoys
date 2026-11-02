@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
   Panel,
   Segmented,
   StatusLine,
   ToolButton,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -195,19 +195,15 @@ export default function KeyPairTool() {
           }
         >
           {jwk && keyPair ? (
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              readOnly
+            <CodeField
               value={keyPair.privateJwk}
+              readOnly
             />
           ) : (
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder="-----BEGIN PRIVATE KEY-----"
+            <CodeField
               value={privatePem}
-              onChange={(e) => setPrivatePem(e.target.value)}
+              onChange={setPrivatePem}
+              placeholder="-----BEGIN PRIVATE KEY-----"
             />
           )}
         </Panel>
@@ -220,29 +216,23 @@ export default function KeyPairTool() {
           }
         >
           {jwk && keyPair ? (
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              readOnly
+            <CodeField
               value={keyPair.publicJwk}
+              readOnly
             />
           ) : (
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder="-----BEGIN PUBLIC KEY-----"
+            <CodeField
               value={publicPem}
-              onChange={(e) => setPublicPem(e.target.value)}
+              onChange={setPublicPem}
+              placeholder="-----BEGIN PUBLIC KEY-----"
             />
           )}
         </Panel>
         <Panel title={L.message}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={L.messageHint}
+          <CodeField
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={setMessage}
+            placeholder={L.messageHint}
           />
         </Panel>
         <Panel
@@ -259,12 +249,10 @@ export default function KeyPairTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
+            value={signature}
             readOnly
             placeholder={L.signatureHint}
-            value={signature}
           />
         </Panel>
       </div>

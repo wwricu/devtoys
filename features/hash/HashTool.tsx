@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CodeField from "@/components/CodeField";
 import { CopyButton, ToolButton, flowEditorClass } from "@/components/kit";
 import { useLang, useText } from "@/lib/i18n";
 import { hashAll, type HashOutput } from "./format";
@@ -37,12 +38,11 @@ export default function HashTool() {
         </span>
         <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
       </div>
-      <textarea
-        className={flowEditorClass}
-        spellCheck={false}
-        placeholder={L.hashHint}
+      <CodeField
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={setInput}
+        placeholder={L.hashHint}
+        className={flowEditorClass}
       />
       <div className="flex flex-col">
         {hashes.map((h) => (

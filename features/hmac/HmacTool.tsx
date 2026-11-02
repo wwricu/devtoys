@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -111,12 +111,10 @@ export default function HmacTool() {
             actions={<CopyButton getText={() => message} />}
             className="min-h-32"
           >
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder={L.messageHint}
+            <CodeField
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={setMessage}
+              placeholder={L.messageHint}
             />
           </Panel>
         </div>

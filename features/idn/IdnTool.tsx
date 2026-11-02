@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
+  fieldBase,
   Panel,
   Segmented,
   Split,
@@ -76,12 +77,10 @@ export default function IdnTool() {
 
       <Split>
         <Panel title={L.domainPanel}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder="münchen.de"
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder="münchen.de"
           />
         </Panel>
         <Panel
@@ -89,13 +88,11 @@ export default function IdnTool() {
           actions={<CopyButton getText={() => read.output} />}
         >
           <div className="flex min-h-0 flex-1 flex-col">
-            <textarea
-              className={`${editorClass} flex-none`}
-              style={{ height: "5.5rem" }}
-              spellCheck={false}
-              readOnly
+            <CodeField
               value={read.output}
+              readOnly
               placeholder={t.result}
+              className={`${fieldBase} h-22 flex-none`}
             />
             {changed.length > 0 && (
               <div className="min-h-0 flex-1 overflow-y-auto border-t border-neutral-200 p-2 dark:border-neutral-800">

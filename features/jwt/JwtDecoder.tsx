@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, editorClass, Panel, Split, ToolButton } from "@/components/kit";
+import CodeField from "@/components/CodeField";
+import { CopyButton, fieldBase, Panel, Split, ToolButton } from "@/components/kit";
 import { useLang, useText } from "@/lib/i18n";
 import { claimDate, decodeJwt, NUMERIC_CLAIMS } from "./format";
 import { strings } from "./locale";
@@ -55,12 +56,11 @@ export default function JwtDecoder() {
           </>
         }
       >
-        <textarea
-          className={editorClass + " min-h-20 flex-none"}
-          spellCheck={false}
-          placeholder={L.pasteToken}
+        <CodeField
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={setInput}
+          placeholder={L.pasteToken}
+          className={`${fieldBase} h-20 flex-none`}
         />
       </Panel>
 
@@ -125,11 +125,9 @@ export default function JwtDecoder() {
             ) : undefined
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
+          <CodeField
             value={result.header?.json ?? ""}
+            readOnly
             placeholder={L.header}
           />
         </Panel>
@@ -141,11 +139,9 @@ export default function JwtDecoder() {
             ) : undefined
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
+          <CodeField
             value={result.payload?.json ?? ""}
+            readOnly
             placeholder={L.payload}
           />
         </Panel>

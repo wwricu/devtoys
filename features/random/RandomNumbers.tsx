@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -189,12 +189,10 @@ export default function RandomNumbers() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
+            value={output}
             readOnly
             placeholder={L.numbers}
-            value={output}
           />
         </Panel>
       </Split>

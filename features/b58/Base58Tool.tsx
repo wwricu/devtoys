@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -154,22 +154,18 @@ export default function Base58Tool() {
 
       <Split>
         <Panel title={t.input} actions={<CopyButton getText={() => input} />}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
+            value={input}
+            onChange={setInput}
             placeholder={
               direction === "to58" ? L.inputTextHint : L.inputB58Hint
             }
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
           />
         </Panel>
         <Panel title={t.output} actions={<CopyButton getText={() => output} />}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
+          <CodeField
             value={output}
+            readOnly
             placeholder={t.result}
           />
         </Panel>

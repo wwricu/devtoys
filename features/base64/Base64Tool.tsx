@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -84,20 +84,16 @@ export default function Base64Tool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={mode === "encode" ? L.encodeHint : L.decodeHint}
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder={mode === "encode" ? L.encodeHint : L.decodeHint}
           />
         </Panel>
         <Panel title={t.output} actions={<CopyButton getText={() => output} />}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
+          <CodeField
             value={output}
+            readOnly
             placeholder={t.result}
           />
         </Panel>

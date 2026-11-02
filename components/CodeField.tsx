@@ -21,12 +21,18 @@ const CodeEditor = dynamic(() => import("@/components/CodeEditor"), {
 
 export interface CodeFieldProps {
   value: string;
-  onChange: (next: string) => void;
-  /** Grammar and colours from the tool; see components/CodeEditor. Omit it and
-   *  the field stays a plain textarea, which never asks for the editor chunk. */
+  /** Omit it on a read-only pane. */
+  onChange?: (next: string) => void;
+  /** Grammar and colours from the tool; see components/CodeEditor. Without it
+   *  the editor shows plain text, which is what most tools pass. */
   extensions?: Extension[];
   validate?: (text: string) => EditorSyntaxError | null;
-  placeholder: string;
+  /** Shown only while empty; a pane that always has content can omit it. */
+  placeholder?: string;
+  /** Output pane: selectable and findable, but nothing is typed here. */
+  readOnly?: boolean;
+  /** Box classes; the plain field and the editor get the same string. */
+  className?: string;
   ref?: Ref<CodeFieldHandle>;
 }
 
@@ -35,17 +41,20 @@ export interface CodeFieldHandle {
 }
 
 /**
- * A multi-line text field that starts as the plain textarea every tool
- * already renders and hands over to CodeMirror once that chunk has arrived.
- * The prerendered body therefore never waits for the editor, and a user who
+ * The multi-line text field of every tool. It starts as the plain textarea the
+ * route already renders and hands over to CodeMirror once that chunk has
+ * arrived, so the prerendered body never waits for the editor and a user who
  * begins typing before the swap keeps the textarea until they leave the field.
+ * The editor adds a find panel, and undo, to both inputs and outputs.
  */
 export default function CodeField({
   value,
   onChange,
   extensions,
   validate,
-  placeholder,
+  placeholder = "",
+  readOnly = false,
+  className,
   ref,
 }: CodeFieldProps) {
   const plain = useRef<HTMLTextAreaElement>(null);
@@ -54,7 +63,6 @@ export default function CodeField({
   const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
-    if (!extensions) return;
     let cancelled = false;
     import("@/components/CodeEditor")
       .then(() => {
@@ -64,7 +72,7 @@ export default function CodeField({
     return () => {
       cancelled = true;
     };
-  }, [extensions]);
+  }, []);
 
   useImperativeHandle(
     ref,
@@ -72,23 +80,28 @@ export default function CodeField({
     [showEditor],
   );
 
-  return showEditor && extensions ? (
+  const box = className ?? editorClass;
+
+  return showEditor ? (
     <CodeEditor
       ref={rich}
       value={value}
       onChange={onChange}
-      extensions={extensions}
+      extensions={extensions ?? []}
       validate={validate}
       placeholder={placeholder}
+      readOnly={readOnly}
+      className={box}
     />
   ) : (
     <textarea
       ref={plain}
-      className={editorClass}
+      className={box}
       spellCheck={false}
+      readOnly={readOnly}
       placeholder={placeholder}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange?.(e.target.value)}
       onFocus={() => {
         editing.current = true;
       }}

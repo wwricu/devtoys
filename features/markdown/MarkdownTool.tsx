@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -51,12 +51,10 @@ export default function MarkdownTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={L.sample}
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder={L.sample}
           />
         </Panel>
         <Panel
@@ -64,11 +62,9 @@ export default function MarkdownTool() {
           actions={<CopyButton getText={() => html} />}
         >
           {view === "html" ? (
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              readOnly
+            <CodeField
               value={html}
+              readOnly
               placeholder={L.htmlResult}
             />
           ) : (

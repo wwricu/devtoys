@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -146,24 +146,20 @@ export default function GzipTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={mode === "compress" ? L.compressHint : L.payloadHint}
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder={mode === "compress" ? L.compressHint : L.payloadHint}
           />
         </Panel>
         <Panel
           title={mode === "compress" ? L.payload : L.plainText}
           actions={<CopyButton getText={() => output} />}
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
+            value={output}
             readOnly
             placeholder={t.result}
-            value={output}
           />
         </Panel>
       </Split>

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, useDeferredValue } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Split,
   StatusLine,
@@ -75,11 +75,10 @@ export default function Base64FileTool() {
     if (file.preview === "text")
       return (
         <>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
+          <CodeField
             value={file.text ?? ""}
+            readOnly
+            placeholder=""
           />
           {file.truncated && (
             <p className="border-t border-neutral-200 px-2 py-1 text-[11px] text-neutral-400 dark:border-neutral-800">
@@ -121,12 +120,10 @@ export default function Base64FileTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={L.pasteHint}
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder={L.pasteHint}
           />
         </Panel>
         <Panel

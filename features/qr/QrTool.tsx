@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -158,12 +158,10 @@ export default function QrTool() {
 
       <Split>
         <Panel title={L.textOrUrl}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder="https://example.com"
+          <CodeField
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={setText}
+            placeholder="https://example.com"
           />
         </Panel>
 

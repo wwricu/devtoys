@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -106,11 +106,9 @@ export default function LoremTool() {
           className="flex-1"
           actions={<CopyButton getText={() => output} />}
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
             value={output}
-            onChange={(e) => setOutput(e.target.value)}
+            onChange={setOutput}
           />
         </Panel>
         {html === "yes" && (

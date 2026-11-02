@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -151,12 +151,10 @@ export default function SvgPreviewTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={L.pasteHint}
+          <CodeField
             value={svg}
-            onChange={(e) => setSvg(e.target.value)}
+            onChange={setSvg}
+            placeholder={L.pasteHint}
           />
         </Panel>
         <Panel

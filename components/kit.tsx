@@ -185,13 +185,16 @@ export function Panel({
   );
 }
 
-const editorBase =
-  "w-full bg-transparent p-2 font-mono text-xs leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400 dark:text-neutral-200";
+/* Look shared by every text box. The layout around it — fill, height, border —
+   is picked per field, and the same string goes to both renderers: the plain
+   textarea and, once its chunk has landed, the editor around it. */
+export const fieldBase =
+  "w-full resize-none bg-transparent p-2 font-mono text-xs leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400 dark:text-neutral-200";
 /** Fills its panel via flex layout. */
-export const editorClass = `${editorBase} min-h-0 flex-1 resize-none`;
+export const editorClass = `${fieldBase} min-h-0 flex-1`;
 
-/** For editors in scrollable pages: content-sized with browser native resize. */
-export const flowEditorClass = `${editorBase} flex-none min-h-24 resize rounded border border-neutral-200 dark:border-neutral-800`;
+/** For editors in scrollable pages: a set height with the browser resize grip. */
+export const flowEditorClass = `${fieldBase} h-24 flex-none resize overflow-auto rounded border border-neutral-200 dark:border-neutral-800`;
 
 /** Smallest share any one pane may take, as a fraction of the whole group. */
 const MIN_SHARE = 0.15;

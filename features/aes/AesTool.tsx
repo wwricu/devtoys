@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -110,12 +110,10 @@ export default function AesTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={mode === "encrypt" ? L.encryptHint : L.payloadHint}
+          <CodeField
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
+            placeholder={mode === "encrypt" ? L.encryptHint : L.payloadHint}
           />
         </Panel>
         <Panel
@@ -132,12 +130,10 @@ export default function AesTool() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
+            value={output}
             readOnly
             placeholder={t.result}
-            value={output}
           />
         </Panel>
       </Split>

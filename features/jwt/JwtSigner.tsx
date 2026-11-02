@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
+  fieldBase,
   Panel,
   Segmented,
   Split,
@@ -98,19 +99,15 @@ export default function JwtSigner() {
 
       <Split>
         <Panel title={L.header}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
             value={header}
-            onChange={(e) => setHeader(e.target.value)}
+            onChange={setHeader}
           />
         </Panel>
         <Panel title={L.payload}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
             value={payload}
-            onChange={(e) => setPayload(e.target.value)}
+            onChange={setPayload}
           />
         </Panel>
       </Split>
@@ -119,12 +116,11 @@ export default function JwtSigner() {
         title={L.signedToken}
         actions={token ? <CopyButton getText={() => token} /> : undefined}
       >
-        <textarea
-          className={editorClass + " min-h-16 flex-none"}
-          spellCheck={false}
+        <CodeField
+          value={token}
           readOnly
           placeholder={L.pressSign}
-          value={token}
+          className={`${fieldBase} h-16 flex-none`}
         />
       </Panel>
 
@@ -133,15 +129,11 @@ export default function JwtSigner() {
         actions={<ToolButton onClick={verify}>{L.checkSignature}</ToolButton>}
       >
         <div className="flex flex-col gap-1 p-2">
-          <textarea
-            className={
-              editorClass +
-              " min-h-14 flex-none rounded border border-neutral-200 dark:border-neutral-800"
-            }
-            spellCheck={false}
-            placeholder={L.verifyHint}
+          <CodeField
             value={verifying}
-            onChange={(e) => setVerifying(e.target.value)}
+            onChange={setVerifying}
+            placeholder={L.verifyHint}
+            className={`${fieldBase} h-14 flex-none rounded border border-neutral-200 dark:border-neutral-800`}
           />
           {result && (
             <p

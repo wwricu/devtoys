@@ -4,7 +4,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import CodeField, { type CodeFieldHandle } from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -149,12 +148,10 @@ export default function XmlFormatter() {
             </>
           }
         >
-          <textarea
-            className={editorClass}
-            spellCheck={false}
+          <CodeField
+            value={result.output}
             readOnly
             placeholder={L.fmtFormatted}
-            value={result.output}
           />
         </Panel>
       </Split>

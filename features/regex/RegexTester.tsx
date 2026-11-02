@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
+  fieldBase,
   Panel,
   Split,
   ToolButton,
@@ -118,12 +119,10 @@ export default function RegexTester() {
               <ToolButton onClick={() => setText("")}>{t.clear}</ToolButton>
             }
           >
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder={L.textHint}
+            <CodeField
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={setText}
+              placeholder={L.textHint}
             />
           </Panel>
           <Panel
@@ -205,15 +204,11 @@ export default function RegexTester() {
               value={replacement}
               onChange={(e) => setReplacement(e.target.value)}
             />
-            <textarea
-              className={
-                editorClass +
-                " min-h-16 rounded border border-neutral-200 dark:border-neutral-800"
-              }
-              spellCheck={false}
+            <CodeField
+              value={replaced}
               readOnly
               placeholder={L.replacementResult}
-              value={replaced}
+              className={`${fieldBase} min-h-16 flex-1 rounded border border-neutral-200 dark:border-neutral-800`}
             />
           </div>
         </Panel>

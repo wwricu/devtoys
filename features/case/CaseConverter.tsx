@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import { CopyButton, ToolButton, flowEditorClass } from "@/components/kit";
 import { useLang, useText } from "@/lib/i18n";
 import { toCases } from "./format";
@@ -18,12 +19,11 @@ export default function CaseConverter() {
         <span className="text-xs text-neutral-500">{t.input}</span>
         <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
       </div>
-      <textarea
-        className={flowEditorClass}
-        spellCheck={false}
-        placeholder={L.styleHint}
+      <CodeField
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={setInput}
+        placeholder={L.styleHint}
+        className={flowEditorClass}
       />
       <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
         {cases.map((c) => (

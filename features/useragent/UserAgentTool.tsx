@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { editorClass, Panel, Split, StatusLine, ToolButton } from "@/components/kit";
+import CodeField from "@/components/CodeField";
+import { Panel, Split, StatusLine, ToolButton } from "@/components/kit";
 import { fill, useText } from "@/lib/i18n";
 import { parseUserAgent, summariseAgent } from "./format";
 import { strings } from "./locale";
@@ -54,12 +55,10 @@ export default function UserAgentTool() {
 
       <Split>
         <Panel title={L.userAgentString}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            placeholder={L.pasteHint}
+          <CodeField
             value={ua}
-            onChange={(e) => setUa(e.target.value)}
+            onChange={setUa}
+            placeholder={L.pasteHint}
           />
         </Panel>
         <Panel title={L.parsed}>

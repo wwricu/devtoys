@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopyButton, editorClass, Panel, Split, ToolButton } from "@/components/kit";
+import CodeField from "@/components/CodeField";
+import { CopyButton, fieldBase, Panel, Split, ToolButton } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { parseUrl, type UrlParts } from "./format";
 import { strings } from "./locale";
@@ -49,12 +50,11 @@ export default function UrlParser() {
           </>
         }
       >
-        <textarea
-          className={editorClass + " min-h-16 flex-none"}
-          spellCheck={false}
-          placeholder={L.pasteHint}
+        <CodeField
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={setInput}
+          placeholder={L.pasteHint}
+          className={`${fieldBase} h-16 flex-none`}
         />
       </Panel>
 

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
   Panel,
   Split,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
@@ -169,21 +169,17 @@ export default function DiffTool() {
         {mode === "side" && (
           <Split>
             <Panel title={L.original}>
-              <textarea
-                className={editorClass}
-                spellCheck={false}
-                placeholder={L.originalHint}
+              <CodeField
                 value={left}
-                onChange={(e) => setLeft(e.target.value)}
+                onChange={setLeft}
+                placeholder={L.originalHint}
               />
             </Panel>
             <Panel title={L.changed}>
-              <textarea
-                className={editorClass}
-                spellCheck={false}
-                placeholder={L.changedHint}
+              <CodeField
                 value={right}
-                onChange={(e) => setRight(e.target.value)}
+                onChange={setRight}
+                placeholder={L.changedHint}
               />
             </Panel>
           </Split>

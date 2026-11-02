@@ -8,7 +8,6 @@ import {
   Split,
   StatusLine,
   ToolButton,
-  editorClass,
 } from "./kit";
 import type { SyntaxError as EditorSyntaxError } from "./CodeEditor";
 import type { Extension } from "@codemirror/state";
@@ -75,13 +74,7 @@ export function SimpleTransform({
           />
         </Panel>
         <Panel title={t.output} actions={<CopyButton getText={() => output} />}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
-            placeholder={outputPlaceholder ?? t.result}
-            value={output}
-          />
+          <CodeField value={output} readOnly placeholder={outputPlaceholder ?? t.result} />
         </Panel>
       </Split>
       <StatusLine

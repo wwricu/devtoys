@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
-  editorClass,
   Panel,
   Segmented,
   Split,
@@ -153,11 +153,9 @@ export default function ImageBase64() {
                 </>
               }
             >
-              <textarea
-                className={editorClass}
-                spellCheck={false}
-                readOnly
+              <CodeField
                 value={text}
+                readOnly
                 placeholder={L.base64Hint}
               />
             </Panel>
@@ -173,12 +171,10 @@ export default function ImageBase64() {
                 </>
               }
             >
-              <textarea
-                className={editorClass}
-                spellCheck={false}
-                placeholder={L.pasteHint}
+              <CodeField
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={setText}
+                placeholder={L.pasteHint}
               />
             </Panel>
             <Panel

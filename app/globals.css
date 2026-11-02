@@ -57,6 +57,11 @@ button {
   --cm-gutter: #a3a3a3;
   --cm-line-active: #f5f5f5;
   --cm-selection: #dbeafe;
+  --cm-panel: #f5f5f5;
+  --cm-panel-border: #d4d4d4;
+  --cm-field: #ffffff;
+  --cm-match: #fef08a;
+  --cm-match-active: #fde047;
 }
 
 .dark {
@@ -69,6 +74,11 @@ button {
   --cm-gutter: #737373;
   --cm-line-active: #171717;
   --cm-selection: #1e3a5f;
+  --cm-panel: #171717;
+  --cm-panel-border: #404040;
+  --cm-field: #0a0a0a;
+  --cm-match: #713f12;
+  --cm-match-active: #a16207;
 }
 
 .cm-editor {
@@ -77,11 +87,13 @@ button {
   color: var(--cm-fg);
 }
 
+/* The field around the editor carries the padding, so one class string sizes
+   both the plain box and the editor. */
 .cm-editor .cm-scroller {
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.625;
-  padding: 8px;
+  padding: 0;
 }
 
 .cm-editor .cm-content {
@@ -106,4 +118,30 @@ button {
 
 .cm-editor.cm-focused .cm-activeLineGutter {
   color: var(--cm-fg);
+}
+
+/* Find brings CodeMirror's own light panel and match colours; the panel and the
+   marks follow the variables above instead, so both work in dark mode. */
+.cm-editor .cm-panel {
+  background: var(--cm-panel);
+  color: var(--cm-fg);
+  border-bottom: 1px solid var(--cm-panel-border);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.cm-editor .cm-panel input:not([type="checkbox"]),
+.cm-editor .cm-panel button {
+  background: var(--cm-field);
+  color: var(--cm-fg);
+  border: 1px solid var(--cm-panel-border);
+}
+
+.cm-editor .cm-searchMatch,
+.cm-editor .cm-selectionMatch {
+  background-color: var(--cm-match);
+}
+
+.cm-editor .cm-searchMatch-selected {
+  background-color: var(--cm-match-active);
 }

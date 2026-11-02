@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CodeField from "@/components/CodeField";
 import {
   CopyButton,
   Panel,
   Segmented,
   Split,
-  editorClass,
   useStoredState,
 } from "@/components/kit";
 import { fill, useText } from "@/lib/i18n";
@@ -82,31 +82,25 @@ export default function ListCompareTool() {
       <Split orientation="column">
         <Split>
           <Panel title={L.listA}>
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder={L.hintA}
+            <CodeField
               value={listA}
-              onChange={(e) => setListA(e.target.value)}
+              onChange={setListA}
+              placeholder={L.hintA}
             />
           </Panel>
           <Panel title={L.listB}>
-            <textarea
-              className={editorClass}
-              spellCheck={false}
-              placeholder={L.hintB}
+            <CodeField
               value={listB}
-              onChange={(e) => setListB(e.target.value)}
+              onChange={setListB}
+              placeholder={L.hintB}
             />
           </Panel>
         </Split>
 
         <Panel title={L.result} actions={<CopyButton getText={() => output} />}>
-          <textarea
-            className={editorClass}
-            spellCheck={false}
-            readOnly
+          <CodeField
             value={output}
+            readOnly
             placeholder={L.resultHint}
           />
         </Panel>
