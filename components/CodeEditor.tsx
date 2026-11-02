@@ -121,7 +121,6 @@ export default function CodeEditor({
   useImperativeHandle(ref, () => ({ focus: () => view.current?.focus() }), []);
 
   useEffect(() => {
-    const grammar = extensions.length > 0;
     // A syntax error underlines itself and the tool's status line names the
     // position; no gutter column is reserved for it, since it would sit empty
     // until something breaks.
@@ -149,10 +148,11 @@ export default function CodeEditor({
         ]
       : [];
     const setup: Extension[] = [
+      // The fold column is empty on a field with no grammar — nothing there can
+      // fold — but every field carries it so the gap between the row number and
+      // the text is the same width on all 44 routes.
       lineNumbers(),
-      // Folding needs ranges a grammar can name, so plain text fields only pay
-      // for the row numbers.
-      ...(grammar ? [foldGutter()] : []),
+      foldGutter(),
       ...(readOnly
         ? [EditorState.readOnly.of(true)]
         : [history(), indentOnInput(), ...checked]),
