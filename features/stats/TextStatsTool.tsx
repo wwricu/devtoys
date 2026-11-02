@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import CodeField from "@/components/CodeField";
-import { CopyButton, Panel, ToolButton } from "@/components/kit";
+import { CopyButton, Panel, Split, ToolButton } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { computeStats, duration } from "./format";
 import { strings } from "./locale";
@@ -35,10 +35,9 @@ export default function TextStatsTool() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 md:flex-row">
+    <Split ratios={[2, 1]} className="h-full">
       <Panel
         title={L.text}
-        className="md:flex-[2]"
         actions={
           <>
             <ToolButton onClick={() => setText("")}>{t.clear}</ToolButton>
@@ -53,7 +52,7 @@ export default function TextStatsTool() {
         />
       </Panel>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto md:flex-[1]">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         <div className="grid grid-cols-2 gap-2">
           <Metric label={L.characters} value={String(stats.characters)} />
           <Metric label={L.noSpaces} value={String(stats.charactersNoSpaces)} />
@@ -75,7 +74,8 @@ export default function TextStatsTool() {
           />
         </div>
 
-        <Panel title={L.frequentWords}>
+        {/* A floor, so the list stays reachable when the column is short. */}
+        <Panel title={L.frequentWords} className="min-h-32">
           <div className="min-h-0 flex-1 overflow-y-auto p-2">
             {stats.frequencies.length === 0 ? (
               <p className="text-xs text-neutral-400">{L.noWordsYet}</p>
@@ -107,6 +107,6 @@ export default function TextStatsTool() {
           </div>
         </Panel>
       </div>
-    </div>
+    </Split>
   );
 }

@@ -288,10 +288,16 @@ function RestorePane({
 export function Split({
   children,
   orientation = "row",
+  ratios,
+  className,
 }: {
   children: React.ReactNode;
   /** "column" stacks panes top/bottom on desktop as well as on mobile. */
   orientation?: SplitOrientation;
+  /** Starting share per pane, relative to each other; a drag replaces them. */
+  ratios?: number[];
+  /** Same as Panel's: for the rare tool whose page root is the group itself. */
+  className?: string;
 }) {
   const { t } = useLang();
   // A branch may return its panes as one fragment; flatten it so each pane is
@@ -313,8 +319,13 @@ export function Split({
     setStoredState(next);
   };
   const box = useRef<HTMLDivElement>(null);
+  const total = ratios?.reduce((sum, share) => sum + share, 0) ?? 0;
   const values =
-    stored.length === count ? stored : panes.map(() => 1 / count);
+    stored.length === count
+      ? stored
+      : ratios && ratios.length === count && total > 0
+        ? ratios.map((share) => share / total)
+        : panes.map(() => 1 / count);
   // Hiding a pane is a momentary zoom, not a preference: it stays in memory so
   // a tool always opens with every pane.
   const [collapsed, setCollapsed] = useState<number | null>(null);
@@ -383,7 +394,9 @@ export function Split({
 
   if (count < 2)
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-2">{children}</div>
+      <div className={`flex min-h-0 flex-1 flex-col gap-2 ${className ?? ""}`}>
+        {children}
+      </div>
     );
 
   return (
@@ -391,7 +404,7 @@ export function Split({
       ref={box}
       className={`flex min-h-0 flex-1 flex-col ${
         orientation === "row" ? "md:flex-row" : ""
-      }`}
+      } ${className ?? ""}`}
     >
       {panes.map((pane, i) => (
         <Fragment key={i}>
