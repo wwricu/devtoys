@@ -375,7 +375,7 @@ export function processXml(text: string, options: XmlOptions): XmlResult {
 
 /**
  * The first syntax error, without serialising the document. The editor's
- * gutter marker runs this on a pause in typing, so it has to name the same
+ * wavy underline runs this on a pause in typing, so it has to name the same
  * spot the status line does.
  */
 export function firstXmlError(text: string): XmlError | null {
@@ -393,7 +393,10 @@ function xmlSyntaxError(source: string, err: unknown): XmlError {
     const { line, column } = lineColumnAt(source, err.offset);
     return { message: err.message, line, column };
   }
-  throw err;
+  // Anything else — a stack overflow on a deeply nested document, say — still
+  // has to come back as a value. Both callers render it; rethrowing takes the
+  // page down with it, since nothing above them catches.
+  return { message: err instanceof Error ? err.message : String(err), line: 1, column: 1 };
 }
 
 function lineColumnAt(text: string, position: number) {
