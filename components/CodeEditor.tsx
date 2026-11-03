@@ -15,7 +15,7 @@ import {
   search,
   searchKeymap,
 } from "@codemirror/search";
-import { EditorState, type Extension } from "@codemirror/state";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import {
   EditorView,
   highlightActiveLine,
@@ -59,6 +59,27 @@ export interface CodeEditorHandle {
    under the caret, or the one that last had focus, or the first on the page. */
 const views = new Set<EditorView>();
 let lastFocused: EditorView | null = null;
+
+/** The find panel speaks CodeMirror's own English; the app is bilingual. */
+const ZH_SEARCH_PHRASES = {
+  Find: "查找",
+  "match case": "区分大小写",
+  "by word": "整词",
+  regexp: "正则",
+  next: "下一个",
+  previous: "上一个",
+  all: "全部",
+  Replace: "替换",
+  replace: "替换",
+  "replace all": "全部替换",
+};
+
+function localeExtensions(placeholder: string, lang: string): Extension[] {
+  return [
+    editorPlaceholder(placeholder),
+    ...(lang === "zh" ? [EditorState.phrases.of(ZH_SEARCH_PHRASES)] : []),
+  ];
+}
 
 function findKeydown(event: KeyboardEvent) {
   if (event.defaultPrevented) return;
@@ -111,14 +132,28 @@ export default function CodeEditor({
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const { lang } = useLang();
-  // The extensions are built once, so the callbacks live behind a ref.
-  const latest = useRef({ onChange, placeholder });
+  // The extensions are built once, so the callbacks live behind a ref. The
+  // validator is in there too: JSON and XML rebuild theirs when their unescape
+  // switch flips, and a frozen one underlines the wrong text after that.
+  const latest = useRef({ onChange, placeholder, validate });
+  const localeBits = useRef(new Compartment());
 
   useEffect(() => {
-    latest.current = { onChange, placeholder };
+    latest.current = { onChange, placeholder, validate };
   });
 
   useImperativeHandle(ref, () => ({ focus: () => view.current?.focus() }), []);
+
+  // The placeholder follows the tool's own switches (JSON and XML change theirs
+  // with the unescape toggle) and the find panel follows the UI language, so
+  // these two live in a compartment instead of being frozen with the setup.
+  useEffect(() => {
+    view.current?.dispatch({
+      effects: localeBits.current.reconfigure(
+        localeExtensions(placeholder, lang),
+      ),
+    });
+  }, [placeholder, lang]);
 
   useEffect(() => {
     // A syntax error underlines itself and the tool's status line names the
@@ -129,7 +164,8 @@ export default function CodeEditor({
           linter(
             (editor) => {
               const { state } = editor;
-              const error = validate(state.doc.toString());
+              const check = latest.current.validate;
+              const error = check ? check(state.doc.toString()) : null;
               if (!error) return [];
               const row = state.doc.line(
                 Math.min(Math.max(error.line, 1), state.doc.lines),
@@ -150,7 +186,7 @@ export default function CodeEditor({
     const setup: Extension[] = [
       // The fold column is empty on a field with no grammar — nothing there can
       // fold — but every field carries it so the gap between the row number and
-      // the text is the same width on all 44 routes.
+      // the text is the same width on every route.
       lineNumbers(),
       foldGutter(),
       ...(readOnly
@@ -160,27 +196,9 @@ export default function CodeEditor({
       highlightActiveLine(),
       ...extensions,
       EditorView.lineWrapping,
-      editorPlaceholder(latest.current.placeholder),
+      localeBits.current.of(localeExtensions(placeholder, lang)),
       search({ top: true }),
       highlightSelectionMatches(),
-      // The find panel speaks CodeMirror's own English; the app is bilingual, so
-      // its labels follow the UI language the field was opened in.
-      ...(lang === "zh"
-        ? [
-            EditorState.phrases.of({
-              Find: "查找",
-              "match case": "区分大小写",
-              "by word": "整词",
-              regexp: "正则",
-              next: "下一个",
-              previous: "上一个",
-              all: "全部",
-              Replace: "替换",
-              replace: "替换",
-              "replace all": "全部替换",
-            }),
-          ]
-        : []),
       keymap.of([
         ...defaultKeymap,
         ...historyKeymap,
