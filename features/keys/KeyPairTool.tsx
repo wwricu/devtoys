@@ -90,6 +90,7 @@ export default function KeyPairTool() {
   };
 
   const generate = async () => {
+    if (busy) return;
     setBusy(true);
     setError(null);
     const read = await generateKeyPair(algorithm, size);

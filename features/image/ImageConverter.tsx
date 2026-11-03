@@ -63,6 +63,14 @@ export default function ImageConverter() {
     setFile(picked);
   };
 
+  // Leaving the tool frees the preview too, not just the next pick.
+  useEffect(
+    () => () => {
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    },
+    [],
+  );
+
   const encodeKey = `${format}|${quality}|${maxWidth}`;
 
   useEffect(() => {
