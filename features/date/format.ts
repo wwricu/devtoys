@@ -381,15 +381,15 @@ export function relativeTime(ms: number, now = Date.now()): RelativeParts {
   const diff = ms - now;
   const past = diff < 0;
   const a = Math.abs(diff);
-  const units: [number, RelativeUnit][] = [
-    [1000, "millisecond"],
-    [1000, "second"],
-    [60, "minute"],
-    [60, "hour"],
-    [24, "day"],
-    [7, "week"],
-    [4.34524, "month"],
-    [12, "year"],
+  const units: RelativeUnit[] = [
+    "millisecond",
+    "second",
+    "minute",
+    "hour",
+    "day",
+    "week",
+    "month",
+    "year",
   ];
   // threshold in ms for each unit size
   const sizes = [
@@ -400,7 +400,7 @@ export function relativeTime(ms: number, now = Date.now()): RelativeParts {
   let count = a;
   for (let i = sizes.length - 1; i >= 0; i--) {
     if (a >= sizes[i]) {
-      chosen = units[i][1];
+      chosen = units[i];
       count = a / sizes[i];
       break;
     }

@@ -101,7 +101,7 @@ function resolveToken(token: string, def: FieldDef): number {
       `'${token}' is not a valid ${def.name.toLowerCase()} value`,
     );
   let v = n;
-  if (def.name === "Day of week" && v === 7) v = 0;
+  if (def.key === "dayOfWeek" && v === 7) v = 0;
   if (v < def.min || v > def.max)
     throw new Error(
       `${v} is out of range for ${def.name.toLowerCase()} (${def.min}-${def.max})`,
@@ -153,7 +153,7 @@ function parseField(raw: string, def: FieldDef): number[] {
         `Range '${body}' runs backwards in ${def.name.toLowerCase()} field`,
       );
     for (let v = lo; v <= hi; v += step) {
-      if (def.name === "Day of week" && v === 7) out.add(0);
+      if (def.key === "dayOfWeek" && v === 7) out.add(0);
       else out.add(v);
     }
   }

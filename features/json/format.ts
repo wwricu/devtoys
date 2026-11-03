@@ -162,8 +162,8 @@ export function processJson(text: string, options: JsonOptions): JsonResult {
 
 /**
  * The first syntax error, without sorting or re-serialising the document. The
- * editor's gutter marker needs this on every pause in typing; `processJson`
- * does far more work than that. Same source as the status line, so the marker
+ * editor's wavy underline needs this on every pause in typing; `processJson`
+ * does far more work than that. Same source as the status line, so the mark
  * and the message always point at the same place. It runs on the text as
  * pasted, so a repaired document keeps its underline: that mark is where the
  * damage was.
