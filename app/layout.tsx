@@ -13,14 +13,19 @@ import { themeScript } from "@/lib/theme";
 // platform they are two 404s on every page, so a local run looks broken.
 const onVercel = process.env.VERCEL_ENV !== undefined;
 
+// React inserts the font preload hints after the load event, so on a warm cache
+// Chromium counts them as preloaded-but-unused. The render-blocking stylesheet
+// asks for the same files, so the hints buy nothing here.
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
