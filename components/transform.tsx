@@ -46,7 +46,9 @@ export function SimpleTransform({
       <div className="flex flex-wrap items-center gap-2">
         {controls}
         <ToolButton
-          onClick={() => setInput(output)}
+          onClick={() => {
+            if (output) setInput(output);
+          }}
           title={t.outputToInputHint}
         >
           {t.outputToInput}
