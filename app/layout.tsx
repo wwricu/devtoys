@@ -9,6 +9,10 @@ import StandaloneTitle from "@/components/StandaloneTitle";
 import { LangProvider } from "@/lib/i18n";
 import { themeScript } from "@/lib/theme";
 
+// The two SDKs fetch paths under /_vercel, which only exist on Vercel. Off the
+// platform they are two 404s on every page, so a local run looks broken.
+const onVercel = process.env.VERCEL_ENV !== undefined;
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -98,8 +102,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </LangProvider>
         <ServiceWorker />
         <StandaloneTitle />
-        <Analytics />
-        <SpeedInsights />
+        {onVercel && <Analytics />}
+        {onVercel && <SpeedInsights />}
       </body>
     </html>
   );
