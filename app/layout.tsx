@@ -7,6 +7,7 @@ import ServiceWorker from "@/components/ServiceWorker";
 import Sidebar from "@/components/Sidebar";
 import StandaloneTitle from "@/components/StandaloneTitle";
 import { LangProvider } from "@/lib/i18n";
+import { SITE_ORIGIN } from "@/lib/site";
 import { themeScript } from "@/lib/theme";
 
 // The two SDKs fetch paths under /_vercel, which only exist on Vercel. Off the
@@ -29,6 +30,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Resolves the relative canonical / og:url each route emits.
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
     default: "Dev Toys",
     template: "%s | Dev Toys",

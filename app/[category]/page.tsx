@@ -25,6 +25,12 @@ export async function generateMetadata(
   return {
     title: `${cat.name} Tools`,
     description: `${cat.tools.length} free ${cat.name.toLowerCase()} tools that run entirely in your browser.`,
+    alternates: { canonical: `/${categorySlug(cat.name)}` },
+    openGraph: {
+      title: `${cat.name} Tools`,
+      description: `${cat.tools.length} free ${cat.name.toLowerCase()} tools that run entirely in your browser.`,
+      url: `/${categorySlug(cat.name)}`,
+    },
   };
 }
 

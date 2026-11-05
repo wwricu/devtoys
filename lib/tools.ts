@@ -832,3 +832,8 @@ export function categorySlug(name: string): string {
 export function getCategory(slug: string) {
   return getCategories().find((c) => categorySlug(c.name) === slug);
 }
+
+/** Public path for a tool; mirrors the route scripts/gen-tool-routes.mjs writes. */
+export function toolPath(tool: ToolDefinition): string {
+  return `/${categorySlug(tool.category)}/${tool.id}`;
+}
