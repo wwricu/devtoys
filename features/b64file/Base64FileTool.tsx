@@ -97,6 +97,11 @@ export default function Base64FileTool() {
           {fill(L.multiNote, { count: blocks })}
         </p>
       )}
+      {file?.tailCut && (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          {L.cutNote}
+        </p>
+      )}
 
       <Split>
         <Panel

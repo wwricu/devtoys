@@ -18,6 +18,8 @@ export interface DecodedFile {
   text: string | null;
   preview: Preview;
   truncated: boolean;
+  /** True only when the Base64 itself proves it was cut short. */
+  tailCut: boolean;
 }
 
 export const MAX_BYTES = 32 * 1024 * 1024;
@@ -151,7 +153,12 @@ export function sniff(bytes: Uint8Array): FileKind {
 /** Strict UTF-8, so a binary payload never ends up as mojibake in the preview. */
 function asText(bytes: Uint8Array): string | null {
   try {
-    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    // `stream` keeps the strictness for anything in the middle, but a cut that
+    // lands inside a multibyte character - which the 64 KiB preview boundary hits
+    // routinely on Chinese or emoji text - is buffered instead of failing the lot.
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes, {
+      stream: true,
+    });
     let control = 0;
     for (let i = 0; i < Math.min(text.length, 4096); i++) {
       const code = text.charCodeAt(i);
@@ -209,8 +216,14 @@ export function decodeToBytes(input: string): DecodeSuccess | DecodeFailure {
   if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean))
     return { error: "Not valid Base64 text" };
   const pad = clean.length % 4;
-  if (pad === 1) return { error: "Not valid Base64 text" };
-  if (pad > 0) clean += "=".repeat(4 - pad);
+  // 4k+1 is the one length no correct encoder can emit, padded or unpadded, so it
+  // is the only tail that proves the paste was cut. That dangling char holds 6
+  // bits which can never be completed: drop it and keep the whole head, which is
+  // where the magic bytes, the image header and all but the last byte live.
+  const tailCut = pad === 1;
+  if (tailCut) clean = clean.slice(0, -1);
+  else if (pad > 0) clean += "=".repeat(4 - pad);
+  if (clean === "") return { error: "Not valid Base64 text" };
   if (clean.length / 4 * 3 > MAX_BYTES)
     return { error: `Larger than the ${Math.round(MAX_BYTES / 1048576)} MB browser limit` };
   const binary = atob(clean);
@@ -228,6 +241,7 @@ export function decodeToBytes(input: string): DecodeSuccess | DecodeFailure {
       text: head,
       preview: previewFor(kind, head),
       truncated: head !== null && bytes.length > PREVIEW_BYTES,
+      tailCut,
     },
   };
 }
