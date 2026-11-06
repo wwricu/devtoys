@@ -18,8 +18,9 @@ export interface DecodedFile {
   text: string | null;
   preview: Preview;
   truncated: boolean;
-  /** True only when the Base64 itself proves it was cut short. */
-  tailCut: boolean;
+  /** The file is not whole: either the Base64 proves it was cut, or the
+   *  container's own end marker is missing. */
+  incomplete: boolean;
 }
 
 export const MAX_BYTES = 32 * 1024 * 1024;
@@ -150,6 +151,44 @@ export function sniff(bytes: Uint8Array): FileKind {
   return octet("Unknown binary");
 }
 
+/**
+ * Whether the format's own end marker is where it should be. A Base64 length
+ * only proves a cut one time in four; the container states it for every format
+ * with a known ending, and the rest report whole rather than cry wolf.
+ */
+function whole(bytes: Uint8Array, kind: FileKind): boolean {
+  const tail = (values: number[], span: number): boolean => {
+    if (bytes.length < values.length) return false;
+    for (let i = Math.max(0, bytes.length - span); i + values.length <= bytes.length; i++)
+      if (values.every((v, j) => bytes[i + j] === v)) return true;
+    return false;
+  };
+  switch (kind.mime) {
+    case "image/png":
+      return tail([0x49, 0x45, 0x4e, 0x44], 32); // IEND
+    case "image/jpeg":
+      return tail([0xff, 0xd9], 128); // EOI, and a scan may not contain it
+    case "image/gif":
+      return tail([0x3b], 16); // trailer
+    case "application/pdf":
+      return ascii(
+        bytes,
+        Math.max(0, bytes.length - 1024),
+        Math.min(1024, bytes.length),
+      ).includes("%%EOF");
+    case "image/webp":
+    case "audio/wav":
+    case "video/avi": {
+      if (bytes.length < 8) return false;
+      const declared =
+        (bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24)) + 8;
+      return bytes.length >= declared;
+    }
+    default:
+      return true;
+  }
+}
+
 /** Strict UTF-8, so a binary payload never ends up as mojibake in the preview. */
 function asText(bytes: Uint8Array): string | null {
   try {
@@ -217,9 +256,10 @@ export function decodeToBytes(input: string): DecodeSuccess | DecodeFailure {
     return { error: "Not valid Base64 text" };
   const pad = clean.length % 4;
   // 4k+1 is the one length no correct encoder can emit, padded or unpadded, so it
-  // is the only tail that proves the paste was cut. That dangling char holds 6
+  // is the only cut the encoding itself can prove. That dangling char holds 6
   // bits which can never be completed: drop it and keep the whole head, which is
   // where the magic bytes, the image header and all but the last byte live.
+  // `whole` reads the other three cases off the container.
   const tailCut = pad === 1;
   if (tailCut) clean = clean.slice(0, -1);
   else if (pad > 0) clean += "=".repeat(4 - pad);
@@ -241,7 +281,7 @@ export function decodeToBytes(input: string): DecodeSuccess | DecodeFailure {
       text: head,
       preview: previewFor(kind, head),
       truncated: head !== null && bytes.length > PREVIEW_BYTES,
-      tailCut,
+      incomplete: tailCut || !whole(bytes, kind),
     },
   };
 }

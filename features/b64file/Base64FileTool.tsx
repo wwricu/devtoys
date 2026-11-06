@@ -53,12 +53,19 @@ export default function Base64FileTool() {
       return <p className="p-3 text-xs text-neutral-400">{L.waiting}</p>;
     if (file.preview === "image")
       return (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={url}
-          alt={L.altPreview}
-          className="max-h-64 max-w-full self-center object-contain p-2"
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={url}
+            alt={L.altPreview}
+            className="max-h-64 max-w-full self-center object-contain p-2"
+          />
+          {/* A half-drawn image reports no size change, so the container check
+              is the only signal that anything was lost. */}
+          {file.incomplete && (
+            <p className="px-2 pb-2 text-xs text-neutral-400">{L.partialNote}</p>
+          )}
+        </>
       );
     if (file.preview === "audio")
       return <audio src={url} controls className="w-full px-2 py-3" />;
@@ -97,7 +104,7 @@ export default function Base64FileTool() {
           {fill(L.multiNote, { count: blocks })}
         </p>
       )}
-      {file?.tailCut && (
+      {file?.incomplete && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           {L.cutNote}
         </p>
