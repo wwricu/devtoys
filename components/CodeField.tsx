@@ -1,23 +1,20 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import {
   useEffect,
   useImperativeHandle,
   useRef,
   useState,
+  type ComponentType,
   type Ref,
 } from "react";
 import { editorClass } from "@/components/kit";
 import type {
   CodeEditorHandle,
+  CodeEditorProps,
   SyntaxError as EditorSyntaxError,
 } from "@/components/CodeEditor";
 import type { Extension } from "@codemirror/state";
-
-const CodeEditor = dynamic(() => import("@/components/CodeEditor"), {
-  ssr: false,
-});
 
 export interface CodeFieldProps {
   value: string;
@@ -59,8 +56,12 @@ export default function CodeField({
 }: CodeFieldProps) {
   const plain = useRef<HTMLTextAreaElement>(null);
   const rich = useRef<CodeEditorHandle>(null);
-  const editing = useRef(false);
-  const [showEditor, setShowEditor] = useState(false);
+  const [editing, setEditing] = useState(false);
+  // The module itself, not a wrapper that fetches it again on render: the field
+  // swaps in the same commit the chunk arrives, so the handover costs no request.
+  const [Editor, setEditor] = useState<ComponentType<CodeEditorProps> | null>(
+    null,
+  );
   // The editable textarea is uncontrolled, so React cannot keep it in step with
   // the tool's state. Only a change that did not originate from this field needs
   // pushing in - the examples, "use the output as input", file loading, Clear.
@@ -79,13 +80,13 @@ export default function CodeField({
     // if the caret is already in the field, hold the swap until the user leaves.
     const el = plain.current;
     if (el) {
-      if (document.activeElement === el) editing.current = true;
+      if (document.activeElement === el) setEditing(true);
       if (!readOnly && el.value !== value) onChange?.(el.value);
     }
     let cancelled = false;
     import("@/components/CodeEditor")
-      .then(() => {
-        if (!cancelled && !editing.current) setShowEditor(true);
+      .then((m) => {
+        if (!cancelled) setEditor(() => m.default);
       })
       .catch(() => {});
     return () => {
@@ -95,16 +96,18 @@ export default function CodeField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const box = className ?? editorClass;
+  // Null until the chunk is in hand, so a swap can never render an empty field.
+  const Active = editing ? null : Editor;
+
   useImperativeHandle(
     ref,
-    () => ({ focus: () => (showEditor ? rich : plain).current?.focus() }),
-    [showEditor],
+    () => ({ focus: () => (Active ? rich : plain).current?.focus() }),
+    [Active],
   );
 
-  const box = className ?? editorClass;
-
-  return showEditor ? (
-    <CodeEditor
+  return Active ? (
+    <Active
       ref={rich}
       value={value}
       onChange={onChange}
@@ -126,13 +129,8 @@ export default function CodeField({
       // field has no caret to lose and keeps following the tool's output.
       {...(readOnly ? { value } : { defaultValue: value })}
       onChange={(e) => onChange?.(e.target.value)}
-      onFocus={() => {
-        editing.current = true;
-      }}
-      onBlur={() => {
-        editing.current = false;
-        setShowEditor(true);
-      }}
+      onFocus={() => setEditing(true)}
+      onBlur={() => setEditing(false)}
     />
   );
 }
