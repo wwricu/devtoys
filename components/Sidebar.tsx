@@ -334,11 +334,19 @@ export default function Sidebar() {
               aria-label={nextLang === "zh" ? "切换到中文" : "Switch to English"}
               className="rounded p-1 text-neutral-400 transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
             >
-              <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 1a6 6 0 0 0-4.243 10.243l1.415-2.477A9.956 9.956 0 0 1 4.5 8c0-.62.09-1.217.258-1.78l-1.53-2.678A5.98 5.98 0 0 1 8 2Zm0 12a6 6 0 0 0 4.243-10.243l-1.415 2.477c.418.553.714 1.15.872 1.78l1.53 2.678A5.98 5.98 0 0 1 8 14Zm-2.5-5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0Z"
-                />
+              <svg
+                viewBox="0 0 16 16"
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.333}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="8" cy="8" r="6.25" />
+                <path d="M8 1.75c1.9 1.7 2.9 3.9 2.9 6.25S9.9 12.55 8 14.25c-1.9-1.7-2.9-3.9-2.9-6.25S6.1 3.45 8 1.75Z" />
+                <path d="M1.75 8h12.5" />
               </svg>
             </button>
             <a
