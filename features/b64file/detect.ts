@@ -74,6 +74,8 @@ function fromBoxed(bytes: Uint8Array): FileKind {
     return { mime: "audio/mp4", ext: "m4a", label: "AAC audio" };
   if (brand === "qt  ")
     return { mime: "video/quicktime", ext: "mov", label: "QuickTime video" };
+  if (brand === "avif" || brand === "avis")
+    return { mime: "image/avif", ext: "avif", label: "AVIF image" };
   if (hasText(bytes, "3gp", 12))
     return { mime: "video/3gpp", ext: "3gp", label: "3GPP video" };
   return { mime: "video/mp4", ext: "mp4", label: "MP4 video" };
@@ -184,9 +186,35 @@ function whole(bytes: Uint8Array, kind: FileKind): boolean {
         (bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24)) + 8;
       return bytes.length >= declared;
     }
+    case "image/avif":
+      return boxesWhole(bytes);
     default:
       return true;
   }
+}
+
+/**
+ * ISO base media boxes each declare their own length, so a cut leaves the last
+ * one short of the boundary it promised. Only AVIF is read this way: a streamed
+ * MP4 may honestly carry a zero `mdat` size, and a box needing a 64-bit length
+ * is past what this tool decodes anyway.
+ */
+function boxesWhole(bytes: Uint8Array): boolean {
+  const u32 = (at: number) =>
+    (bytes[at] * 0x1000000 + ((bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3])) >>> 0;
+  let at = 0;
+  while (at + 8 <= bytes.length) {
+    let size = u32(at);
+    let step = 8;
+    if (size === 1) {
+      size = u32(at + 12);
+      step = 16;
+    }
+    if (size === 0) return true; // declared as "to the end of the file"
+    if (size < step || at + size > bytes.length) return false;
+    at += size;
+  }
+  return at === bytes.length;
 }
 
 /** Strict UTF-8, so a binary payload never ends up as mojibake in the preview. */
