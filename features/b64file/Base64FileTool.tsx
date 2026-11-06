@@ -46,27 +46,37 @@ export default function Base64FileTool() {
     return () => URL.revokeObjectURL(url);
   }, [url]);
 
+  // A cut that stops before the image data leaves the browser nothing to draw,
+  // and it reports that as a broken image rather than an empty one. Keyed by
+  // the url, so the next paste is judged on its own.
+  const [failedUrl, setFailedUrl] = useState("");
+  const undrawable = url !== "" && failedUrl === url;
+
   const fileName = file ? `file.${file.kind.ext}` : "";
 
   const body = () => {
     if (!file)
       return <p className="p-3 text-xs text-neutral-400">{L.waiting}</p>;
-    if (file.preview === "image")
+    if (file.preview === "image") {
+      if (undrawable)
+        return <p className="p-3 text-xs text-neutral-400">{L.noDraw}</p>;
       return (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
             alt={L.altPreview}
+            onError={() => setFailedUrl(url)}
             className="max-h-64 max-w-full self-center object-contain p-2"
           />
-          {/* A half-drawn image reports no size change, so the container check
-              is the only signal that anything was lost. */}
+          {/* A half-decoded image reports neither a size change nor an error, so
+              the container check is the only signal that anything was lost. */}
           {file.incomplete && (
             <p className="px-2 pb-2 text-xs text-neutral-400">{L.partialNote}</p>
           )}
         </>
       );
+    }
     if (file.preview === "audio")
       return <audio src={url} controls className="w-full px-2 py-3" />;
     if (file.preview === "video")
