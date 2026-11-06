@@ -62,13 +62,22 @@ export default function Base64FileTool() {
         return <p className="p-3 text-xs text-neutral-400">{L.noDraw}</p>;
       return (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={url}
-            alt={L.altPreview}
-            onError={() => setFailedUrl(url)}
-            className="max-h-64 max-w-full self-center object-contain p-2"
-          />
+          {/* A cut leaves a few rows of a tall image; fitting the whole canvas
+              into the pane squeezes those rows into a couple of pixels, so a
+              partial file is drawn at its real size and scrolled instead. */}
+          <div className="min-h-0 flex-1 overflow-auto">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt={L.altPreview}
+              onError={() => setFailedUrl(url)}
+              className={
+                file.incomplete
+                  ? "max-w-none p-2"
+                  : "mx-auto max-h-64 max-w-full object-contain p-2"
+              }
+            />
+          </div>
           {/* A half-decoded image reports neither a size change nor an error, so
               the container check is the only signal that anything was lost. */}
           {file.incomplete && (
