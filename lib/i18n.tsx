@@ -205,10 +205,6 @@ const zhTools: Record<string, { name: string; description: string }> = {
     name: "图片格式转换",
     description: "在 PNG、JPEG 与 WebP 之间转换图片",
   },
-  "image-base64": {
-    name: "图片 / Base64",
-    description: "将图片转为 Base64 data URL，或还原成图片",
-  },
   "pem-decode": {
     name: "证书 / PEM 查看",
     description: "从 PEM 文本读取 X.509 证书、CSR、密钥或 CRL",
@@ -301,8 +297,8 @@ const zhTools: Record<string, { name: string; description: string }> = {
     description: "由 JSON 生成 Java POJO，或由 Java 类生成 JSON 样本",
   },
   "base64-file": {
-    name: "Base64 转文件",
-    description: "把 Base64 解码成可下载文件，自动识别文本里的第一段 Base64 和文件类型",
+    name: "Base64 / 文件",
+    description: "把文件编码成 Base64，或把 Base64 解码成可下载文件，自动识别文本里的 Base64 段和文件类型",
   },
   "list-compare": {
     name: "列表比较",

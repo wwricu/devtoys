@@ -211,6 +211,10 @@ export function decodeToBytes(input: string): DecodeSuccess | DecodeFailure {
   if (raw === "") return { error: "Nothing to decode" };
 
   let clean = raw.replace(/\s+/g, "");
+  // A data URI is the same payload with its type written in front. The bytes
+  // still decide the type, so only the envelope comes off - anything that does
+  // not claim to be Base64 falls through to the rejection below.
+  clean = clean.replace(/^data:[^,]*;base64,/i, "");
   if (/[-_]/.test(clean) && !/[+/]/.test(clean))
     clean = clean.replace(/-/g, "+").replace(/_/g, "/");
   if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean))
