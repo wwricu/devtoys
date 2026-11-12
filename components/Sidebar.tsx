@@ -164,6 +164,9 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
         {categories.map((c) => {
           const open = searching || collapsed[c.name] !== true;
+          // A starred tool is listed in both groups; only the Favourites copy
+          // takes the highlight, so one page never lights up two rows.
+          const favGroup = c.name === "Favourites";
           return (
             <div key={c.name} className="mb-1">
               <div className="flex items-center gap-1 rounded pr-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60">
@@ -199,7 +202,8 @@ export default function Sidebar() {
                   {c.tools.map((tool) => {
                     const toolCat = categorySlug(tool.category);
                     const href = `/${toolCat}/${tool.id}`;
-                    const active = pathname === `/${toolCat}/${tool.id}`;
+                    const active =
+                      pathname === href && (favGroup || !favs.has(tool.id));
                     return (
                       <li key={tool.id}>
                         <Link
