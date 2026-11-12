@@ -98,6 +98,13 @@ export default function Sidebar() {
     document.documentElement.classList.toggle("sidebar-hidden", next);
   };
   const { favs } = useFavourites();
+  // A starred tool is listed twice and both rows link to the same page, so the
+  // URL cannot say which one was used. Remember the row that was clicked; a
+  // page reached without one lights the Favourites copy, the row that is on
+  // screen without scrolling.
+  const [picked, setPicked] = useState<{ href: string; group: string } | null>(
+    null,
+  );
   const intent = useToolIntent();
   useToolWarmup();
 
@@ -164,8 +171,6 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
         {categories.map((c) => {
           const open = searching || collapsed[c.name] !== true;
-          // A starred tool is listed in both groups; only the Favourites copy
-          // takes the highlight, so one page never lights up two rows.
           const favGroup = c.name === "Favourites";
           return (
             <div key={c.name} className="mb-1">
@@ -202,13 +207,21 @@ export default function Sidebar() {
                   {c.tools.map((tool) => {
                     const toolCat = categorySlug(tool.category);
                     const href = `/${toolCat}/${tool.id}`;
+                    // Only a starred tool has two rows, so only it needs the
+                    // clicked row to break the tie. Unstarring drops the
+                    // Favourites copy and leaves the one row lit again.
                     const active =
-                      pathname === href && (favGroup || !favs.has(tool.id));
+                      pathname === href &&
+                      (!favs.has(tool.id) ||
+                        (picked?.href === href
+                          ? picked.group === c.name
+                          : favGroup));
                     return (
                       <li key={tool.id}>
                         <Link
                           href={href}
                           prefetch={false}
+                          onClick={() => setPicked({ href, group: c.name })}
                           onPointerEnter={() => intent(href)}
                           onFocus={() => intent(href)}
                           className={`flex items-center gap-2 rounded px-2 py-1 text-xs transition-colors ${
