@@ -138,6 +138,21 @@ export default function CodeEditor({
   // switch flips, and a frozen one underlines the wrong text after that.
   const latest = useRef({ onChange, placeholder, validate });
   const localeBits = useRef(new Compartment());
+  const colourBits = useRef(new Compartment());
+  const capped = useRef(false);
+
+  // A minified document is one line of thousands of tokens; rebuilding a span
+  // per token on every keystroke is what makes typing lag. Past this line length
+  // the colours go away until the text is formatted back into short lines.
+  const syncColours = (view: EditorView) => {
+    if (!language) return;
+    const long = view.viewportLineBlocks.some((b) => b.to - b.from > 2000);
+    if (long === capped.current) return;
+    capped.current = long;
+    view.dispatch({
+      effects: colourBits.current.reconfigure(long ? [] : colours(language)),
+    });
+  };
 
   useEffect(() => {
     latest.current = { onChange, placeholder, validate };
@@ -195,7 +210,8 @@ export default function CodeEditor({
         : [history(), indentOnInput(), ...checked]),
       bracketMatching(),
       highlightActiveLine(),
-      ...(language ? [grammar(language), colours(language)] : []),
+      ...(language ? [grammar(language)] : []),
+      colourBits.current.of(language ? colours(language) : []),
       EditorView.lineWrapping,
       localeBits.current.of(localeExtensions(placeholder, lang)),
       search({ top: true }),
@@ -213,6 +229,7 @@ export default function CodeEditor({
         if (update.docChanged) {
           latest.current.onChange?.(update.state.doc.toString());
         }
+        syncColours(update.view);
       }),
     ];
 
@@ -222,6 +239,7 @@ export default function CodeEditor({
     });
     view.current = created;
     register(created);
+    syncColours(created);
     return () => {
       unregister(created);
       created.destroy();
