@@ -20,7 +20,6 @@ import {
   unescapeJsonInput,
   type SortKeys,
 } from "./format";
-import { jsonExtensions } from "./editor";
 import { strings } from "./locale";
 
 export default function JsonFormatter() {
@@ -164,7 +163,7 @@ export default function JsonFormatter() {
             ref={field}
             value={input}
             onChange={setInput}
-            extensions={jsonExtensions}
+            language="json"
             validate={validate}
             placeholder={unescape ? L.unescapePlaceholder : L.pasteHint}
           />

@@ -14,7 +14,6 @@ import {
   useStoredState,
 } from "@/components/kit";
 import { fill, useLang, useText } from "@/lib/i18n";
-import { xmlExtensions } from "./editor";
 import { firstXmlError, processXml, unescapeXmlInput } from "./format";
 import { strings } from "./locale";
 
@@ -131,7 +130,7 @@ export default function XmlFormatter() {
             ref={field}
             value={input}
             onChange={setInput}
-            extensions={xmlExtensions}
+            language="xml"
             validate={validate}
             placeholder={unescape ? L.fmtPasteEscapedHint : L.fmtPasteHint}
           />

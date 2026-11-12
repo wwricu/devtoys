@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import CodeField from "@/components/CodeField";
 import { CopyButton, Panel, Split, ToolButton } from "@/components/kit";
-import { jsonExtensions } from "@/features/json/editor";
 import { fill, useLang, useText } from "@/lib/i18n";
 import { evaluateJsonPath, type JsonValue } from "./format";
 import { strings } from "./locale";
@@ -97,7 +96,7 @@ export default function JsonPathTool() {
           <CodeField
             value={json}
             onChange={setJson}
-            extensions={jsonExtensions}
+            language="json"
             placeholder={L.jsonHint}
           />
         </Panel>

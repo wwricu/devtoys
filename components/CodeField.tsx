@@ -14,15 +14,15 @@ import type {
   CodeEditorProps,
   SyntaxError as EditorSyntaxError,
 } from "@/components/CodeEditor";
-import type { Extension } from "@codemirror/state";
+import type { EditorLanguage } from "@/components/editor-languages";
 
 export interface CodeFieldProps {
   value: string;
   /** Omit it on a read-only pane. */
   onChange?: (next: string) => void;
-  /** Grammar and colours from the tool; see components/CodeEditor. Without it
-   *  the editor shows plain text, which is what most tools pass. */
-  extensions?: Extension[];
+  /** Grammar id from the tool; see components/editor-languages. Without it the
+   *  editor shows plain text, which is what most tools pass. */
+  language?: EditorLanguage;
   validate?: (text: string) => EditorSyntaxError | null;
   /** Shown only while empty; a pane that always has content can omit it. */
   placeholder?: string;
@@ -47,7 +47,7 @@ export interface CodeFieldHandle {
 export default function CodeField({
   value,
   onChange,
-  extensions,
+  language,
   validate,
   placeholder = "",
   readOnly = false,
@@ -111,7 +111,7 @@ export default function CodeField({
       ref={rich}
       value={value}
       onChange={onChange}
-      extensions={extensions ?? []}
+      language={language}
       validate={validate}
       placeholder={placeholder}
       readOnly={readOnly}

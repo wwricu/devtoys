@@ -9,7 +9,7 @@ import {
   StatusLine,
   ToolButton,
 } from "./kit";
-import type { Extension } from "@codemirror/state";
+import type { EditorLanguage } from "@/components/editor-languages";
 import { fill, useLang } from "@/lib/i18n";
 
 export interface TransformResult {
@@ -28,14 +28,14 @@ export function SimpleTransform({
   run,
   inputPlaceholder,
   outputPlaceholder,
-  extensions,
+  language,
 }: {
   controls?: React.ReactNode;
   run: (input: string) => TransformResult;
   inputPlaceholder?: string;
   outputPlaceholder?: string;
   /** Grammar for the input box; omit it and the box stays a plain textarea. */
-  extensions?: Extension[];
+  language?: EditorLanguage;
 }) {
   const { t } = useLang();
   const [input, setInput] = useState("");
@@ -67,7 +67,7 @@ export function SimpleTransform({
           <CodeField
             value={input}
             onChange={setInput}
-            extensions={extensions}
+            language={language}
             placeholder={inputPlaceholder ?? t.input}
           />
         </Panel>

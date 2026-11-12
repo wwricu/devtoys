@@ -24,6 +24,7 @@ import {
   placeholder as editorPlaceholder,
 } from "@codemirror/view";
 import { useEffect, useImperativeHandle, useRef, type Ref } from "react";
+import { colours, grammar, type EditorLanguage } from "@/components/editor-languages";
 import { useLang } from "@/lib/i18n";
 
 export interface SyntaxError {
@@ -35,9 +36,9 @@ export interface SyntaxError {
 export interface CodeEditorProps {
   value: string;
   onChange?: (next: string) => void;
-  /** Grammar and colours, supplied by the tool so one language is not paid for
-   *  by every other editor. */
-  extensions: Extension[];
+  /** Grammar id. The CodeMirror imports live in this lazy chunk, so naming a
+   *  language here never pulls the editor into a route's first-load graph. */
+  language?: EditorLanguage;
   /** The first syntax error, or null. Runs on a pause in typing, not a beat.
    *  Without it nothing underlines. */
   validate?: (text: string) => SyntaxError | null;
@@ -122,7 +123,7 @@ function unregister(view: EditorView) {
 export default function CodeEditor({
   value,
   onChange,
-  extensions,
+  language,
   validate,
   placeholder,
   readOnly = false,
@@ -194,7 +195,7 @@ export default function CodeEditor({
         : [history(), indentOnInput(), ...checked]),
       bracketMatching(),
       highlightActiveLine(),
-      ...extensions,
+      ...(language ? [grammar(language), colours(language)] : []),
       EditorView.lineWrapping,
       localeBits.current.of(localeExtensions(placeholder, lang)),
       search({ top: true }),
@@ -226,7 +227,7 @@ export default function CodeEditor({
       created.destroy();
       view.current = null;
     };
-    // Built once; extensions is a module constant from the tool, on purpose.
+    // Built once; language is a module constant from the tool, on purpose.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
