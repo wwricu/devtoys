@@ -99,7 +99,7 @@ function stampText(instant: Instant, unit: TimeUnit): string {
   }
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function ValueButton({ value, hint }: { value: string; hint?: string }) {
   const { t } = useLang();
   const [copied, setCopied] = useState(false);
   const copy = useCallback(async () => {
@@ -112,18 +112,69 @@ function Field({ label, value }: { label: string; value: string }) {
     }
   }, [value]);
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-neutral-100 py-1 last:border-0 dark:border-neutral-800">
-      <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
+    <button
+      type="button"
+      onClick={copy}
+      title={copied ? t.copied : hint && value ? `${hint} · ${value}` : value}
+      className="min-w-0 flex-1 truncate rounded px-1 text-right font-mono text-xs text-neutral-800 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+    >
+      {copied ? t.copied : value || "—"}
+    </button>
+  );
+}
+
+/** Names the two value columns once per card so the rows stay compact. */
+function ZoneHeader({ zones }: { zones: [string, string] }) {
+  return (
+    <div className="flex flex-col gap-1 pb-1 sm:flex-row sm:items-center sm:gap-2">
+      <span className="shrink-0 sm:w-28" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:gap-2">
+        {zones.map((zone, i) => (
+          <span
+            key={i}
+            title={zone}
+            className="min-w-0 flex-1 truncate text-right text-[10px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+          >
+            {zone}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One format across both zones. A single value means the format is absolute
+ * (UTC, HTTP, Unix, relative) and does not move with the zone, so it spans both
+ * columns instead of repeating.
+ */
+function CompareRow({
+  label,
+  values,
+  zones,
+}: {
+  label: string;
+  values: string[];
+  zones: [string, string];
+}) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 last:border-0 dark:border-neutral-800 sm:flex-row sm:items-stretch sm:gap-2">
+      <span
+        title={label}
+        className="shrink-0 truncate text-xs text-neutral-500 dark:text-neutral-400 sm:w-28 sm:self-center"
+      >
         {label}
       </span>
-      <button
-        type="button"
-        onClick={copy}
-        title={copied ? t.copied : value}
-        className="min-w-0 flex-1 truncate rounded px-1 text-right font-mono text-xs text-neutral-800 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
-      >
-        {copied ? t.copied : value || "—"}
-      </button>
+      <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:gap-2">
+        {values.length === 2 ? (
+          <>
+            <ValueButton value={values[0]} hint={zones[0]} />
+            <ValueButton value={values[1]} hint={zones[1]} />
+          </>
+        ) : (
+          <ValueButton value={values[0]} />
+        )}
+      </div>
     </div>
   );
 }
@@ -227,6 +278,9 @@ export default function DateConverter() {
   );
   const unit: TimeUnit = storedUnit === "ns" ? "auto" : storedUnit;
   const [zone, setZone] = useStoredState<string>("date.zone", "");
+  // Comparison column; UTC by default so the first open contrasts the working
+  // zone against a fixed reference instead of showing the same value twice.
+  const [zone2, setZone2] = useStoredState<string>("date.zone2", "UTC");
   const system = useSyncExternalStore(noSubscription, systemZone, () => "UTC");
   const zoneOptions = useSyncExternalStore(
     noSubscription,
@@ -274,6 +328,17 @@ export default function DateConverter() {
     () =>
       zoneOptions.includes(zoneId) ? zoneOptions : [zoneId, ...zoneOptions],
     [zoneOptions, zoneId],
+  );
+
+  const zone2Id = useMemo(() => {
+    if (zone2 && isValidZone(zone2)) return zone2;
+    return system;
+  }, [zone2, system]);
+
+  const options2 = useMemo(
+    () =>
+      zoneOptions.includes(zone2Id) ? zoneOptions : [zone2Id, ...zoneOptions],
+    [zoneOptions, zone2Id],
   );
 
   // Labels carry each zone's offset at the displayed instant; the minute bucket
@@ -354,10 +419,16 @@ export default function DateConverter() {
     () => (instant ? formatDate(instant.ms, instant.ns, zoneId, now) : null),
     [instant, zoneId, now],
   );
+  const fields2 = useMemo(
+    () => (instant ? formatDate(instant.ms, instant.ns, zone2Id, now) : null),
+    [instant, zone2Id, now],
+  );
   const wall = useMemo(
     () => (instant ? wallParts(instant.ms, zoneId) : null),
     [instant, zoneId],
   );
+
+  const zoneColumns: [string, string] = [zoneId, zone2Id];
 
   // The stored instant renders canonically; only an untouched or rejected
   // edit keeps a draft, so external changes (zone, now, wall clock) win.
@@ -539,26 +610,46 @@ export default function DateConverter() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          {L.timezone}
-        </span>
-        <select
-          aria-label={L.timezone}
-          // Full-width own row on narrow screens keeps the leading IANA id readable.
-          className={`${inputClass} order-last w-full sm:order-none sm:w-72 lg:w-96`}
-          value={zoneId}
-          onChange={(e) => {
-            setZone(e.target.value);
-            setNotice(null);
-          }}
-        >
-          {options.map((id) => (
-            <option key={id} value={id}>
-              {labels?.get(id) ??
-                (id === zoneId ? zoneOptionLabel(labelAnchor, id) : id)}
-            </option>
-          ))}
-        </select>
+        <div className="order-last flex w-full items-center gap-2 sm:order-none sm:w-auto">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {L.timezone}
+          </span>
+          <select
+            aria-label={L.timezone}
+            // Full-width own row on narrow screens keeps the leading IANA id readable.
+            className={`${inputClass} w-full sm:w-60 lg:w-72`}
+            value={zoneId}
+            onChange={(e) => {
+              setZone(e.target.value);
+              setNotice(null);
+            }}
+          >
+            {options.map((id) => (
+              <option key={id} value={id}>
+                {labels?.get(id) ??
+                  (id === zoneId ? zoneOptionLabel(labelAnchor, id) : id)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="order-last flex w-full items-center gap-2 sm:order-none sm:w-auto">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {L.compareLabel}
+          </span>
+          <select
+            aria-label={L.compareLabel}
+            className={`${inputClass} w-full sm:w-60 lg:w-72`}
+            value={zone2Id}
+            onChange={(e) => setZone2(e.target.value)}
+          >
+            {options2.map((id) => (
+              <option key={id} value={id}>
+                {labels?.get(id) ??
+                  (id === zone2Id ? zoneOptionLabel(labelAnchor, id) : id)}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <ToolButton onClick={useNow} title={L.nowHint}>
             {L.now}
@@ -698,36 +789,91 @@ export default function DateConverter() {
         </div>
       </Card>
 
-      {fields && (
-        <div className="grid shrink-0 grid-cols-1 items-start gap-3 lg:grid-cols-2">
+      {fields && fields2 && (
+        <div className="flex shrink-0 flex-col gap-3">
           <Card title={L.dateFormats}>
             <div className="flex flex-col">
-              <Field label={L.isoUtc} value={fields.isoUtc} />
-              <Field label={L.isoZoned} value={fields.isoZoned} />
-              <Field label={L.rfc2822} value={fields.rfc2822} />
-              <Field label={L.httpDate} value={fields.httpDate} />
-              <Field label={L.sql} value={fields.sql} />
-              <Field label={L.localeString} value={fields.local} />
+              <ZoneHeader zones={zoneColumns} />
+              <CompareRow
+                label={L.isoUtc}
+                values={[fields.isoUtc]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.isoZoned}
+                values={[fields.isoZoned, fields2.isoZoned]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.rfc2822}
+                values={[fields.rfc2822, fields2.rfc2822]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.httpDate}
+                values={[fields.httpDate]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.sql}
+                values={[fields.sql, fields2.sql]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.localeString}
+                values={[fields.local, fields2.local]}
+                zones={zoneColumns}
+              />
             </div>
           </Card>
 
           <Card title={L.timestamps}>
             <div className="flex flex-col">
-              <Field label={L.unixSeconds} value={fields.unixSeconds} />
-              <Field label={L.unixMillis} value={fields.unixMillis} />
-              <Field label={L.unixMicros} value={fields.unixMicros} />
-              <Field label={L.weekday} value={dayNames[fields.weekday]} />
-              <Field label={L.timezone} value={fields.timezone} />
-              <Field label={L.utcOffset} value={fields.offset} />
-              <Field
-                label={L.daylight}
-                value={`${fields.dst ? L.dstOn : L.dstOff} (${
-                  fields.abbreviation
-                })`}
+              <ZoneHeader zones={zoneColumns} />
+              <CompareRow
+                label={L.unixSeconds}
+                values={[fields.unixSeconds]}
+                zones={zoneColumns}
               />
-              <Field
+              <CompareRow
+                label={L.unixMillis}
+                values={[fields.unixMillis]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.unixMicros}
+                values={[fields.unixMicros]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.weekday}
+                values={[dayNames[fields.weekday], dayNames[fields2.weekday]]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.timezone}
+                values={[fields.timezone, fields2.timezone]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.utcOffset}
+                values={[fields.offset, fields2.offset]}
+                zones={zoneColumns}
+              />
+              <CompareRow
+                label={L.daylight}
+                values={[
+                  `${fields.dst ? L.dstOn : L.dstOff} (${fields.abbreviation})`,
+                  `${fields2.dst ? L.dstOn : L.dstOff} (${
+                    fields2.abbreviation
+                  })`,
+                ]}
+                zones={zoneColumns}
+              />
+              <CompareRow
                 label={L.relative}
-                value={relativeText(fields.relative)}
+                values={[relativeText(fields.relative)]}
+                zones={zoneColumns}
               />
             </div>
           </Card>
