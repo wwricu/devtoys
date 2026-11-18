@@ -48,15 +48,16 @@ export default function Base64FileTool() {
   const [pickError, setPickError] = useState<string | null>(null);
   const pickRef = useRef<HTMLInputElement>(null);
   const [autoFind, setAutoFind] = useStoredState("b64file.autoFind", true);
+  const [unescape, setUnescape] = useStoredState("b64file.unescape", false);
   // A pasted payload can be megabytes, so decoding waits for a quiet moment.
   const settled = useDeferredValue(input);
 
   const decoded = useMemo(
     () =>
       direction === "toFile" && settled.trim() !== ""
-        ? decodeInput(settled, autoFind)
+        ? decodeInput(settled, autoFind, unescape)
         : null,
-    [direction, settled, autoFind],
+    [direction, settled, autoFind, unescape],
   );
   const file = decoded && "file" in decoded ? decoded.file : null;
   const blocks = decoded && "file" in decoded ? decoded.blocks : 0;
@@ -171,6 +172,18 @@ export default function Base64FileTool() {
                 className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
               />
               {L.autoFind}
+            </label>
+            <label
+              title={L.unescapeHint}
+              className="flex cursor-pointer items-center gap-1 whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-300"
+            >
+              <input
+                type="checkbox"
+                checked={unescape}
+                onChange={(e) => setUnescape(e.target.checked)}
+                className="size-3.5 accent-neutral-700 dark:accent-neutral-300"
+              />
+              {L.unescape}
             </label>
             <ToolButton onClick={() => setInput("")}>{t.clear}</ToolButton>
             <CopyButton getText={() => input} />

@@ -277,12 +277,50 @@ function base64Groups(input: string): string[] {
 }
 
 /**
+ * Undo the escapes that wrap a pasted payload so the Base64 underneath can be
+ * read: percent-encoding from a URL (%2B, %2F, %3D) and backslash sequences from
+ * a JSON/JS/Python string (\n, \/, \", \\, \uXXXX). The Base64 alphabet holds
+ * neither % nor \, so this only ever touches the wrapping, never the payload.
+ */
+export function unescapeBase64(input: string): string {
+  let out = input.replace(/%([0-9A-Fa-f]{2})/g, (_, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+  out = out.replace(
+    /\\(u[0-9A-Fa-f]{4}|[nrtbfv0\\/"])/g,
+    (whole: string, code: string) => {
+      if (code[0] === "u")
+        return String.fromCharCode(parseInt(code.slice(1), 16));
+      const map: Record<string, string> = {
+        n: "\n",
+        r: "\r",
+        t: "\t",
+        b: "\b",
+        f: "\f",
+        v: "\v",
+        "0": "\0",
+        "\\": "\\",
+        "/": "/",
+        '"': '"',
+      };
+      return map[code] ?? whole;
+    },
+  );
+  return out;
+}
+
+/**
  * Decodes what was pasted. With `find` enabled, a paste that is not one blob
  * is scanned for bare Base64 runs; the first is decoded and `blocks` reports
- * how many valid runs were found.
+ * how many valid runs were found. With `unescape` enabled, URL and backslash
+ * escapes come off first, for payloads copied out of a URL or a string literal.
  */
-export function decodeInput(input: string, find: boolean): DecodeOutcome {
-  const raw = input.trim();
+export function decodeInput(
+  input: string,
+  find: boolean,
+  unescape: boolean,
+): DecodeOutcome {
+  const raw = (unescape ? unescapeBase64(input) : input).trim();
   if (raw === "") return { error: "Nothing to decode" };
   const whole = decodeToBytes(raw);
   if (!find) return "file" in whole ? { file: whole.file, blocks: 1 } : whole;
