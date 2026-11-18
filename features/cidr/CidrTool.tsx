@@ -51,7 +51,7 @@ function Details({ info }: { info: CidrInfo }) {
   const halves = subnets(info);
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
-      <Panel title={L.network}>
+      <Panel title={L.network} className="flex-none">
         <div className="flex flex-col">
           <Row label={L.cidr} value={info.cidr} />
           <Row
@@ -70,6 +70,7 @@ function Details({ info }: { info: CidrInfo }) {
       </Panel>
       <Panel
         title={L.range}
+        className="flex-none"
         actions={
           <CopyButton getText={() => `${info.network}-${info.broadcast}`} />
         }
@@ -84,7 +85,7 @@ function Details({ info }: { info: CidrInfo }) {
         </div>
       </Panel>
       {halves.length > 0 && (
-        <Panel title={L.subnets}>
+        <Panel title={L.subnets} className="flex-none">
           <div className="flex flex-col">
             {halves.map((s) => (
               <Row
